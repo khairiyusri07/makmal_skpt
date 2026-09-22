@@ -493,17 +493,27 @@ html, body {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--gcal-bg);
 }
 
-/* Calendar Header Row (GMT+08 + 7 Days) */
+/* Calendar Header Row (GMT+08 + 7 Days Header) */
 .gcal-grid-header {
   display: grid;
-  grid-template-columns: 80px repeat(7, 1fr);
+  grid-template-columns: 80px repeat(7, minmax(130px, 1fr));
+  min-width: 990px;
   border-bottom: 1px solid var(--gcal-border);
   background: var(--gcal-bg);
   user-select: none;
-  padding-right: 8px; /* Offset scrollbar */
+  box-sizing: border-box;
+  overflow-y: scroll; /* Reserve scrollbar width to match scroll body */
+  scrollbar-color: transparent transparent;
+}
+
+.gcal-grid-header::-webkit-scrollbar {
+  width: 12px;
+  background: transparent;
 }
 
 .gcal-tz-header {
@@ -515,6 +525,7 @@ html, body {
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .gcal-day-col-header {
@@ -525,6 +536,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  box-sizing: border-box;
 }
 
 .gcal-day-col-header:last-child {
@@ -564,16 +576,19 @@ html, body {
 /* Time Grid Body (Scrollable) */
 .gcal-grid-scroll-body {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .gcal-time-row {
   display: grid;
-  grid-template-columns: 80px repeat(7, 1fr);
+  grid-template-columns: 80px repeat(7, minmax(130px, 1fr));
+  min-width: 990px;
   border-bottom: 1px solid var(--gcal-border-grid);
   min-height: 56px;
+  box-sizing: border-box;
 }
 
 .gcal-time-cell {
@@ -1117,13 +1132,13 @@ html, body {
 
   /* Calendar Grid Responsive Scroll */
   .gcal-grid-header {
-    grid-template-columns: 60px repeat(7, minmax(100px, 1fr));
-    min-width: 760px;
+    grid-template-columns: 60px repeat(7, minmax(110px, 1fr));
+    min-width: 830px;
   }
 
   .gcal-time-row {
-    grid-template-columns: 60px repeat(7, minmax(100px, 1fr));
-    min-width: 760px;
+    grid-template-columns: 60px repeat(7, minmax(110px, 1fr));
+    min-width: 830px;
   }
 
   .gcal-calendar-container {

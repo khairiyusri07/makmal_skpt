@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Google Calendar - Tempahan Makmal Komputer (LabBook)</title>
+  <title>Tempahan Makmal Komputer SKPT</title>
   <meta name="description"
     content="Sistem tempahan dan jadual makmal komputer interaktif untuk institusi pendidikan dan sekolah.">
 
@@ -38,7 +38,7 @@
           <div class="gcal-brand-icon">
             <i data-lucide="calendar"></i>
           </div>
-          <span class="gcal-brand-title">Calendar <small
+          <span class="gcal-brand-title">SKPT <small
               style="font-size: 0.75rem; color: var(--gcal-text-subtle); margin-left: 6px;">Tempahan
               Makmal</small></span>
         </div>
@@ -106,7 +106,7 @@
           </div>
           <div class="sidebar-nav-item" id="tabBtnAdmin">
             <i data-lucide="lock" style="width: 18px;"></i>
-            <span>Rekod Admin (PIN 1234)</span>
+            <span>Akses Admin</span>
           </div>
         </div>
       </aside>
@@ -207,8 +207,7 @@
     <div class="modal-container">
       <div class="modal-header">
         <div class="modal-title">
-          <h3>Borang Tempahan Makmal Komputer</h3>
-          <p>Sila isi maklumat tempahan dengan lengkap.</p>
+          <h3>Booking Penggunaan Makmal Komputer SKPT</h3>
         </div>
         <button class="close-modal-btn" id="btnCloseBookingModal">&times;</button>
       </div>
@@ -223,9 +222,9 @@
 
         <form id="bookingForm">
           <div class="form-group">
-            <label for="formLab">Pilih Makmal Komputer <span>*</span></label>
+            <label for="formLab">Bilik <span>*</span></label>
             <select id="formLab" class="form-control-custom" required readonly>
-              <option value="LAB-1" selected>Makmal Komputer Utama (35 PC)</option>
+              <option value="LAB-1" selected>Makmal Komputer</option>
             </select>
           </div>
 
@@ -236,35 +235,42 @@
             </div>
 
             <div class="form-group">
-              <label for="formSlot">Slot Masa / Sesi <span>*</span></label>
+              <label for="formSlot">Slot Masa<span>*</span></label>
               <select id="formSlot" class="form-control-custom" required>
-                <option value="08:00 - 08:30">Sesi 1 (08:00 AM - 08:30 AM)</option>
-                <option value="08:30 - 09:00">Sesi 2 (08:30 AM - 09:00 AM)</option>
-                <option value="09:00 - 09:30">Sesi 3 (09:00 AM - 09:30 AM)</option>
-                <option value="09:30 - 10:00">Sesi 4 (09:30 AM - 10:00 AM)</option>
-                <option value="10:00 - 10:30">Sesi 5 (10:00 AM - 10:30 AM)</option>
-                <option value="10:30 - 11:00">Sesi 6 (10:30 AM - 11:00 AM)</option>
-                <option value="11:00 - 11:30">Sesi 7 (11:00 AM - 11:30 AM)</option>
-                <option value="11:30 - 12:00">Sesi 8 (11:30 AM - 12:00 PM)</option>
-                <option value="12:00 - 12:30">Sesi 9 (12:00 PM - 12:30 PM)</option>
-                <option value="12:30 - 13:00">Sesi 10 (12:30 PM - 01:00 PM)</option>
-                <option value="13:00 - 13:30">Sesi 11 (01:00 PM - 01:30 PM)</option>
-                <option value="13:30 - 14:00">Sesi 12 (01:30 PM - 02:00 PM)</option>
-                <option value="14:00 - 14:30">Sesi 13 (02:00 PM - 02:30 PM)</option>
+                <option value="08:00 - 08:30">08:00 AM - 08:30 AM</option>
+                <option value="08:30 - 09:00">08:30 AM - 09:00 AM</option>
+                <option value="09:00 - 09:30">09:00 AM - 09:30 AM</option>
+                <option value="09:30 - 10:00">09:30 AM - 10:00 AM</option>
+                <option value="10:00 - 10:30">10:00 AM - 10:30 AM</option>
+                <option value="10:30 - 11:00">10:30 AM - 11:00 AM</option>
+                <option value="11:00 - 11:30">11:00 AM - 11:30 AM</option>
+                <option value="11:30 - 12:00">11:30 AM - 12:00 PM</option>
+                <option value="12:00 - 12:30">12:00 PM - 12:30 PM</option>
+                <option value="12:30 - 13:00">12:30 PM - 01:00 PM</option>
+                <option value="13:00 - 13:30">01:00 PM - 01:30 PM</option>
+                <option value="13:30 - 14:00">01:30 PM - 02:00 PM</option>
+                <option value="14:00 - 14:30">02:00 PM - 02:30 PM</option>
               </select>
             </div>
           </div>
 
           <div class="form-group">
             <label for="formApplicant">Nama Pemohon <span>*</span></label>
-            <input type="text" id="formApplicant" class="form-control-custom" placeholder="Contoh: Cikgu Ahmad Razali"
-              required>
+            <input type="text" id="formApplicant" class="form-control-custom" required>
           </div>
 
           <div class="form-group">
-            <label for="formSubject">Subjek / Kelas / Kumpulan <span>*</span></label>
-            <input type="text" id="formSubject" class="form-control-custom"
-              placeholder="Contoh: 5 Sains - Asas Sains Komputer" required>
+            <label for="formSubject">Kelas<span>*</span></label>
+            <select id="formSubject" class="form-control-custom" required>
+              <option value="1 UTARID">1 UTARID</option>
+              <option value="2 ZUHRAH">2 ZUHRAH</option>
+              <option value="3 MARIKH">3 MARIKH</option>
+              <option value="4 MUSYTARI">4 MUSYTARI</option>
+              <option value="5 ZUHAL">5 ZUHAL</option>
+              <option value="6 NEPTUN">6 NEPTUN</option>
+              <option value="PRA SEKOLAH">PRA SEKOLAH</option>
+              <option value="LAIN-LAIN">LAIN-LAIN</option>
+            </select>
           </div>
 
           <div class="form-group">
@@ -305,13 +311,11 @@
             style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; margin-bottom: 14px;">
             <div><strong>Kod Tempahan:</strong> <span id="slipCode">...</span></div>
             <div><strong>Tarikh:</strong> <span id="slipDate">...</span></div>
-            <div><strong>Makmal:</strong> <span id="slipLab">Makmal Komputer 1</span></div>
+            <div><strong>Makmal:</strong> <span id="slipLab">Makmal Komputer</span></div>
             <div><strong>Slot Masa:</strong> <span id="slipSlot">...</span></div>
             <div><strong>Pemohon:</strong> <span id="slipApplicant">...</span></div>
-            <div><strong>Peranan:</strong> <span id="slipRole">Guru</span></div>
-            <div style="grid-column: span 2;"><strong>Subjek / Kelas:</strong> <span id="slipSubject">...</span></div>
-            <div><strong>Bilangan PC:</strong> <span id="slipPCCount">35 PC</span></div>
-            <div><strong>Tujuan:</strong> <span id="slipPurpose">Pelajaran & Sesi Amali</span></div>
+            <div style="grid-column: span 2;"><strong>Kelas:</strong> <span id="slipSubject">...</span></div>
+
           </div>
         </div>
       </div>
