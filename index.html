@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ms">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Calendar - Tempahan Makmal Komputer (LabBook)</title>
+  <meta name="description"
+    content="Sistem tempahan dan jadual makmal komputer interaktif untuk institusi pendidikan dan sekolah.">
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Google Identity Services (GSI) OAuth 2.0 SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <div class="gcal-app-container">
+
+    <!-- 1. GOOGLE CALENDAR TOPBAR (HEADER) -->
+    <header class="gcal-topbar">
+      <div class="gcal-topbar-left">
+        <button id="btnToggleSidebar" class="gcal-icon-btn" title="Main menu">
+          <i data-lucide="menu"></i>
+        </button>
+        <div class="gcal-brand">
+          <div class="gcal-brand-icon">
+            <i data-lucide="calendar"></i>
+          </div>
+          <span class="gcal-brand-title">Calendar <small
+              style="font-size: 0.75rem; color: var(--gcal-text-subtle); margin-left: 6px;">Tempahan
+              Makmal</small></span>
+        </div>
+        <button id="btnToday" class="btn-gcal-today">Hari Ini</button>
+        <div class="gcal-nav-arrows">
+          <button id="btnPrevWeek" class="gcal-icon-btn" title="Minggu Sebelumnya">
+            <i data-lucide="chevron-left"></i>
+          </button>
+          <button id="btnNextWeek" class="gcal-icon-btn" title="Minggu Seterusnya">
+            <i data-lucide="chevron-right"></i>
+          </button>
+        </div>
+        <h2 id="gcalDateRangeText" class="gcal-date-title">...</h2>
+      </div>
+
+      <div class="gcal-topbar-right">
+        <button class="gcal-icon-btn" title="Carian">
+          <i data-lucide="search"></i>
+        </button>
+        <button class="gcal-icon-btn" title="Bantuan">
+          <i data-lucide="help-circle"></i>
+        </button>
+        <button class="gcal-icon-btn" title="Tetapan">
+          <i data-lucide="settings"></i>
+        </button>
+        <button class="gcal-view-selector">
+          Minggu <i data-lucide="chevron-down" style="width: 14px;"></i>
+        </button>
+        <div id="userProfileSection" class="user-profile-section">
+          <!-- Rendered via JS: User Badge & Logout OR Login Button -->
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. BODY LAYOUT (SIDEBAR + MAIN CONTENT + RIGHT SHORTCUT BAR) -->
+    <div class="gcal-body-wrapper">
+
+      <!-- Mobile Sidebar Backdrop Overlay -->
+      <div class="gcal-sidebar-backdrop" id="sidebarBackdrop"></div>
+
+      <!-- LEFT SIDEBAR -->
+      <aside class="gcal-sidebar" id="gcalSidebar">
+        <!-- "+ Tempah Slot" Floating Action Button -->
+        <button id="btnOpenBookingModalSidebar" class="btn-gcal-create">
+          <svg width="24" height="24" viewBox="0 0 36 36">
+            <path fill="#4285F4" d="M16 16v14h4V20z" />
+            <path fill="#34A853" d="M30 16H20l-4 4h14z" />
+            <path fill="#FBBC05" d="M6 16h10l4-4H6z" />
+            <path fill="#EA4335" d="M20 16V6h-4v10z" />
+          </svg>
+          <span>Tempah Slot</span>
+        </button>
+
+        <!-- MINI MONTH CALENDAR WIDGET -->
+        <div class="mini-calendar" id="miniCalendarContainer">
+          <!-- Rendered via JavaScript -->
+        </div>
+
+        <!-- SIDEBAR NAVIGATION -->
+        <div class="sidebar-nav-section">
+          <div class="sidebar-nav-title">Menu Utama</div>
+          <div class="sidebar-nav-item active" id="tabBtnSchedule">
+            <i data-lucide="calendar" style="width: 18px;"></i>
+            <span>Jadual Makmal</span>
+          </div>
+          <div class="sidebar-nav-item" id="tabBtnAdmin">
+            <i data-lucide="lock" style="width: 18px;"></i>
+            <span>Rekod Admin (PIN 1234)</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT AREA -->
+      <main class="gcal-main-content">
+
+        <!-- TAB PANEL 1: Jadual Makmal (Google Calendar Grid View) -->
+        <div id="scheduleTabPanel" class="tab-panel active">
+          <div class="gcal-calendar-container">
+            <!-- Calendar Days Header Row -->
+            <div class="gcal-grid-header" id="gcalHeaderRow">
+              <!-- Rendered via JavaScript (GMT+8 + 7 Days Header) -->
+            </div>
+
+            <!-- Calendar Time Grid Body (Scrollable) -->
+            <div class="gcal-grid-scroll-body" id="gcalGridBody">
+              <!-- Rendered via JavaScript -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB PANEL 2: Rekod Admin (Restricted Admin Only Access) -->
+        <div id="adminTabPanel" class="tab-panel">
+          <div class="admin-tab-container">
+            <div class="admin-card">
+              <div class="admin-header-flex">
+                <div class="admin-header-title">
+                  <i data-lucide="shield-check" style="color: var(--gcal-blue); width: 24px; height: 24px;"></i>
+                  <h2>Rekod Tempahan Makmal (Panel Admin)</h2>
+                </div>
+                <span
+                  style="background: var(--gcal-blue-light); color: var(--gcal-blue-dark); padding: 4px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: 600;">
+                  Akses Pentadbir Disahkan
+                </span>
+              </div>
+
+              <div class="admin-table-controls">
+                <div style="position: relative;">
+                  <i data-lucide="search"
+                    style="position: absolute; left: 10px; top: 10px; width: 18px; color: var(--gcal-text-subtle);"></i>
+                  <input type="text" id="searchInput" class="search-input-gcal"
+                    placeholder="Cari pemohon, subjek, atau kod tempahan...">
+                </div>
+
+                <select id="statusFilter" class="form-control-custom" style="width: 160px;">
+                  <option value="ALL">Semua Status</option>
+                  <option value="Diluluskan">Diluluskan</option>
+                  <option value="Dibatalkan">Dibatalkan</option>
+                </select>
+              </div>
+
+              <div style="overflow-x: auto;">
+                <table class="data-table-gcal">
+                  <thead>
+                    <tr>
+                      <th>Kod Tempahan</th>
+                      <th>Pemohon & Peranan</th>
+                      <th>Tarikh & Slot Masa</th>
+                      <th>Kelas / Subjek</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Tindakan Admin</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bookingTableBody">
+                    <!-- Rendered via JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- RIGHT WORKSPACE SHORTCUT BAR -->
+      <aside class="gcal-right-bar">
+        <div class="right-bar-icon" title="Keep">
+          <i data-lucide="file-text" style="color: #fbbc04;"></i>
+        </div>
+        <div class="right-bar-icon" title="Tasks">
+          <i data-lucide="check-circle" style="color: #4285f4;"></i>
+        </div>
+        <div class="right-bar-icon" title="Contacts">
+          <i data-lucide="user" style="color: #ea4335;"></i>
+        </div>
+        <div class="right-bar-icon" title="Tambah">
+          <i data-lucide="plus"></i>
+        </div>
+      </aside>
+
+    </div>
+
+  </div>
+
+  <!-- MODAL 1: BORANG TEMPAHAN MAKMAL -->
+  <div class="modal-overlay" id="bookingModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title">
+          <h3>Borang Tempahan Makmal Komputer</h3>
+          <p>Sila isi maklumat tempahan dengan lengkap.</p>
+        </div>
+        <button class="close-modal-btn" id="btnCloseBookingModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Conflict Alert Banner -->
+        <div class="modal-alert danger" id="conflictAlert"
+          style="display: none; background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 10px; border-radius: 6px; margin-bottom: 14px;">
+          <i data-lucide="alert-triangle"></i>
+          <span id="conflictAlertMsg">Slot masa bagi makmal ini telah ditempah!</span>
+        </div>
+
+        <form id="bookingForm">
+          <div class="form-group">
+            <label for="formLab">Pilih Makmal Komputer <span>*</span></label>
+            <select id="formLab" class="form-control-custom" required readonly>
+              <option value="LAB-1" selected>Makmal Komputer Utama (35 PC)</option>
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label for="formDate">Tarikh Tempahan <span>*</span></label>
+              <input type="date" id="formDate" class="form-control-custom" required>
+            </div>
+
+            <div class="form-group">
+              <label for="formSlot">Slot Masa / Sesi <span>*</span></label>
+              <select id="formSlot" class="form-control-custom" required>
+                <option value="08:00 - 08:30">Sesi 1 (08:00 AM - 08:30 AM)</option>
+                <option value="08:30 - 09:00">Sesi 2 (08:30 AM - 09:00 AM)</option>
+                <option value="09:00 - 09:30">Sesi 3 (09:00 AM - 09:30 AM)</option>
+                <option value="09:30 - 10:00">Sesi 4 (09:30 AM - 10:00 AM)</option>
+                <option value="10:00 - 10:30">Sesi 5 (10:00 AM - 10:30 AM)</option>
+                <option value="10:30 - 11:00">Sesi 6 (10:30 AM - 11:00 AM)</option>
+                <option value="11:00 - 11:30">Sesi 7 (11:00 AM - 11:30 AM)</option>
+                <option value="11:30 - 12:00">Sesi 8 (11:30 AM - 12:00 PM)</option>
+                <option value="12:00 - 12:30">Sesi 9 (12:00 PM - 12:30 PM)</option>
+                <option value="12:30 - 13:00">Sesi 10 (12:30 PM - 01:00 PM)</option>
+                <option value="13:00 - 13:30">Sesi 11 (01:00 PM - 01:30 PM)</option>
+                <option value="13:30 - 14:00">Sesi 12 (01:30 PM - 02:00 PM)</option>
+                <option value="14:00 - 14:30">Sesi 13 (02:00 PM - 02:30 PM)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="formApplicant">Nama Pemohon <span>*</span></label>
+            <input type="text" id="formApplicant" class="form-control-custom" placeholder="Contoh: Cikgu Ahmad Razali"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label for="formSubject">Subjek / Kelas / Kumpulan <span>*</span></label>
+            <input type="text" id="formSubject" class="form-control-custom"
+              placeholder="Contoh: 5 Sains - Asas Sains Komputer" required>
+          </div>
+
+          <div class="form-group">
+            <label for="formNotes">Catatan / Nota Tambahan</label>
+            <textarea id="formNotes" class="form-control-custom" rows="2"
+              placeholder="Sebarang maklumat tambahan..."></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-gcal-red" id="btnCancelBooking">Batal</button>
+            <button type="submit" class="btn-gcal-blue" id="btnSubmitBooking">Sahkan Tempahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: SLIP & BUTIRAN TEMPAHAN -->
+  <div class="modal-overlay" id="slipModal">
+    <div class="modal-container" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <h3>Slip Butiran Tempahan</h3>
+          <p>Salinan sah tempahan makmal komputer.</p>
+        </div>
+        <button class="close-modal-btn" id="btnCloseSlipModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="slip-card">
+          <div style="text-align: center; border-bottom: 2px solid #e0e0e0; padding-bottom: 12px; margin-bottom: 12px;">
+            <h2 style="font-size: 1.1rem; color: #202124;">SLIP TEMPAHAN MAKMAL KOMPUTER</h2>
+            <p style="font-size: 0.8rem; color: #70757a;">LabBook System • Status: <strong
+                style="color: #1e8e3e;">DILULUSKAN</strong></p>
+          </div>
+
+          <div
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; margin-bottom: 14px;">
+            <div><strong>Kod Tempahan:</strong> <span id="slipCode">...</span></div>
+            <div><strong>Tarikh:</strong> <span id="slipDate">...</span></div>
+            <div><strong>Makmal:</strong> <span id="slipLab">Makmal Komputer 1</span></div>
+            <div><strong>Slot Masa:</strong> <span id="slipSlot">...</span></div>
+            <div><strong>Pemohon:</strong> <span id="slipApplicant">...</span></div>
+            <div><strong>Peranan:</strong> <span id="slipRole">Guru</span></div>
+            <div style="grid-column: span 2;"><strong>Subjek / Kelas:</strong> <span id="slipSubject">...</span></div>
+            <div><strong>Bilangan PC:</strong> <span id="slipPCCount">35 PC</span></div>
+            <div><strong>Tujuan:</strong> <span id="slipPurpose">Pelajaran & Sesi Amali</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-gcal-blue" id="btnPrintSlip">Cetak Slip</button>
+        <button type="button" class="btn-gcal-red" id="btnCloseSlipBtn">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: LOG MASUK / DAFTAR AKAUN GOOGLE DELIMa KPM -->
+  <div class="modal-overlay" id="loginModal">
+    <div class="modal-container" style="max-width: 440px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <h3 id="authModalTitle">Log Masuk Google DELIMa</h3>
+          <p id="authModalSub">Sila log masuk atau daftar Akaun DELIMa KPM.</p>
+        </div>
+        <button class="close-modal-btn" id="btnCloseLoginModal">&times;</button>
+      </div>
+
+      <!-- Auth Tab Switcher -->
+      <div style="display: flex; border-bottom: 1px solid var(--gcal-border); background: var(--gcal-surface);">
+        <button id="authTabLogin" type="button"
+          style="flex: 1; padding: 10px; border: none; background: transparent; font-family: inherit; font-weight: 600; font-size: 0.85rem; cursor: pointer; border-bottom: 2px solid var(--gcal-blue); color: var(--gcal-blue);">Log
+          Masuk</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- FORM 1: LOG MASUK -->
+        <div id="loginFormContainer">
+          <!-- Official Sign In With Google (SIWG) HTML API Component -->
+          <div id="g_id_onload"
+            data-client_id="118978054225-587be9hupkr97ovm0c5dp4eks3fjngdc.apps.googleusercontent.com"
+            data-context="signin" data-ux_mode="popup" data-callback="handleGoogleCredentialResponse"
+            data-auto_select="false" data-itp_support="true">
+          </div>
+
+          <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline"
+            data-text="signin_with" data-size="large" data-logo_alignment="left" data-width="340"
+            style="display: flex; justify-content: center; margin-bottom: 12px;">
+          </div>
+
+          <!-- Dynamic JS SIWG Container -->
+          <div id="googleSiwgButtonContainer" style="display: flex; justify-content: center; margin-bottom: 12px;">
+          </div>
+
+
+        </div>
+
+
+        <!-- MODAL 4: PENGESAHAN PIN ADMIN -->
+        <div class="modal-overlay" id="adminAuthModal">
+          <div class="modal-container" style="max-width: 400px;">
+            <div class="modal-header">
+              <div class="modal-title">
+                <h3>Pengesahan Akses Admin</h3>
+                <p>Sila masukkan PIN Pentadbir.</p>
+              </div>
+              <button class="close-modal-btn" id="btnCloseAdminAuthModal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+              <form id="adminAuthForm">
+                <div class="form-group">
+                  <label for="adminPinInput">PIN Admin (Default: 1234)</label>
+                  <input type="password" id="adminPinInput" class="form-control-custom" placeholder="1234" required
+                    autofocus style="text-align: center; font-size: 1.2rem; letter-spacing: 0.2em;">
+                </div>
+                <button type="submit" class="btn-gcal-blue" style="width: 100%;">Sahkan PIN Admin</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile Floating Action Button (FAB) -->
+        <button id="mobileFabBtn" class="mobile-fab-btn">
+          <svg width="24" height="24" viewBox="0 0 36 36">
+            <path fill="#4285F4" d="M16 16v14h4V20z" />
+            <path fill="#34A853" d="M30 16H20l-4 4h14z" />
+            <path fill="#FBBC05" d="M6 16h10l4-4H6z" />
+            <path fill="#EA4335" d="M20 16V6h-4v10z" />
+          </svg>
+          <span>Tempah</span>
+        </button>
+
+        <!-- Toast Notification Container -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Application Logic Modules (Strict Dependency Load Order) -->
+        <script src="js/config.js"></script>
+        <script src="js/auth.js"></script>
+        <script src="js/models.js"></script>
+        <script src="js/store.js"></script>
+        <script src="js/views.js"></script>
+        <script src="app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,1169 @@
+/* ==========================================================================
+   LABBOOK - GOOGLE CALENDAR WEB INTERFACE DESIGN SYSTEM
+   Exact replica of Google Calendar (Light Theme, Material You UI)
+   ========================================================================== */
+
+:root {
+  /* Google Light Color Palette */
+  --gcal-bg: #ffffff;
+  --gcal-surface: #f8f9fa;
+  --gcal-hover: #f1f3f4;
+  --gcal-border: #dadce0;
+  --gcal-border-light: #e0e0e0;
+  --gcal-border-grid: #e6e8eb;
+
+  /* Google Blue & Accents */
+  --gcal-blue: #1a73e8;
+  --gcal-blue-hover: #1765cc;
+  --gcal-blue-light: #e8f0fe;
+  --gcal-blue-dark: #185abc;
+  
+  --gcal-green: #1e8e3e;
+  --gcal-green-light: #e6f4ea;
+  --gcal-amber: #d97706;
+  --gcal-amber-light: #fef3c7;
+  --gcal-red: #d93025;
+  --gcal-red-light: #fce8e6;
+
+  /* Text Colors */
+  --gcal-text-main: #3c4043;
+  --gcal-text-subtle: #70757a;
+  --gcal-text-dark: #202124;
+
+  /* Typography & Shadows */
+  --gcal-font: 'Plus Jakarta Sans', -apple-system, Roboto, Arial, sans-serif;
+  --gcal-shadow-sm: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+  --gcal-shadow-md: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
+  --gcal-shadow-lg: 0 4px 16px 0 rgba(60,64,67,0.2);
+  --gcal-radius: 8px;
+  --gcal-radius-pill: 24px;
+}
+
+/* Reset & Global */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: var(--gcal-font);
+  background-color: var(--gcal-bg);
+  color: var(--gcal-text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Main Layout Wrapper */
+.gcal-app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--gcal-bg);
+}
+
+/* ==========================================================================
+   1. GOOGLE CALENDAR TOP NAVBAR (HEADER)
+   ========================================================================== */
+.gcal-topbar {
+  height: 64px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--gcal-border);
+  background: var(--gcal-bg);
+  user-select: none;
+  z-index: 20;
+}
+
+.gcal-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gcal-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--gcal-text-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.gcal-icon-btn:hover {
+  background: var(--gcal-hover);
+  color: var(--gcal-text-dark);
+}
+
+.gcal-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 16px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.gcal-brand-icon {
+  width: 38px;
+  height: 38px;
+  background: var(--gcal-blue);
+  color: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  box-shadow: var(--gcal-shadow-sm);
+}
+
+.gcal-brand-title {
+  font-size: 1.35rem;
+  font-weight: 500;
+  color: var(--gcal-text-main);
+  letter-spacing: -0.01em;
+}
+
+.btn-gcal-today {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 18px;
+  border: 1px solid var(--gcal-border);
+  background: var(--gcal-bg);
+  color: var(--gcal-text-main);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: 12px;
+}
+
+.btn-gcal-today:hover {
+  background: var(--gcal-hover);
+  border-color: #c6c9ce;
+}
+
+.gcal-nav-arrows {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.gcal-date-title {
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: var(--gcal-text-main);
+  margin-left: 12px;
+  min-width: 200px;
+}
+
+/* Topbar Right Icons & Profile */
+.gcal-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gcal-view-selector {
+  height: 36px;
+  padding: 0 12px 0 16px;
+  border-radius: 18px;
+  border: 1px solid var(--gcal-border);
+  background: var(--gcal-bg);
+  color: var(--gcal-text-main);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.gcal-view-selector:hover {
+  background: var(--gcal-hover);
+}
+
+/* User Profile Badge */
+.user-profile-section {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.user-profile-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid var(--gcal-border);
+  border-radius: 24px;
+  background: var(--gcal-bg);
+  transition: all 0.15s ease;
+}
+
+.user-profile-badge:hover {
+  background: var(--gcal-hover);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4285f4, #34a853);
+  color: white;
+  font-weight: 700;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-profile-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.user-profile-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--gcal-text-main);
+}
+
+.user-profile-email {
+  font-size: 0.72rem;
+  color: var(--gcal-text-subtle);
+}
+
+.btn-logout-gcal {
+  background: transparent;
+  border: none;
+  color: var(--gcal-red);
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-logout-gcal:hover {
+  background: var(--gcal-red-light);
+}
+
+.btn-login-gcal {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 18px;
+  background: var(--gcal-blue);
+  color: white;
+  border: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: background 0.15s ease;
+}
+
+.btn-login-gcal:hover {
+  background: var(--gcal-blue-hover);
+}
+
+/* ==========================================================================
+   2. BODY LAYOUT (SIDEBAR + MAIN CONTENT + RIGHT SHORTCUT BAR)
+   ========================================================================== */
+.gcal-body-wrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   LEFT SIDEBAR
+   -------------------------------------------------------------------------- */
+.gcal-sidebar {
+  width: 256px;
+  min-width: 256px;
+  padding: 16px 12px 16px 16px;
+  border-right: 1px solid var(--gcal-border);
+  background: var(--gcal-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  user-select: none;
+  transition: margin-left 0.25s ease;
+}
+
+.gcal-sidebar.collapsed {
+  margin-left: -256px;
+}
+
+/* Floating "+ Tempah" Button (Google Material You Style) */
+.btn-gcal-create {
+  height: 48px;
+  width: max-content;
+  min-width: 140px;
+  padding: 0 24px 0 16px;
+  border-radius: var(--gcal-radius-pill);
+  border: 1px solid var(--gcal-border);
+  background: var(--gcal-bg);
+  color: var(--gcal-text-main);
+  box-shadow: var(--gcal-shadow-sm);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-gcal-create:hover {
+  box-shadow: var(--gcal-shadow-md);
+  background: #f8f9fa;
+  transform: translateY(-1px);
+}
+
+.btn-gcal-create svg {
+  color: var(--gcal-blue);
+}
+
+/* MINI MONTH CALENDAR WIDGET */
+.mini-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mini-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.mini-cal-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gcal-text-main);
+}
+
+.mini-cal-arrows {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.mini-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  row-gap: 2px;
+}
+
+.mini-cal-dayname {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--gcal-text-subtle);
+  padding: 6px 0;
+}
+
+.mini-cal-date {
+  font-size: 0.75rem;
+  color: var(--gcal-text-main);
+  height: 28px;
+  width: 28px;
+  margin: 0 auto;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mini-cal-date:hover {
+  background: var(--gcal-hover);
+}
+
+.mini-cal-date.other-month {
+  color: #bdc1c6;
+}
+
+.mini-cal-date.is-today {
+  background: var(--gcal-blue);
+  color: white;
+  font-weight: 700;
+}
+
+.mini-cal-date.active-week {
+  background: var(--gcal-blue-light);
+  color: var(--gcal-blue-dark);
+  font-weight: 600;
+}
+
+/* Sidebar Navigation Items */
+.sidebar-nav-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-nav-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gcal-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 12px;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 0 20px 20px 0;
+  color: var(--gcal-text-main);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.sidebar-nav-item:hover {
+  background: var(--gcal-hover);
+}
+
+.sidebar-nav-item.active {
+  background: var(--gcal-blue-light);
+  color: var(--gcal-blue-dark);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   MAIN CONTENT AREA
+   -------------------------------------------------------------------------- */
+.gcal-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--gcal-bg);
+}
+
+.tab-panel {
+  display: none;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.tab-panel.active {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   3. GOOGLE CALENDAR WEEKLY GRID VIEW
+   ========================================================================== */
+.gcal-calendar-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Calendar Header Row (GMT+08 + 7 Days) */
+.gcal-grid-header {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  border-bottom: 1px solid var(--gcal-border);
+  background: var(--gcal-bg);
+  user-select: none;
+  padding-right: 8px; /* Offset scrollbar */
+}
+
+.gcal-tz-header {
+  padding: 12px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gcal-text-subtle);
+  border-right: 1px solid var(--gcal-border-grid);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.gcal-day-col-header {
+  padding: 10px 4px;
+  text-align: center;
+  border-right: 1px solid var(--gcal-border-grid);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.gcal-day-col-header:last-child {
+  border-right: none;
+}
+
+.gcal-day-name-str {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--gcal-text-subtle);
+  text-transform: uppercase;
+}
+
+.gcal-day-num-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: var(--gcal-text-main);
+  transition: all 0.15s ease;
+}
+
+.gcal-day-col-header.is-today .gcal-day-name-str {
+  color: var(--gcal-blue);
+}
+
+.gcal-day-col-header.is-today .gcal-day-num-circle {
+  background: var(--gcal-blue);
+  color: white;
+  font-weight: 700;
+}
+
+/* Time Grid Body (Scrollable) */
+.gcal-grid-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.gcal-time-row {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  border-bottom: 1px solid var(--gcal-border-grid);
+  min-height: 56px;
+}
+
+.gcal-time-cell {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--gcal-text-subtle);
+  border-right: 1px solid var(--gcal-border-grid);
+  text-align: right;
+  transform: translateY(-8px);
+  user-select: none;
+}
+
+.gcal-slot-cell {
+  border-right: 1px solid var(--gcal-border-grid);
+  padding: 4px;
+  position: relative;
+  transition: background 0.15s ease;
+}
+
+.gcal-slot-cell:last-child {
+  border-right: none;
+}
+
+.gcal-slot-cell.empty-slot {
+  cursor: pointer;
+}
+
+.gcal-slot-cell.empty-slot:hover {
+  background: var(--gcal-hover);
+}
+
+.gcal-slot-cell.empty-slot:hover::after {
+  content: '+ Tempah';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--gcal-blue);
+  color: white;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  pointer-events: none;
+  box-shadow: var(--gcal-shadow-sm);
+}
+
+/* Event Block Card */
+.gcal-event-block {
+  height: 100%;
+  width: 100%;
+  background: var(--gcal-blue-light);
+  border-left: 4px solid var(--gcal-blue);
+  border-radius: 4px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  overflow: hidden;
+}
+
+.gcal-event-block:hover {
+  box-shadow: var(--gcal-shadow-sm);
+  filter: brightness(0.97);
+}
+
+.gcal-event-block.pending {
+  background: var(--gcal-amber-light);
+  border-left-color: var(--gcal-amber);
+}
+
+.gcal-event-title-text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gcal-blue-dark);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gcal-event-block.pending .gcal-event-title-text {
+  color: #92400e;
+}
+
+.gcal-event-applicant-text {
+  font-size: 0.72rem;
+  color: var(--gcal-text-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   4. REKOD ADMIN TAB PANEL
+   ========================================================================== */
+.admin-tab-container {
+  padding: 24px;
+  overflow-y: auto;
+  height: 100%;
+  background: var(--gcal-surface);
+}
+
+.admin-card {
+  background: var(--gcal-bg);
+  border: 1px solid var(--gcal-border);
+  border-radius: var(--gcal-radius);
+  padding: 24px;
+  box-shadow: var(--gcal-shadow-sm);
+}
+
+.admin-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-header-title h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gcal-text-main);
+}
+
+.admin-table-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.search-input-gcal {
+  height: 38px;
+  padding: 0 14px 0 36px;
+  border: 1px solid var(--gcal-border);
+  border-radius: var(--gcal-radius);
+  background: var(--gcal-bg);
+  font-family: inherit;
+  font-size: 0.875rem;
+  outline: none;
+  width: 320px;
+}
+
+.search-input-gcal:focus {
+  border-color: var(--gcal-blue);
+  box-shadow: 0 0 0 2px var(--gcal-blue-light);
+}
+
+.data-table-gcal {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.data-table-gcal th {
+  text-align: left;
+  padding: 12px 14px;
+  background: var(--gcal-surface);
+  color: var(--gcal-text-subtle);
+  font-weight: 600;
+  border-bottom: 1px solid var(--gcal-border);
+}
+
+.data-table-gcal td {
+  padding: 14px;
+  border-bottom: 1px solid var(--gcal-border-light);
+  color: var(--gcal-text-main);
+}
+
+.data-table-gcal tr:hover td {
+  background: var(--gcal-hover);
+}
+
+/* Buttons */
+.btn-gcal-blue {
+  background: var(--gcal-blue);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn-gcal-blue:hover { background: var(--gcal-blue-hover); }
+
+.btn-gcal-green {
+  background: var(--gcal-green);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.btn-gcal-red {
+  background: var(--gcal-red-light);
+  color: var(--gcal-red);
+  border: 1px solid rgba(217, 48, 37, 0.3);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   5. RIGHT WORKSPACE SHORTCUT BAR
+   -------------------------------------------------------------------------- */
+.gcal-right-bar {
+  width: 56px;
+  min-width: 56px;
+  border-left: 1px solid var(--gcal-border);
+  background: var(--gcal-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  gap: 20px;
+  user-select: none;
+}
+
+.right-bar-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--gcal-text-subtle);
+  transition: background 0.15s ease;
+}
+
+.right-bar-icon:hover {
+  background: var(--gcal-hover);
+  color: var(--gcal-text-dark);
+}
+
+/* ==========================================================================
+   6. MODAL DIALOG STYLES (Light Theme Google Style)
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(32, 33, 36, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-container {
+  background: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--gcal-shadow-lg);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--gcal-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--gcal-text-dark);
+}
+
+.modal-title p {
+  font-size: 0.8rem;
+  color: var(--gcal-text-subtle);
+}
+
+.close-modal-btn {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: var(--gcal-text-subtle);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-modal-btn:hover { background: var(--gcal-hover); }
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-footer {
+  padding: 12px 24px;
+  border-top: 1px solid var(--gcal-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: var(--gcal-surface);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--gcal-text-main);
+}
+
+.form-control-custom {
+  padding: 10px 14px;
+  border: 1px solid var(--gcal-border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  outline: none;
+  background: var(--gcal-bg);
+  color: var(--gcal-text-main);
+}
+
+.form-control-custom:focus {
+  border-color: var(--gcal-blue);
+  box-shadow: 0 0 0 2px var(--gcal-blue-light);
+}
+
+/* Toast Notification */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  background: #323232;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  box-shadow: var(--gcal-shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Google SSO Account Chooser Modal */
+.google-account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.google-account-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--gcal-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.google-account-item:hover {
+  background: var(--gcal-blue-light);
+  border-color: var(--gcal-blue);
+}
+
+/* Slip Modal Print Card */
+.slip-card {
+  background: white;
+  color: black;
+  border: 2px dashed var(--gcal-border);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+/* Print */
+@media print {
+  .gcal-topbar, .gcal-sidebar, .gcal-right-bar, .modal-header, .modal-footer {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   7. MOBILE & TABLET RESPONSIVE STYLES (Screen width <= 768px)
+   ========================================================================== */
+
+/* Floating Mobile Action Button (FAB) */
+.mobile-fab-btn {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 99;
+  background: var(--gcal-bg);
+  color: var(--gcal-text-main);
+  border: 1px solid var(--gcal-border);
+  border-radius: var(--gcal-radius-pill);
+  padding: 0 20px 0 16px;
+  height: 52px;
+  box-shadow: var(--gcal-shadow-md);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.mobile-fab-btn svg {
+  color: var(--gcal-blue);
+}
+
+/* Sidebar Backdrop Overlay on Mobile */
+.gcal-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(32, 33, 36, 0.4);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.gcal-sidebar-backdrop.active {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  /* Show Mobile FAB */
+  .mobile-fab-btn {
+    display: flex;
+  }
+
+  /* Top Bar Header Adaptations */
+  .gcal-topbar {
+    padding: 0 10px;
+    height: 56px;
+  }
+
+  .gcal-brand-title small {
+    display: none;
+  }
+
+  .gcal-date-title {
+    font-size: 1.05rem;
+    margin-left: 6px;
+    min-width: auto;
+  }
+
+  .btn-gcal-today {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 0.8rem;
+    margin-left: 6px;
+  }
+
+  .gcal-view-selector,
+  .gcal-topbar-right button[title="Bantuan"],
+  .gcal-topbar-right button[title="Tetapan"] {
+    display: none;
+  }
+
+  .user-profile-info {
+    display: none;
+  }
+
+  .user-profile-badge {
+    padding: 4px;
+    border-radius: 50%;
+  }
+
+  /* Left Sidebar Drawer on Mobile */
+  .gcal-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 101;
+    box-shadow: var(--gcal-shadow-lg);
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-left: 0 !important;
+  }
+
+  .gcal-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* Hide Right Shortcut Bar on Mobile */
+  .gcal-right-bar {
+    display: none;
+  }
+
+  /* Calendar Grid Responsive Scroll */
+  .gcal-grid-header {
+    grid-template-columns: 60px repeat(7, minmax(100px, 1fr));
+    min-width: 760px;
+  }
+
+  .gcal-time-row {
+    grid-template-columns: 60px repeat(7, minmax(100px, 1fr));
+    min-width: 760px;
+  }
+
+  .gcal-calendar-container {
+    overflow-x: auto;
+  }
+
+  .gcal-time-cell {
+    font-size: 0.7rem;
+    padding: 4px;
+  }
+
+  .gcal-event-title-text {
+    font-size: 0.75rem;
+  }
+
+  .gcal-event-applicant-text {
+    font-size: 0.68rem;
+  }
+
+  /* Modals on Mobile */
+  .modal-container {
+    max-width: 94vw !important;
+    margin: 10px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .admin-tab-container {
+    padding: 12px;
+  }
+
+  .search-input-gcal {
+    width: 100%;
+  }
+
+  .admin-table-controls {
+    flex-direction: column;
+  }
+}
