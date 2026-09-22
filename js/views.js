@@ -415,8 +415,12 @@ class ModalView {
   }
 
   openAdminAuth() {
-    this.dom.adminPinInput.value = '';
+    if (!this.dom.adminAuthModal) return;
+    if (this.dom.adminPinInput) this.dom.adminPinInput.value = '';
     this.dom.adminAuthModal.classList.add('active');
+    setTimeout(() => {
+      if (this.dom.adminPinInput) this.dom.adminPinInput.focus();
+    }, 100);
   }
 
   closeAdminAuth() {

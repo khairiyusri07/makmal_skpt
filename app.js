@@ -30,26 +30,45 @@ class App {
 
   switchTab(tabName) {
     this.closeMobileSidebar();
+    const schedPanel = document.getElementById('scheduleTabPanel');
+    const adminPanel = document.getElementById('adminTabPanel');
+    const btnSched = document.getElementById('tabBtnSchedule');
+    const btnAdmin = document.getElementById('tabBtnAdmin');
+
     if (tabName === 'admin') {
       if (!this.authStore.isAdminVerified) {
         this.modalView.openAdminAuth();
         return;
       }
       this.activeTab = 'admin';
-      document.getElementById('scheduleTabPanel').style.display = 'none';
-      document.getElementById('adminTabPanel').style.display = 'block';
-      document.getElementById('tabBtnSchedule').classList.remove('active');
-      document.getElementById('tabBtnAdmin').classList.add('active');
+      if (schedPanel) {
+        schedPanel.classList.remove('active');
+        schedPanel.style.display = 'none';
+      }
+      if (adminPanel) {
+        adminPanel.classList.add('active');
+        adminPanel.style.display = 'flex';
+      }
+      if (btnSched) btnSched.classList.remove('active');
+      if (btnAdmin) btnAdmin.classList.add('active');
       this.tableView.render();
     } else {
       this.activeTab = 'schedule';
-      document.getElementById('adminTabPanel').style.display = 'none';
-      document.getElementById('scheduleTabPanel').style.display = 'block';
-      document.getElementById('tabBtnAdmin').classList.remove('active');
-      document.getElementById('tabBtnSchedule').classList.add('active');
+      if (adminPanel) {
+        adminPanel.classList.remove('active');
+        adminPanel.style.display = 'none';
+      }
+      if (schedPanel) {
+        schedPanel.classList.add('active');
+        schedPanel.style.display = 'flex';
+      }
+      if (btnAdmin) btnAdmin.classList.remove('active');
+      if (btnSched) btnSched.classList.add('active');
       this.calendarView.render();
     }
-    if (window.lucide) lucide.createIcons();
+    requestAnimationFrame(() => {
+      if (window.lucide) lucide.createIcons();
+    });
   }
 
   closeMobileSidebar() {
