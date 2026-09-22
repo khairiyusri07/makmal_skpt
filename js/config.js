@@ -36,6 +36,14 @@ const MONTH_NAMES_MY = [
 ];
 
 class DateUtils {
+  static getSunday(d = new Date()) {
+    const date = new Date(d);
+    const day = date.getDay();
+    date.setDate(date.getDate() - day);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
   static getMonday(d = new Date()) {
     const date = new Date(d);
     const day = date.getDay();

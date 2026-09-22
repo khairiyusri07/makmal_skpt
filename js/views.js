@@ -68,12 +68,12 @@ class CalendarView {
   }
 
   renderHeaderToolbar(weekDays) {
-    const sundayObj = weekDays[6].dateObj;
+    const lastDayObj = weekDays[6].dateObj;
     const startDay = weekDays[0].dateNum;
-    const endDay = sundayObj.getDate();
+    const endDay = lastDayObj.getDate();
     const startMonth = MONTH_NAMES_MY[weekDays[0].dateObj.getMonth()];
-    const endMonth = MONTH_NAMES_MY[sundayObj.getMonth()];
-    const year = sundayObj.getFullYear();
+    const endMonth = MONTH_NAMES_MY[lastDayObj.getMonth()];
+    const year = lastDayObj.getFullYear();
 
     let rangeText = (startMonth === endMonth)
       ? `${startDay} - ${endDay} ${startMonth} ${year}`
@@ -140,15 +140,14 @@ class CalendarView {
 
   renderMiniCalendar(weekDays) {
     if (!this.dom.miniCalendar) return;
-    const currentMonday = this.store.currentMonday;
-    const year = currentMonday.getFullYear();
-    const month = currentMonday.getMonth();
+    const currentSunday = this.store.currentSunday;
+    const year = currentSunday.getFullYear();
+    const month = currentSunday.getMonth();
 
     const firstDayOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month + 1, 0);
 
-    let startDayOfWeek = firstDayOfMonth.getDay() - 1;
-    if (startDayOfWeek === -1) startDayOfWeek = 6;
+    let startDayOfWeek = firstDayOfMonth.getDay();
 
     const totalDays = lastDayOfMonth.getDate();
     const todayStr = DateUtils.formatDateIso(new Date());
@@ -170,12 +169,12 @@ class CalendarView {
       </div>
 
       <div class="mini-cal-grid">
+        <div class="mini-cal-dayname">S</div>
         <div class="mini-cal-dayname">M</div>
         <div class="mini-cal-dayname">T</div>
         <div class="mini-cal-dayname">W</div>
         <div class="mini-cal-dayname">T</div>
         <div class="mini-cal-dayname">F</div>
-        <div class="mini-cal-dayname">S</div>
         <div class="mini-cal-dayname">S</div>
     `;
 
@@ -666,19 +665,4 @@ class ModalView {
   }
 }
 
-google.accounts.id.initialize({
-  client_id: window.GOOGLE_CLIENT_ID,
-  callback: (response) => this.handleGoogleCredentialResponse(response),
-  auto_select: false
-});
 
-// Melukis butang rasmi Google
-google.accounts.id.renderButton(container, {
-  theme: 'outline',
-  size: 'large',
-  text: 'signin_with',
-  shape: 'rectangular'
-});
-
-// Menampilkan Google One Tap prompt melayang
-google.accounts.id.prompt();

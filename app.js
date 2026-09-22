@@ -106,7 +106,7 @@ class App {
     const btnToday = document.getElementById('btnToday');
     if (btnToday) {
       btnToday.addEventListener('click', () => {
-        this.store.currentMonday = DateUtils.getMonday(new Date());
+        this.store.currentSunday = DateUtils.getSunday(new Date());
         this.render();
       });
     }
@@ -210,22 +210,22 @@ class App {
   selectMiniCalDate(dateStr) {
     if (dateStr) {
       this.closeMobileSidebar();
-      this.store.currentMonday = DateUtils.getMonday(new Date(dateStr));
+      this.store.currentSunday = DateUtils.getSunday(new Date(dateStr));
       this.render();
     }
   }
 
   prevWeek() {
-    const d = new Date(this.store.currentMonday);
+    const d = new Date(this.store.currentSunday);
     d.setDate(d.getDate() - 7);
-    this.store.currentMonday = DateUtils.getMonday(d);
+    this.store.currentSunday = DateUtils.getSunday(d);
     this.render();
   }
 
   nextWeek() {
-    const d = new Date(this.store.currentMonday);
+    const d = new Date(this.store.currentSunday);
     d.setDate(d.getDate() + 7);
-    this.store.currentMonday = DateUtils.getMonday(d);
+    this.store.currentSunday = DateUtils.getSunday(d);
     this.render();
   }
 

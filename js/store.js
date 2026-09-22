@@ -6,7 +6,7 @@ class BookingStore {
   constructor(authStore) {
     this.auth = authStore;
     this.bookings = [];
-    this.currentMonday = DateUtils.getMonday(new Date());
+    this.currentSunday = DateUtils.getSunday(new Date());
     this.searchQuery = "";
     this.statusFilter = "ALL";
     this.load();
@@ -110,7 +110,7 @@ class BookingStore {
     const todayIso = DateUtils.formatDateIso(new Date());
     const weekDays = [];
     for (let i = 0; i < 7; i++) {
-      const d = new Date(this.currentMonday);
+      const d = new Date(this.currentSunday);
       d.setDate(d.getDate() + i);
       const dateStr = DateUtils.formatDateIso(d);
       const dayNameStr = DAY_NAMES_MY[d.getDay()];
