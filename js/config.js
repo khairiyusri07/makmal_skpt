@@ -82,6 +82,15 @@ class DateUtils {
       const year = dmyMatch[3];
       return `${year}-${month}-${day}`;
     }
+    const months = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
+    const monthMatch = str.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+(\d{1,2})\s+(\d{4})/i);
+    if (monthMatch) {
+      const mStr = monthMatch[1].toLowerCase();
+      const month = months[mStr];
+      const day = monthMatch[2].padStart(2, '0');
+      const year = monthMatch[3];
+      return `${year}-${month}-${day}`;
+    }
     const d = new Date(str);
     if (!isNaN(d.getTime())) {
       return DateUtils.formatDateIso(d);

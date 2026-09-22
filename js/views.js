@@ -535,7 +535,7 @@ class ModalView {
     const name = document.getElementById('regName') ? document.getElementById('regName').value : '';
     const email = document.getElementById('regEmail') ? document.getElementById('regEmail').value : '';
     const password = document.getElementById('regPassword') ? document.getElementById('regPassword').value : '';
-    const role = document.getElementById('regRole') ? document.getElementById('regRole').value : 'Guru / Tenaga Pengajar';
+    const role = document.getElementById('regRole') ? document.getElementById('regRole').value : 'Guru';
 
     try {
       const newUser = this.store.auth.registerUser(name, email, password, role);
@@ -581,14 +581,14 @@ class ModalView {
         btnLogin.style.color = 'var(--gcal-blue)';
       }
       if (title) title.textContent = "Log Masuk Google DELIMa";
-      if (sub) sub.textContent = "Sila log masuk menggunakan Akaun DELIMa KPM.";
+      if (sub) sub.textContent = "Sila log masuk menggunakan Akaun DELIMa.";
     }
   }
 
   openBooking(dateStr, slotStr) {
     if (!this.store.auth.isLoggedIn()) {
       this.openLogin();
-      this.app.showToast("Sila log masuk dengan Akaun Google DELIMa KPM terlebih dahulu.", "error");
+      this.app.showToast("Sila log masuk dengan Akaun Google DELIMa terlebih dahulu.", "error");
       return;
     }
 
@@ -727,7 +727,7 @@ class ProfileView {
 
     if (this.dom.inputName) this.dom.inputName.value = user.name || '';
     if (this.dom.inputEmail) this.dom.inputEmail.value = user.email || '';
-    if (this.dom.selectRole) this.dom.selectRole.value = user.role || 'Guru / Tenaga Pengajar';
+    if (this.dom.selectRole) this.dom.selectRole.value = user.role || 'Guru';
     if (this.dom.inputPhone) this.dom.inputPhone.value = user.phone || '';
     if (this.dom.inputSubject) this.dom.inputSubject.value = user.subject || '';
   }
@@ -740,7 +740,7 @@ class ProfileView {
     }
 
     const name = this.dom.inputName ? this.dom.inputName.value.trim() : '';
-    const role = this.dom.selectRole ? this.dom.selectRole.value : 'Guru / Tenaga Pengajar';
+    const role = this.dom.selectRole ? this.dom.selectRole.value : 'Guru';
     const phone = this.dom.inputPhone ? this.dom.inputPhone.value.trim() : '';
     const subject = this.dom.inputSubject ? this.dom.inputSubject.value.trim() : '';
 

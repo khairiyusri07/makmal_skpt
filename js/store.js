@@ -50,36 +50,64 @@ class BookingStore {
   }
 
   async fetchFromSheet() {
-    if (!GOOGLE_SHEET_API_URL) return;
+    if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("YOUR_SCRIPT_ID")) return;
     try {
       const res = await fetch(GOOGLE_SHEET_API_URL);
       if (res.ok) {
         const json = await res.json();
-        if (json && json.status === 'success' && Array.isArray(json.data)) {
+        if (json && json.status === 'success' && Array.isArray(json.data) && json.data.length > 0) {
           const sheetBookings = json.data
-            .filter(row => row.id && row.date && row.slot)
-            .map(row => new Booking({
-              id: String(row.id),
-              labId: 'LAB-1',
-              date: DateUtils.normalizeDate(row.date),
-              slot: DateUtils.normalizeSlot(row.slot),
-              applicant: row.applicant || 'Guru',
-              role: row.role || 'Guru / Tenaga Pengajar',
-              subject: row.subject || 'Tempahan',
-              pcCount: 35,
-              purpose: '',
-              status: row.status || 'Menunggu Kelulusan',
-              createdAt: row.createdAt || new Date().toISOString()
-            }));
+            .map(row => {
+              const rId = row.id || row.ID || row.Id;
+              const rDate = row.date || row.Date || row.Tarikh || row.tarikh || row["Tarikh"];
+              const rSlot = row.slot || row.Slot || row["Slot Masa"] || row.slotMasa || row.SlotMasa || row["Slot"];
+              const rApplicant = row.applicant || row.Applicant || row["Nama Pemohon"] || row.namaPemohon;
+              const rRole = row.role || row.Role || row.Peranan || row.peranan;
+              const rSubject = row.subject || row.Subject || row["Kelas / Subjek"] || row["Kelas/Subjek"] || row.kelasSubjek || row.subjek || row.Kelas;
+              const rStatus = row.status || row.Status;
+              const rCreatedAt = row.createdAt || row["Tarikh Dicipta"] || row.tarikhDicipta;
 
-          const newJson = JSON.stringify(sheetBookings.map(b => ({ id: b.id, status: b.status, date: b.date, slot: b.slot, applicant: b.applicant, subject: b.subject })));
-          const currentJson = JSON.stringify(this.bookings.map(b => ({ id: b.id, status: b.status, date: b.date, slot: b.slot, applicant: b.applicant, subject: b.subject })));
+              if (!rId || !rDate || !rSlot) return null;
 
-          if (newJson !== currentJson) {
-            this.bookings = sheetBookings;
-            this.save();
-            if (window.app) {
-              window.app.render();
+              return new Booking({
+                id: String(rId),
+                labId: 'LAB-1',
+                date: DateUtils.normalizeDate(rDate),
+                slot: DateUtils.normalizeSlot(rSlot),
+                applicant: rApplicant || 'Guru',
+                role: rRole || 'Guru / Tenaga Pengajar',
+                subject: rSubject || 'Tempahan',
+                pcCount: 35,
+                purpose: '',
+                status: rStatus || 'Menunggu Kelulusan',
+                createdAt: rCreatedAt || new Date().toISOString()
+              });
+            })
+            .filter(b => b !== null);
+
+          if (sheetBookings.length > 0) {
+            let updated = false;
+            sheetBookings.forEach(sb => {
+              const idx = this.bookings.findIndex(b => b.id === sb.id);
+              if (idx !== -1) {
+                if (this.bookings[idx].status !== sb.status ||
+                    this.bookings[idx].date !== sb.date ||
+                    this.bookings[idx].slot !== sb.slot ||
+                    this.bookings[idx].subject !== sb.subject) {
+                  this.bookings[idx] = sb;
+                  updated = true;
+                }
+              } else {
+                this.bookings.push(sb);
+                updated = true;
+              }
+            });
+
+            if (updated) {
+              this.save();
+              if (window.app) {
+                window.app.render();
+              }
             }
           }
         }
@@ -95,6 +123,8 @@ class BookingStore {
 
   addBooking(bookingData) {
     bookingData.status = "Menunggu Kelulusan";
+    bookingData.date = DateUtils.normalizeDate(bookingData.date);
+    bookingData.slot = DateUtils.normalizeSlot(bookingData.slot);
     const booking = new Booking(bookingData);
     this.bookings.unshift(booking);
     this.save();
