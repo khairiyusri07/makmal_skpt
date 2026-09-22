@@ -61,8 +61,8 @@ class BookingStore {
             .map(row => new Booking({
               id: String(row.id),
               labId: 'LAB-1',
-              date: String(row.date),
-              slot: String(row.slot),
+              date: DateUtils.normalizeDate(row.date),
+              slot: DateUtils.normalizeSlot(row.slot),
               applicant: row.applicant || 'Guru',
               role: row.role || 'Guru / Tenaga Pengajar',
               subject: row.subject || 'Tempahan',
@@ -152,7 +152,12 @@ class BookingStore {
   }
 
   findConflict(date, slot) {
-    return this.bookings.find(b => b.date === date && b.slot === slot && b.status !== "Dibatalkan");
+    const normDate = DateUtils.normalizeDate(date);
+    const normSlot = DateUtils.normalizeSlot(slot);
+    return this.bookings.find(b => {
+      if (b.status === "Dibatalkan") return false;
+      return DateUtils.normalizeDate(b.date) === normDate && DateUtils.normalizeSlot(b.slot) === normSlot;
+    });
   }
 
   getFilteredBookings() {

@@ -18,6 +18,13 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Application Logic Modules (Strict Dependency Load Order) -->
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/models.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/views.js"></script>
+  <script src="app.js"></script>
   <!-- Custom Styles -->
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -53,18 +60,6 @@
       </div>
 
       <div class="gcal-topbar-right">
-        <button class="gcal-icon-btn" title="Carian">
-          <i data-lucide="search"></i>
-        </button>
-        <button class="gcal-icon-btn" title="Bantuan">
-          <i data-lucide="help-circle"></i>
-        </button>
-        <button class="gcal-icon-btn" title="Tetapan">
-          <i data-lucide="settings"></i>
-        </button>
-        <button class="gcal-view-selector">
-          Minggu <i data-lucide="chevron-down" style="width: 14px;"></i>
-        </button>
         <div id="userProfileSection" class="user-profile-section">
           <!-- Rendered via JS: User Badge & Logout OR Login Button -->
         </div>
@@ -189,20 +184,24 @@
               <div class="profile-header-card">
                 <div class="profile-avatar-large" id="profileAvatarCircle">G</div>
                 <div class="profile-header-meta">
-                  <h2 id="profileNameHeading" style="font-size: 1.35rem; font-weight: 800; color: var(--gcal-text-dark);">Profil Saya</h2>
+                  <h2 id="profileNameHeading"
+                    style="font-size: 1.35rem; font-weight: 800; color: var(--gcal-text-dark);">Profil Saya</h2>
                   <span id="profileEmailBadge" class="profile-email-chip">user@moe-dl.edu.my</span>
                 </div>
               </div>
 
               <form id="profileForm" style="margin-top: 24px;">
                 <div class="form-group">
-                  <label for="profileName" style="font-weight: 700;">Nama Penuh (Mengikut Kad Pengenalan / Rekod KPM)</label>
-                  <input type="text" id="profileName" class="form-control-custom" required placeholder="Contoh: Cikgu Ahmad Razali">
+                  <label for="profileName" style="font-weight: 700;">Nama Penuh (Mengikut Kad Pengenalan / Rekod
+                    KPM)</label>
+                  <input type="text" id="profileName" class="form-control-custom" required
+                    placeholder="Contoh: Cikgu Ahmad Razali">
                 </div>
 
                 <div class="form-group">
                   <label for="profileEmail" style="font-weight: 700;">Emel ID DELIMa (Hanya Baca)</label>
-                  <input type="email" id="profileEmail" class="form-control-custom" readonly disabled style="background: var(--gcal-surface); color: var(--gcal-text-subtle);">
+                  <input type="email" id="profileEmail" class="form-control-custom" readonly disabled
+                    style="background: var(--gcal-surface); color: var(--gcal-text-subtle);">
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
@@ -224,11 +223,14 @@
 
                 <div class="form-group">
                   <label for="profileSubject" style="font-weight: 700;">Mata Pelajaran Utama / Kelas Usaha</label>
-                  <input type="text" id="profileSubject" class="form-control-custom" placeholder="Contoh: RBT / Bahasa Melayu (6 Utarid)">
+                  <input type="text" id="profileSubject" class="form-control-custom"
+                    placeholder="Contoh: RBT / Bahasa Melayu (6 Utarid)">
                 </div>
 
-                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gcal-border);">
-                  <button type="submit" class="btn-gcal-blue" style="height: 44px; padding: 0 24px; font-weight: 700; border-radius: 22px; display: flex; align-items: center; gap: 8px;">
+                <div
+                  style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gcal-border);">
+                  <button type="submit" class="btn-gcal-blue"
+                    style="height: 44px; padding: 0 24px; font-weight: 700; border-radius: 22px; display: flex; align-items: center; gap: 8px;">
                     <i data-lucide="save" style="width: 18px;"></i> Simpan Maklumat Profil
                   </button>
                 </div>
@@ -239,21 +241,7 @@
 
       </main>
 
-      <!-- RIGHT WORKSPACE SHORTCUT BAR -->
-      <aside class="gcal-right-bar">
-        <div class="right-bar-icon" title="Keep">
-          <i data-lucide="file-text" style="color: #fbbc04;"></i>
-        </div>
-        <div class="right-bar-icon" title="Tasks">
-          <i data-lucide="check-circle" style="color: #4285f4;"></i>
-        </div>
-        <div class="right-bar-icon" title="Contacts">
-          <i data-lucide="user" style="color: #ea4335;"></i>
-        </div>
-        <div class="right-bar-icon" title="Tambah">
-          <i data-lucide="plus"></i>
-        </div>
-      </aside>
+
 
     </div>
 
@@ -463,13 +451,7 @@
         <!-- Toast Notification Container -->
         <div class="toast-container" id="toastContainer"></div>
 
-        <!-- Application Logic Modules (Strict Dependency Load Order) -->
-        <script src="js/config.js"></script>
-        <script src="js/auth.js"></script>
-        <script src="js/models.js"></script>
-        <script src="js/store.js"></script>
-        <script src="js/views.js"></script>
-        <script src="app.js"></script>
+
 </body>
 
 </html>

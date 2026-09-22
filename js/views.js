@@ -108,7 +108,13 @@ class CalendarView {
       `;
 
       weekDays.forEach(day => {
-        const booking = this.store.bookings.find(b => b.date === day.dateStr && b.slot === slot && b.status !== "Dibatalkan");
+        const normDayDate = DateUtils.normalizeDate(day.dateStr);
+        const normSlot = DateUtils.normalizeSlot(slot);
+
+        const booking = this.store.bookings.find(b => {
+          if (b.status === "Dibatalkan") return false;
+          return DateUtils.normalizeDate(b.date) === normDayDate && DateUtils.normalizeSlot(b.slot) === normSlot;
+        });
 
         if (booking) {
           const isPending = (booking.status === "Menunggu Kelulusan");

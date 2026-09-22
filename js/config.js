@@ -65,4 +65,41 @@ class DateUtils {
     d.setDate(d.getDate() + offsetDays);
     return DateUtils.formatDateIso(d);
   }
+
+  static normalizeDate(dateInput) {
+    if (!dateInput) return '';
+    let str = String(dateInput).trim();
+    if (str.includes('T')) {
+      str = str.split('T')[0];
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      return str;
+    }
+    const dmyMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (dmyMatch) {
+      const day = dmyMatch[1].padStart(2, '0');
+      const month = dmyMatch[2].padStart(2, '0');
+      const year = dmyMatch[3];
+      return `${year}-${month}-${day}`;
+    }
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      return DateUtils.formatDateIso(d);
+    }
+    return str;
+  }
+
+  static normalizeSlot(slotInput) {
+    if (!slotInput) return '';
+    let str = String(slotInput).toUpperCase().replace(/AM|PM/g, '').trim();
+    const parts = str.split(/[\-\–\—]/);
+    if (parts.length === 2) {
+      let start = parts[0].trim().replace('.', ':');
+      let end = parts[1].trim().replace('.', ':');
+      if (start.length === 4 && start.includes(':')) start = '0' + start;
+      if (end.length === 4 && end.includes(':')) end = '0' + end;
+      return `${start} - ${end}`;
+    }
+    return str;
+  }
 }
