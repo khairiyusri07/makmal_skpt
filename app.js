@@ -11,6 +11,7 @@ class App {
     this.calendarView = new CalendarView(this.store, this);
     this.tableView = new TableView(this.store, this);
     this.modalView = new ModalView(this.store, this);
+    this.profileView = new ProfileView(this.authStore, this);
     this.activeTab = 'schedule';
   }
 
@@ -25,6 +26,9 @@ class App {
     if (this.activeTab === 'admin') {
       this.tableView.render();
     }
+    if (this.activeTab === 'profile') {
+      this.profileView.render();
+    }
     if (window.lucide) lucide.createIcons();
   }
 
@@ -32,8 +36,27 @@ class App {
     this.closeMobileSidebar();
     const schedPanel = document.getElementById('scheduleTabPanel');
     const adminPanel = document.getElementById('adminTabPanel');
+    const profilePanel = document.getElementById('profileTabPanel');
     const btnSched = document.getElementById('tabBtnSchedule');
     const btnAdmin = document.getElementById('tabBtnAdmin');
+    const btnProfile = document.getElementById('tabBtnProfile');
+
+    if (schedPanel) {
+      schedPanel.classList.remove('active');
+      schedPanel.style.display = 'none';
+    }
+    if (adminPanel) {
+      adminPanel.classList.remove('active');
+      adminPanel.style.display = 'none';
+    }
+    if (profilePanel) {
+      profilePanel.classList.remove('active');
+      profilePanel.style.display = 'none';
+    }
+
+    if (btnSched) btnSched.classList.remove('active');
+    if (btnAdmin) btnAdmin.classList.remove('active');
+    if (btnProfile) btnProfile.classList.remove('active');
 
     if (tabName === 'admin') {
       if (!this.authStore.isAdminVerified) {
@@ -41,28 +64,26 @@ class App {
         return;
       }
       this.activeTab = 'admin';
-      if (schedPanel) {
-        schedPanel.classList.remove('active');
-        schedPanel.style.display = 'none';
-      }
       if (adminPanel) {
         adminPanel.classList.add('active');
         adminPanel.style.display = 'flex';
       }
-      if (btnSched) btnSched.classList.remove('active');
       if (btnAdmin) btnAdmin.classList.add('active');
       this.tableView.render();
+    } else if (tabName === 'profile') {
+      this.activeTab = 'profile';
+      if (profilePanel) {
+        profilePanel.classList.add('active');
+        profilePanel.style.display = 'flex';
+      }
+      if (btnProfile) btnProfile.classList.add('active');
+      this.profileView.render();
     } else {
       this.activeTab = 'schedule';
-      if (adminPanel) {
-        adminPanel.classList.remove('active');
-        adminPanel.style.display = 'none';
-      }
       if (schedPanel) {
         schedPanel.classList.add('active');
         schedPanel.style.display = 'flex';
       }
-      if (btnAdmin) btnAdmin.classList.remove('active');
       if (btnSched) btnSched.classList.add('active');
       this.calendarView.render();
     }
@@ -85,6 +106,12 @@ class App {
 
     const tabAdmin = document.getElementById('tabBtnAdmin');
     if (tabAdmin) tabAdmin.addEventListener('click', () => this.switchTab('admin'));
+
+    const tabProfile = document.getElementById('tabBtnProfile');
+    if (tabProfile) tabProfile.addEventListener('click', () => this.switchTab('profile'));
+
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) profileForm.addEventListener('submit', (e) => this.profileView.handleProfileSubmit(e));
 
     // Sidebar Toggle (Desktop & Mobile)
     const btnToggleSidebar = document.getElementById('btnToggleSidebar');

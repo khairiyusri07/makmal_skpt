@@ -106,6 +106,10 @@
             <i data-lucide="calendar" style="width: 18px;"></i>
             <span>Jadual Makmal</span>
           </div>
+          <div class="sidebar-nav-item" id="tabBtnProfile">
+            <i data-lucide="user-check" style="width: 18px;"></i>
+            <span>Profil Saya</span>
+          </div>
           <div class="sidebar-nav-item" id="tabBtnAdmin">
             <i data-lucide="lock" style="width: 18px;"></i>
             <span>Akses Admin</span>
@@ -178,6 +182,61 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB PANEL 3: Profil Saya (User Profile Panel) -->
+        <div id="profileTabPanel" class="tab-panel">
+          <div class="admin-tab-container">
+            <div class="admin-card" style="max-width: 680px; margin: 0 auto; padding: 28px;">
+              <div class="profile-header-card">
+                <div class="profile-avatar-large" id="profileAvatarCircle">G</div>
+                <div class="profile-header-meta">
+                  <h2 id="profileNameHeading" style="font-size: 1.35rem; font-weight: 800; color: var(--gcal-text-dark);">Profil Saya</h2>
+                  <span id="profileEmailBadge" class="profile-email-chip">user@moe-dl.edu.my</span>
+                </div>
+              </div>
+
+              <form id="profileForm" style="margin-top: 24px;">
+                <div class="form-group">
+                  <label for="profileName" style="font-weight: 700;">Nama Penuh (Mengikut Kad Pengenalan / Rekod KPM)</label>
+                  <input type="text" id="profileName" class="form-control-custom" required placeholder="Contoh: Cikgu Ahmad Razali">
+                </div>
+
+                <div class="form-group">
+                  <label for="profileEmail" style="font-weight: 700;">Emel ID DELIMa (Hanya Baca)</label>
+                  <input type="email" id="profileEmail" class="form-control-custom" readonly disabled style="background: var(--gcal-surface); color: var(--gcal-text-subtle);">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                  <div class="form-group">
+                    <label for="profileRole" style="font-weight: 700;">Peranan / Jawatan</label>
+                    <select id="profileRole" class="form-control-custom">
+                      <option value="Guru / Tenaga Pengajar">Guru / Tenaga Pengajar</option>
+                      <option value="Penyelaras Makmal / ICT">Penyelaras Makmal / ICT</option>
+                      <option value="Guru Kelas">Guru Kelas</option>
+                      <option value="Pentadbir Sekolah">Pentadbir Sekolah</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="profilePhone" style="font-weight: 700;">Nombor Telefon (WhatsApp)</label>
+                    <input type="text" id="profilePhone" class="form-control-custom" placeholder="Contoh: 012-3456789">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="profileSubject" style="font-weight: 700;">Mata Pelajaran Utama / Kelas Usaha</label>
+                  <input type="text" id="profileSubject" class="form-control-custom" placeholder="Contoh: RBT / Bahasa Melayu (6 Utarid)">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--gcal-border);">
+                  <button type="submit" class="btn-gcal-blue" style="height: 44px; padding: 0 24px; font-weight: 700; border-radius: 22px; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="save" style="width: 18px;"></i> Simpan Maklumat Profil
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

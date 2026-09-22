@@ -191,6 +191,32 @@ class AuthStore {
     }
   }
 
+  updateUserProfile(data) {
+    if (!this.currentUser) throw new Error("Tiada sesi pengguna aktif. Sila log masuk terlebih dahulu.");
+
+    const cleanName = (data.name || '').trim();
+    if (!cleanName) throw new Error("Nama Penuh tidak boleh dibiarkan kosong.");
+
+    this.currentUser.name = cleanName;
+    if (data.role) this.currentUser.role = data.role;
+    if (data.phone) this.currentUser.phone = data.phone;
+    if (data.subject) this.currentUser.subject = data.subject;
+
+    // Kemaskini dalam senarai registeredUsers
+    const registeredUser = this.registeredUsers.find(u => u.email === this.currentUser.email);
+    if (registeredUser) {
+      registeredUser.name = cleanName;
+      if (data.role) registeredUser.role = data.role;
+      if (data.phone) registeredUser.phone = data.phone;
+      if (data.subject) registeredUser.subject = data.subject;
+      this.saveRegisteredUsers();
+    }
+
+    this.saveSession();
+    this.syncAccountToSheet(this.currentUser);
+    return this.currentUser;
+  }
+
   logout() {
     this.currentUser = null;
     this.isAdminVerified = false;

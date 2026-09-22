@@ -669,4 +669,85 @@ class ModalView {
   }
 }
 
+// --------------------------------------------------------------------------
+// 5. PROFILE VIEW (User Profile Management Panel)
+// --------------------------------------------------------------------------
+class ProfileView {
+  constructor(authStore, app) {
+    this.auth = authStore;
+    this.app = app;
+    this.dom = {
+      panel: document.getElementById('profileTabPanel'),
+      form: document.getElementById('profileForm'),
+      inputName: document.getElementById('profileName'),
+      inputEmail: document.getElementById('profileEmail'),
+      selectRole: document.getElementById('profileRole'),
+      inputPhone: document.getElementById('profilePhone'),
+      inputSubject: document.getElementById('profileSubject'),
+      avatarCircle: document.getElementById('profileAvatarCircle'),
+      displayEmailBadge: document.getElementById('profileEmailBadge'),
+      displayNameHeading: document.getElementById('profileNameHeading')
+    };
+  }
+
+  render() {
+    if (!this.dom.panel) return;
+
+    if (!this.auth.isLoggedIn()) {
+      this.dom.panel.innerHTML = `
+        <div class="admin-tab-container">
+          <div class="admin-card" style="padding: 40px 20px; text-align: center; max-width: 480px; margin: 40px auto; border-radius: 16px;">
+            <div style="width: 64px; height: 64px; background: var(--gcal-blue-light); color: var(--gcal-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+              <i data-lucide="user-x" style="width: 32px; height: 32px;"></i>
+            </div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--gcal-text-dark); margin-bottom: 8px;">Akses Profil Dihadkan</h3>
+            <p style="font-size: 0.88rem; color: var(--gcal-text-subtle); margin-bottom: 20px;">Sila log masuk dengan Akaun DELIMa KPM anda untuk melihat dan mengemaskini maklumat profil pengguna.</p>
+            <button class="btn-gcal-blue" onclick="window.app.openLogin()" style="height: 44px; padding: 0 24px; font-weight: 700; border-radius: 22px;">
+              Log Masuk Akaun DELIMa
+            </button>
+          </div>
+        </div>
+      `;
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+
+    const user = this.auth.currentUser;
+    const initials = (user.name || 'G').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+    if (this.dom.avatarCircle) this.dom.avatarCircle.textContent = initials;
+    if (this.dom.displayNameHeading) this.dom.displayNameHeading.textContent = user.name;
+    if (this.dom.displayEmailBadge) this.dom.displayEmailBadge.textContent = user.email;
+
+    if (this.dom.inputName) this.dom.inputName.value = user.name || '';
+    if (this.dom.inputEmail) this.dom.inputEmail.value = user.email || '';
+    if (this.dom.selectRole) this.dom.selectRole.value = user.role || 'Guru / Tenaga Pengajar';
+    if (this.dom.inputPhone) this.dom.inputPhone.value = user.phone || '';
+    if (this.dom.inputSubject) this.dom.inputSubject.value = user.subject || '';
+  }
+
+  handleProfileSubmit(e) {
+    e.preventDefault();
+    if (!this.auth.isLoggedIn()) {
+      this.app.openLogin();
+      return;
+    }
+
+    const name = this.dom.inputName ? this.dom.inputName.value.trim() : '';
+    const role = this.dom.selectRole ? this.dom.selectRole.value : 'Guru / Tenaga Pengajar';
+    const phone = this.dom.inputPhone ? this.dom.inputPhone.value.trim() : '';
+    const subject = this.dom.inputSubject ? this.dom.inputSubject.value.trim() : '';
+
+    try {
+      const updatedUser = this.auth.updateUserProfile({ name, role, phone, subject });
+      this.render();
+      this.app.render();
+      this.app.showToast(`Profil Berjaya Dikemaskini! Maklumat ${updatedUser.name} telah disimpan.`, "success");
+    } catch (err) {
+      this.app.showToast(err.message, "error");
+    }
+  }
+}
+
+
 
