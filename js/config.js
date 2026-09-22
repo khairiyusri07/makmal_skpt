@@ -7,7 +7,7 @@ const LABS = [
 ];
 
 // Paste Google Apps Script Web App URL here to enable live Google Sheets sync
-const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyW2XGJr3vVwZH-bUOc-GNjMx4mdcZyd-0D16yUMVZb5tbLHGueArzNtBXsySQlOwSn/exec";
+const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwY0yrSpvDkR8KrYPEH8__mhJXRv8KmOGzvKjpqoFqDo7MbdrB7xG3KgAAhhYzpp4Fp/exec";
 
 
 // Ganti dengan Google Client ID anda daripada Google Cloud Console
