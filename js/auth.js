@@ -11,6 +11,23 @@ class AuthStore {
     this.loadSession();
   }
 
+  loadRegisteredUsers() {
+    const saved = localStorage.getItem('labbook_registered_users');
+    if (saved) {
+      try {
+        this.registeredUsers = JSON.parse(saved);
+      } catch (e) {
+        this.registeredUsers = [];
+      }
+    }
+    if (!this.registeredUsers || this.registeredUsers.length === 0) {
+      this.registeredUsers = [
+        { name: "Cikgu Ahmad Razali", email: "g-83920192@moe-dl.edu.my", password: "password123", role: "Guru" },
+        { name: "Cikgu Siti Nurhaliza", email: "g-10293847@moe-dl.edu.my", password: "password123", role: "Guru" }
+      ];
+      this.saveRegisteredUsers();
+    }
+  }
 
   saveRegisteredUsers() {
     localStorage.setItem('labbook_registered_users', JSON.stringify(this.registeredUsers));
