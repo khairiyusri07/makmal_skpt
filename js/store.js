@@ -24,6 +24,43 @@ class BookingStore {
     } else {
       this.bookings = [];
     }
+    this.fetchFromSheet();
+  }
+
+  async fetchFromSheet() {
+    if (!GOOGLE_SHEET_API_URL) return;
+    try {
+      const res = await fetch(GOOGLE_SHEET_API_URL);
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.status === 'success' && Array.isArray(json.data)) {
+          const sheetBookings = json.data
+            .filter(row => row.id && row.date && row.slot)
+            .map(row => new Booking({
+              id: String(row.id),
+              labId: 'LAB-1',
+              date: String(row.date),
+              slot: String(row.slot),
+              applicant: row.applicant || 'Guru',
+              role: row.role || 'Guru / Tenaga Pengajar',
+              subject: row.subject || 'Tempahan',
+              pcCount: 35,
+              purpose: '',
+              status: row.status || 'Menunggu Kelulusan',
+              createdAt: row.createdAt || new Date().toISOString()
+            }));
+          if (sheetBookings.length > 0) {
+            this.bookings = sheetBookings;
+            this.save();
+            if (window.app) {
+              window.app.render();
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Could not fetch bookings from Google Sheet API:", err);
+    }
   }
 
   save() {
