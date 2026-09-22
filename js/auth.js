@@ -136,12 +136,22 @@ class AuthStore {
     const cleanEmail = (email || '').trim().toLowerCase();
 
     if (!this.validateDelimaEmail(cleanEmail)) {
-      throw new Error(`Akaun Google "${cleanEmail}" bukan akaun DELIMa KPM! Sila gunakan akaun DELIMa yang berakhir dengan @moe-dl.edu.my`);
+      throw new Error(`Akaun Google "${cleanEmail}" bukan akaun DELIMa KPM! Sila gunakan akaun DELIMa KPM yang berakhir dengan @moe-dl.edu.my`);
     }
 
     let user = this.registeredUsers.find(u => u.email === cleanEmail);
     if (!user) {
-      user = this.registerUser(name || `Cikgu (${cleanEmail.split('@')[0]})`, cleanEmail, "google_sso");
+      // Auto-register new valid DELIMa Google Sign-In user automatically
+      const formattedName = name || `Cikgu (${cleanEmail.split('@')[0]})`;
+      user = {
+        name: formattedName,
+        email: cleanEmail,
+        password: "google_sso",
+        role: "Guru / Tenaga Pengajar",
+        registeredAt: new Date().toISOString()
+      };
+      this.registeredUsers.push(user);
+      this.saveRegisteredUsers();
     }
 
     this.currentUser = {
@@ -161,18 +171,20 @@ class AuthStore {
   async syncAccountToSheet(user) {
     if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("YOUR_SCRIPT_ID")) return;
     try {
+      const payload = JSON.stringify({
+        action: "RECORD_USER_ACCOUNT",
+        email: user.email,
+        name: user.name,
+        role: user.role || "Guru / Tenaga Pengajar",
+        loginTime: new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur' }),
+        authProvider: user.authProvider || "Google OAuth 2.0"
+      });
+
       await fetch(GOOGLE_SHEET_API_URL, {
         method: "POST",
         mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "RECORD_USER_ACCOUNT",
-          email: user.email,
-          name: user.name,
-          role: user.role || "Guru / Tenaga Pengajar",
-          loginTime: new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur' }),
-          authProvider: user.authProvider || "DELIMa Registered Account"
-        })
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: payload
       });
     } catch (err) {
       console.warn("Gagal menyelaraskan akaun pengguna ke Google Sheets:", err);
