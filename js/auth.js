@@ -11,24 +11,6 @@ class AuthStore {
     this.loadSession();
   }
 
-  loadRegisteredUsers() {
-    const saved = localStorage.getItem('labbook_registered_users');
-    if (saved) {
-      try {
-        this.registeredUsers = JSON.parse(saved);
-      } catch (e) {
-        this.registeredUsers = [];
-      }
-    }
-    // Default seed accounts if empty
-    if (!this.registeredUsers || this.registeredUsers.length === 0) {
-      this.registeredUsers = [
-        { name: "Cikgu Ahmad Razali", email: "g-83920192@moe-dl.edu.my", password: "password123", role: "Guru / Tenaga Pengajar" },
-        { name: "Cikgu Siti Nurhaliza", email: "g-10293847@moe-dl.edu.my", password: "password123", role: "Guru / Tenaga Pengajar" }
-      ];
-      this.saveRegisteredUsers();
-    }
-  }
 
   saveRegisteredUsers() {
     localStorage.setItem('labbook_registered_users', JSON.stringify(this.registeredUsers));
@@ -61,7 +43,7 @@ class AuthStore {
     return cleanEmail.endsWith('@moe-dl.edu.my');
   }
 
-  registerUser(name, email, password, role = "Guru / Tenaga Pengajar") {
+  registerUser(name, email, password, role = "Guru") {
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanName = (name || '').trim();
 
@@ -123,7 +105,7 @@ class AuthStore {
     this.currentUser = {
       name: user.name,
       email: user.email,
-      role: user.role || "Guru / Tenaga Pengajar",
+      role: user.role || "Guru",
       loginTime: new Date().toISOString()
     };
 
@@ -147,7 +129,7 @@ class AuthStore {
         name: formattedName,
         email: cleanEmail,
         password: "google_sso",
-        role: "Guru / Tenaga Pengajar",
+        role: "Guru",
         registeredAt: new Date().toISOString()
       };
       this.registeredUsers.push(user);
@@ -158,7 +140,7 @@ class AuthStore {
       name: user.name,
       email: user.email,
       picture: picture || '',
-      role: user.role || "Guru / Tenaga Pengajar",
+      role: user.role || "Guru",
       authProvider: "Google OAuth 2.0",
       loginTime: new Date().toISOString()
     };
@@ -175,7 +157,7 @@ class AuthStore {
         action: "RECORD_USER_ACCOUNT",
         email: user.email,
         name: user.name,
-        role: user.role || "Guru / Tenaga Pengajar",
+        role: user.role || "Guru",
         loginTime: new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur' }),
         authProvider: user.authProvider || "Google OAuth 2.0"
       });
@@ -225,6 +207,12 @@ class AuthStore {
 
   isLoggedIn() {
     return !!this.currentUser;
+  }
+
+  isLabCoordinator() {
+    if (!this.currentUser) return false;
+    const role = (this.currentUser.role || '').toLowerCase();
+    return role.includes('penyelaras makmal');
   }
 
   verifyAdminPin(pin) {
