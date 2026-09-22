@@ -10,6 +10,21 @@ class BookingStore {
     this.searchQuery = "";
     this.statusFilter = "ALL";
     this.load();
+    this.startAutoPolling(4000);
+
+    // Immediate background fetch whenever user returns to tab or window focus
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          this.fetchFromSheet();
+        }
+      });
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', () => {
+        this.fetchFromSheet();
+      });
+    }
   }
 
   load() {
@@ -25,6 +40,13 @@ class BookingStore {
       this.bookings = [];
     }
     this.fetchFromSheet();
+  }
+
+  startAutoPolling(intervalMs = 4000) {
+    if (this.pollingInterval) clearInterval(this.pollingInterval);
+    this.pollingInterval = setInterval(() => {
+      this.fetchFromSheet();
+    }, intervalMs);
   }
 
   async fetchFromSheet() {
@@ -49,7 +71,11 @@ class BookingStore {
               status: row.status || 'Menunggu Kelulusan',
               createdAt: row.createdAt || new Date().toISOString()
             }));
-          if (sheetBookings.length > 0) {
+
+          const newJson = JSON.stringify(sheetBookings.map(b => ({ id: b.id, status: b.status, date: b.date, slot: b.slot, applicant: b.applicant, subject: b.subject })));
+          const currentJson = JSON.stringify(this.bookings.map(b => ({ id: b.id, status: b.status, date: b.date, slot: b.slot, applicant: b.applicant, subject: b.subject })));
+
+          if (newJson !== currentJson) {
             this.bookings = sheetBookings;
             this.save();
             if (window.app) {
@@ -67,14 +93,13 @@ class BookingStore {
     localStorage.setItem('labbook_bookings_v4', JSON.stringify(this.bookings));
   }
 
-
-
   addBooking(bookingData) {
     bookingData.status = "Menunggu Kelulusan";
     const booking = new Booking(bookingData);
     this.bookings.unshift(booking);
     this.save();
     this.syncToAddSheet(booking);
+    setTimeout(() => this.fetchFromSheet(), 2000);
     return booking;
   }
 
@@ -84,6 +109,7 @@ class BookingStore {
       booking.status = "Diluluskan";
       this.save();
       this.syncToAddSheet(booking);
+      setTimeout(() => this.fetchFromSheet(), 2000);
     }
   }
 
@@ -93,6 +119,7 @@ class BookingStore {
       booking.status = "Dibatalkan";
       this.save();
       this.syncToCancelSheet(id);
+      setTimeout(() => this.fetchFromSheet(), 2000);
     }
   }
 
@@ -158,3 +185,4 @@ class BookingStore {
     return weekDays;
   }
 }
+
