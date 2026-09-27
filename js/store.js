@@ -10,18 +10,20 @@ class BookingStore {
     this.searchQuery = "";
     this.statusFilter = "ALL";
     this.load();
-    this.startAutoPolling(4000);
+    this.startAutoPolling(500);
 
     // Immediate background fetch whenever user returns to tab or window focus
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
+          this.fetchFromPythonBackend();
           this.fetchFromSheet();
         }
       });
     }
     if (typeof window !== 'undefined') {
       window.addEventListener('focus', () => {
+        this.fetchFromPythonBackend();
         this.fetchFromSheet();
       });
     }
@@ -43,9 +45,10 @@ class BookingStore {
     this.fetchFromSheet();
   }
 
-  startAutoPolling(intervalMs = 4000) {
+  startAutoPolling(intervalMs = 500) {
     if (this.pollingInterval) clearInterval(this.pollingInterval);
     this.pollingInterval = setInterval(() => {
+      // Fetch both database and Google Sheets every 0.5s (500ms)
       this.fetchFromPythonBackend();
       this.fetchFromSheet();
     }, intervalMs);
@@ -68,9 +71,9 @@ class BookingStore {
               const idx = this.bookings.findIndex(b => b.id === ab.id);
               if (idx !== -1) {
                 if (this.bookings[idx].status !== ab.status ||
-                    this.bookings[idx].date !== ab.date ||
-                    this.bookings[idx].slot !== ab.slot ||
-                    this.bookings[idx].subject !== ab.subject) {
+                  this.bookings[idx].date !== ab.date ||
+                  this.bookings[idx].slot !== ab.slot ||
+                  this.bookings[idx].subject !== ab.subject) {
                   this.bookings[idx] = ab;
                   updated = true;
                 }
@@ -102,9 +105,9 @@ class BookingStore {
                 const idx = this.bookings.findIndex(b => b.id === ab.id);
                 if (idx !== -1) {
                   if (this.bookings[idx].status !== ab.status ||
-                      this.bookings[idx].date !== ab.date ||
-                      this.bookings[idx].slot !== ab.slot ||
-                      this.bookings[idx].subject !== ab.subject) {
+                    this.bookings[idx].date !== ab.date ||
+                    this.bookings[idx].slot !== ab.slot ||
+                    this.bookings[idx].subject !== ab.subject) {
                     this.bookings[idx] = ab;
                     updated = true;
                   }
@@ -122,12 +125,12 @@ class BookingStore {
             }
           }
         }
-      } catch (e2) {}
+      } catch (e2) { }
     }
   }
 
   async fetchFromSheet() {
-    if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("YOUR_SCRIPT_ID")) return;
+    if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("AKfycbzjDVx9f5KRsDWluTQOYtvu5yGyC50z3DS7lkBtAnuU8YA8mv43oHh4lyFxkYauO5UG")) return;
     try {
       const res = await fetch(GOOGLE_SHEET_API_URL);
       if (res.ok) {
@@ -168,9 +171,9 @@ class BookingStore {
               const idx = this.bookings.findIndex(b => b.id === sb.id);
               if (idx !== -1) {
                 if (this.bookings[idx].status !== sb.status ||
-                    this.bookings[idx].date !== sb.date ||
-                    this.bookings[idx].slot !== sb.slot ||
-                    this.bookings[idx].subject !== sb.subject) {
+                  this.bookings[idx].date !== sb.date ||
+                  this.bookings[idx].slot !== sb.slot ||
+                  this.bookings[idx].subject !== sb.subject) {
                   this.bookings[idx] = sb;
                   updated = true;
                 }
