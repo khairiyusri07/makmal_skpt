@@ -130,7 +130,7 @@ class BookingStore {
   }
 
   async fetchFromSheet() {
-    if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("AKfycbzjDVx9f5KRsDWluTQOYtvu5yGyC50z3DS7lkBtAnuU8YA8mv43oHh4lyFxkYauO5UG")) return;
+    if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("AKfycbxX5mC_8JFWj7OYghFanhUCszkzvtCALX9736QPHUBcbsqPcDofFGwfvBYDYpCAdICK")) return;
     try {
       const res = await fetch(GOOGLE_SHEET_API_URL);
       if (res.ok) {
@@ -155,9 +155,9 @@ class BookingStore {
                 date: DateUtils.normalizeDate(rDate),
                 slot: DateUtils.normalizeSlot(rSlot),
                 applicant: rApplicant || 'Guru',
-                role: rRole || 'Guru / Tenaga Pengajar',
+                role: rRole || 'Guru ',
                 subject: rSubject || 'Tempahan',
-                pcCount: 35,
+                pcCount: 21,
                 purpose: '',
                 status: rStatus || 'Menunggu Kelulusan',
                 createdAt: rCreatedAt || new Date().toISOString()
