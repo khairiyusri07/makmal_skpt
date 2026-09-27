@@ -53,7 +53,11 @@ class BookingStore {
 
   async fetchFromPythonBackend() {
     try {
-      const res = await fetch(`${PYTHON_API_URL}/bookings`);
+      const apiUrl = (typeof getBackendApiUrl === 'function') ? getBackendApiUrl('/bookings') : `${PYTHON_API_URL}/bookings`;
+      let res = await fetch(apiUrl);
+      if (!res.ok && !apiUrl.startsWith('http')) {
+        res = await fetch('http://localhost:5000/api/bookings');
+      }
       if (res.ok) {
         const json = await res.json();
         if (json && json.status === 'success' && Array.isArray(json.data)) {
@@ -86,7 +90,39 @@ class BookingStore {
         }
       }
     } catch (err) {
-      // Backend might be offline or starting up
+      try {
+        const resFallback = await fetch('http://localhost:5000/api/bookings');
+        if (resFallback.ok) {
+          const json = await resFallback.json();
+          if (json && json.status === 'success' && Array.isArray(json.data)) {
+            const apiBookings = json.data.map(item => new Booking(item));
+            if (apiBookings.length > 0) {
+              let updated = false;
+              apiBookings.forEach(ab => {
+                const idx = this.bookings.findIndex(b => b.id === ab.id);
+                if (idx !== -1) {
+                  if (this.bookings[idx].status !== ab.status ||
+                      this.bookings[idx].date !== ab.date ||
+                      this.bookings[idx].slot !== ab.slot ||
+                      this.bookings[idx].subject !== ab.subject) {
+                    this.bookings[idx] = ab;
+                    updated = true;
+                  }
+                } else {
+                  this.bookings.push(ab);
+                  updated = true;
+                }
+              });
+              if (updated || this.bookings.length === 0) {
+                this.save();
+                if (window.app) {
+                  window.app.render();
+                }
+              }
+            }
+          }
+        }
+      } catch (e2) {}
     }
   }
 

@@ -65,24 +65,28 @@ def init_db():
     cursor.execute("SELECT COUNT(*) FROM bookings")
     if cursor.fetchone()[0] == 0:
         today = datetime.date.today()
-        # Create dates for current week
-        monday = today - datetime.timedelta(days=today.weekday())
+        # Create dates for current week matching Sunday start
+        days_since_sunday = (today.weekday() + 1) % 7
+        sunday = today - datetime.timedelta(days=days_since_sunday)
+        monday = sunday + datetime.timedelta(days=1)
+        tuesday = sunday + datetime.timedelta(days=2)
+        wednesday = sunday + datetime.timedelta(days=3)
         
         sample_bookings = [
             (
-                "TB-1001", "LAB-1", (monday + datetime.timedelta(days=0)).strftime("%Y-%m-%d"),
+                "TB-1001", "LAB-1", monday.strftime("%Y-%m-%d"),
                 "08:00 - 08:30", "Cikgu Ahmad Razali", "Guru / Tenaga Pengajar",
                 "RBT Tahun 5 - Coding Scratch", 35, "Pelajaran & Amali", "[]", "Perlu projektor",
                 "Diluluskan", datetime.datetime.now().isoformat()
             ),
             (
-                "TB-1002", "LAB-1", (monday + datetime.timedelta(days=1)).strftime("%Y-%m-%d"),
+                "TB-1002", "LAB-1", tuesday.strftime("%Y-%m-%d"),
                 "10:00 - 10:30", "Cikgu Siti Nurhaliza", "Guru / Tenaga Pengajar",
                 "Matematik - Kuiz Digital Kahoot", 35, "Pelajaran & Amali", "[]", "",
                 "Diluluskan", datetime.datetime.now().isoformat()
             ),
             (
-                "TB-1003", "LAB-1", (monday + datetime.timedelta(days=2)).strftime("%Y-%m-%d"),
+                "TB-1003", "LAB-1", wednesday.strftime("%Y-%m-%d"),
                 "11:00 - 11:30", "Cikgu Ahmad Razali", "Guru / Tenaga Pengajar",
                 "Sains - Latihan Interaktif DELIMa", 35, "Pelajaran & Amali", "[]", "",
                 "Menunggu Kelulusan", datetime.datetime.now().isoformat()

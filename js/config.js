@@ -9,6 +9,15 @@ const LABS = [
 // Python Flask Backend API URL Endpoint
 const PYTHON_API_URL = "/api";
 
+function getBackendApiUrl(path = '') {
+  if (typeof window !== 'undefined' && window.location && window.location.origin) {
+    if (window.location.origin.includes(':5000')) {
+      return `/api${path}`;
+    }
+  }
+  return `http://localhost:5000/api${path}`;
+}
+
 // Paste Google Apps Script Web App URL here to enable live Google Sheets sync
 const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbzjDVx9f5KRsDWluTQOYtvu5yGyC50z3DS7lkBtAnuU8YA8mv43oHh4lyFxkYauO5UG/exec";
 
