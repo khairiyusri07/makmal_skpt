@@ -141,9 +141,9 @@ class BookingStore {
               const rId = row.id || row.ID || row.Id;
               const rDate = row.date || row.Date || row.Tarikh || row.tarikh || row["Tarikh"];
               const rSlot = row.slot || row.Slot || row["Slot Masa"] || row.slotMasa || row.SlotMasa || row["Slot"];
-              const rApplicant = row.applicant || row.Applicant || row["Nama Pemohon"] || row.namaPemohon;
+              const rApplicant = row.applicant || row.Applicant || row.Pemohon || row["Nama Pemohon"] || row.namaPemohon;
               const rRole = row.role || row.Role || row.Peranan || row.peranan;
-              const rSubject = row.subject || row.Subject || row["Kelas / Subjek"] || row["Kelas/Subjek"] || row.kelasSubjek || row.subjek || row.Kelas;
+              const rSubject = row.subject || row.Subject || row.Subjek || row["Kelas / Subjek"] || row["Kelas/Subjek"] || row.kelasSubjek || row.subjek || row.Kelas;
               const rStatus = row.status || row.Status;
               const rCreatedAt = row.createdAt || row["Tarikh Dicipta"] || row.tarikhDicipta;
 
@@ -154,12 +154,12 @@ class BookingStore {
                 labId: 'LAB-1',
                 date: DateUtils.normalizeDate(rDate),
                 slot: DateUtils.normalizeSlot(rSlot),
-                applicant: rApplicant || 'Guru',
-                role: rRole || 'Guru ',
-                subject: rSubject || 'Tempahan',
+                applicant: String(rApplicant || 'Guru'),
+                role: String(rRole || 'Guru / Tenaga Pengajar'),
+                subject: String(rSubject || 'Tempahan'),
                 pcCount: 21,
                 purpose: '',
-                status: rStatus || 'Menunggu Kelulusan',
+                status: String(rStatus || 'Menunggu Kelulusan'),
                 createdAt: rCreatedAt || new Date().toISOString()
               });
             })
@@ -173,7 +173,8 @@ class BookingStore {
                 if (this.bookings[idx].status !== sb.status ||
                   this.bookings[idx].date !== sb.date ||
                   this.bookings[idx].slot !== sb.slot ||
-                  this.bookings[idx].subject !== sb.subject) {
+                  this.bookings[idx].subject !== sb.subject ||
+                  this.bookings[idx].applicant !== sb.applicant) {
                   this.bookings[idx] = sb;
                   updated = true;
                 }
@@ -183,7 +184,7 @@ class BookingStore {
               }
             });
 
-            if (updated) {
+            if (updated || this.bookings.length === 0) {
               this.save();
               if (window.app) {
                 window.app.render();

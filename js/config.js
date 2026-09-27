@@ -83,6 +83,10 @@ class DateUtils {
     if (!dateInput) return '';
     let str = String(dateInput).trim();
     if (str.includes('T')) {
+      const dObj = new Date(str);
+      if (!isNaN(dObj.getTime())) {
+        return DateUtils.formatDateIso(dObj);
+      }
       str = str.split('T')[0];
     }
     if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
