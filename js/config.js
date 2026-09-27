@@ -6,8 +6,12 @@ const LABS = [
   { id: 'LAB-1', name: 'Makmal Komputer Utama', location: 'Tingkat 1', pcs: 35, specs: 'Core i7, 16GB RAM' }
 ];
 
+// Python Flask Backend API URL Endpoint
+const PYTHON_API_URL = "/api";
+
 // Paste Google Apps Script Web App URL here to enable live Google Sheets sync
-const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwY0yrSpvDkR8KrYPEH8__mhJXRv8KmOGzvKjpqoFqDo7MbdrB7xG3KgAAhhYzpp4Fp/exec";
+const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbzjDVx9f5KRsDWluTQOYtvu5yGyC50z3DS7lkBtAnuU8YA8mv43oHh4lyFxkYauO5UG/exec";
+
 
 
 // Ganti dengan Google Client ID anda daripada Google Cloud Console
@@ -80,15 +84,6 @@ class DateUtils {
       const day = dmyMatch[1].padStart(2, '0');
       const month = dmyMatch[2].padStart(2, '0');
       const year = dmyMatch[3];
-      return `${year}-${month}-${day}`;
-    }
-    const months = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
-    const monthMatch = str.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+(\d{1,2})\s+(\d{4})/i);
-    if (monthMatch) {
-      const mStr = monthMatch[1].toLowerCase();
-      const month = months[mStr];
-      const day = monthMatch[2].padStart(2, '0');
-      const year = monthMatch[3];
       return `${year}-${month}-${day}`;
     }
     const d = new Date(str);

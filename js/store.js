@@ -39,14 +39,55 @@ class BookingStore {
     } else {
       this.bookings = [];
     }
+    this.fetchFromPythonBackend();
     this.fetchFromSheet();
   }
 
   startAutoPolling(intervalMs = 4000) {
     if (this.pollingInterval) clearInterval(this.pollingInterval);
     this.pollingInterval = setInterval(() => {
+      this.fetchFromPythonBackend();
       this.fetchFromSheet();
     }, intervalMs);
+  }
+
+  async fetchFromPythonBackend() {
+    try {
+      const res = await fetch(`${PYTHON_API_URL}/bookings`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.status === 'success' && Array.isArray(json.data)) {
+          const apiBookings = json.data.map(item => new Booking(item));
+          if (apiBookings.length > 0) {
+            let updated = false;
+            apiBookings.forEach(ab => {
+              const idx = this.bookings.findIndex(b => b.id === ab.id);
+              if (idx !== -1) {
+                if (this.bookings[idx].status !== ab.status ||
+                    this.bookings[idx].date !== ab.date ||
+                    this.bookings[idx].slot !== ab.slot ||
+                    this.bookings[idx].subject !== ab.subject) {
+                  this.bookings[idx] = ab;
+                  updated = true;
+                }
+              } else {
+                this.bookings.push(ab);
+                updated = true;
+              }
+            });
+
+            if (updated || this.bookings.length === 0) {
+              this.save();
+              if (window.app) {
+                window.app.render();
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      // Backend might be offline or starting up
+    }
   }
 
   async fetchFromSheet() {
@@ -121,35 +162,72 @@ class BookingStore {
     localStorage.setItem('labbook_bookings_v4', JSON.stringify(this.bookings));
   }
 
-  addBooking(bookingData) {
+  async addBooking(bookingData) {
     bookingData.status = "Menunggu Kelulusan";
     bookingData.date = DateUtils.normalizeDate(bookingData.date);
     bookingData.slot = DateUtils.normalizeSlot(bookingData.slot);
     const booking = new Booking(bookingData);
     this.bookings.unshift(booking);
     this.save();
+
+    // Sync to Python Flask backend
+    try {
+      await fetch(`${PYTHON_API_URL}/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(booking)
+      });
+    } catch (e) { }
+
     this.syncToAddSheet(booking);
-    setTimeout(() => this.fetchFromSheet(), 2000);
+    setTimeout(() => {
+      this.fetchFromPythonBackend();
+      this.fetchFromSheet();
+    }, 1500);
     return booking;
   }
 
-  approveBooking(id) {
+  async approveBooking(id) {
     const booking = this.bookings.find(b => b.id === id);
     if (booking) {
       booking.status = "Diluluskan";
       this.save();
+
+      // Sync to Python Flask backend
+      try {
+        await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: "Diluluskan" })
+        });
+      } catch (e) { }
+
       this.syncToAddSheet(booking);
-      setTimeout(() => this.fetchFromSheet(), 2000);
+      setTimeout(() => {
+        this.fetchFromPythonBackend();
+        this.fetchFromSheet();
+      }, 1500);
     }
   }
 
-  rejectBooking(id) {
+  async rejectBooking(id) {
     const booking = this.bookings.find(b => b.id === id);
     if (booking) {
       booking.status = "Dibatalkan";
       this.save();
+
+      // Sync to Python Flask backend
+      try {
+        await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
+          method: 'DELETE'
+        });
+      } catch (e) { }
+
       this.syncToCancelSheet(id);
-      setTimeout(() => this.fetchFromSheet(), 2000);
+      setTimeout(() => {
+        this.fetchFromPythonBackend();
+        this.fetchFromSheet();
+      }, 1500);
     }
   }
 

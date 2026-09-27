@@ -168,6 +168,21 @@ class AuthStore {
   }
 
   async syncAccountToSheet(user) {
+    // Sync to Python Flask backend
+    try {
+      if (typeof PYTHON_API_URL !== 'undefined') {
+        fetch(`${PYTHON_API_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: user.email,
+            name: user.name,
+            password: user.password || 'google_sso'
+          })
+        }).catch(err => {});
+      }
+    } catch (err) {}
+
     if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("YOUR_SCRIPT_ID")) return;
     try {
       const payload = JSON.stringify({
