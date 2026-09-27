@@ -19,7 +19,7 @@ function getBackendApiUrl(path = '') {
 }
 
 // Paste Google Apps Script Web App URL here to enable live Google Sheets sync
-const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxX5mC_8JFWj7OYghFanhUCszkzvtCALX9736QPHUBcbsqPcDofFGwfvBYDYpCAdICK/exec";
+const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxwPumtWswj5eg4nKL4C-O-K5ub5dsdnSQAcWPvWugLLODAEwfPASYyP2OVZ-TQkKpL/exec";
 
 
 

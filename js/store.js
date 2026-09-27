@@ -130,7 +130,7 @@ class BookingStore {
   }
 
   async fetchFromSheet() {
-    if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("AKfycbxX5mC_8JFWj7OYghFanhUCszkzvtCALX9736QPHUBcbsqPcDofFGwfvBYDYpCAdICK")) return;
+    if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("YOUR_SCRIPT_ID")) return;
     try {
       const res = await fetch(GOOGLE_SHEET_API_URL);
       if (res.ok) {
