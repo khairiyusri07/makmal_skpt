@@ -271,6 +271,7 @@ class TableView {
           <td><strong style="color: var(--gcal-blue);">${b.id}</strong></td>
           <td>
             <strong>${b.applicant}</strong>
+            ${b.userId ? `<br><span style="font-size: 0.72rem; background: var(--gcal-blue-light); color: var(--gcal-blue-dark); padding: 1px 6px; border-radius: 8px; font-weight: 600;">${b.userId}</span>` : ''}
             <br><small style="color: var(--gcal-text-subtle);">${b.role}</small>
           </td>
           <td>

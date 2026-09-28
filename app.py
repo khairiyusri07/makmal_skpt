@@ -23,6 +23,7 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS bookings (
             id TEXT PRIMARY KEY,
+            userId TEXT,
             labId TEXT,
             date TEXT,
             slot TEXT,
@@ -42,6 +43,7 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             email TEXT PRIMARY KEY,
+            userId TEXT,
             name TEXT,
             password TEXT,
             role TEXT,
@@ -51,15 +53,25 @@ def init_db():
         )
     ''')
     
+    # Migration to add userId column if missing in existing DB
+    try:
+        cursor.execute("ALTER TABLE bookings ADD COLUMN userId TEXT")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN userId TEXT")
+    except Exception:
+        pass
+
     # Seed initial users if empty
     cursor.execute("SELECT COUNT(*) FROM users")
     if cursor.fetchone()[0] == 0:
         initial_users = [
-            ("g-83920192@moe-dl.edu.my", "Cikgu Ahmad Razali", "password123", "Guru", "", "Sains", datetime.datetime.now().isoformat()),
-            ("g-10293847@moe-dl.edu.my", "Cikgu Siti Nurhaliza", "password123", "Guru", "", "Matematik", datetime.datetime.now().isoformat()),
-            ("penyelaras@moe-dl.edu.my", "Penyelaras Makmal", "password123", "Penyelaras Makmal Komputer", "0123456789", "ICT", datetime.datetime.now().isoformat())
+            ("g-83920192@moe-dl.edu.my", "USR-83920192", "Cikgu Ahmad Razali", "password123", "Guru", "", "Sains", datetime.datetime.now().isoformat()),
+            ("g-10293847@moe-dl.edu.my", "USR-10293847", "Cikgu Siti Nurhaliza", "password123", "Guru", "", "Matematik", datetime.datetime.now().isoformat()),
+            ("penyelaras@moe-dl.edu.my", "USR-PENYELARAS", "Penyelaras Makmal", "password123", "Penyelaras Makmal Komputer", "0123456789", "ICT", datetime.datetime.now().isoformat())
         ]
-        cursor.executemany("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)", initial_users)
+        cursor.executemany("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)", initial_users)
         
     # Seed initial bookings if empty
     cursor.execute("SELECT COUNT(*) FROM bookings")

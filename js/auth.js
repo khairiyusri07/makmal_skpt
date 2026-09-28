@@ -27,6 +27,38 @@ class AuthStore {
       ];
       this.saveRegisteredUsers();
     }
+    this.fetchUsersFromSheet();
+  }
+
+  async fetchUsersFromSheet() {
+    if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("YOUR_SCRIPT_ID")) return;
+    try {
+      const res = await fetch(`${GOOGLE_SHEET_API_URL}?action=GET_USERS`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.status === 'success' && Array.isArray(json.users)) {
+          let updated = false;
+          json.users.forEach(u => {
+            const cleanEmail = (u.email || '').trim().toLowerCase();
+            if (cleanEmail) {
+              const idx = this.registeredUsers.findIndex(existing => existing.email === cleanEmail);
+              if (idx === -1) {
+                this.registeredUsers.push({
+                  name: u.name,
+                  email: cleanEmail,
+                  role: u.role || 'Guru',
+                  phone: u.phone || '',
+                  subject: u.subject || '',
+                  registeredAt: u.loginTime || new Date().toISOString()
+                });
+                updated = true;
+              }
+            }
+          });
+          if (updated) this.saveRegisteredUsers();
+        }
+      }
+    } catch (e) { }
   }
 
   saveRegisteredUsers() {
@@ -179,9 +211,9 @@ class AuthStore {
             name: user.name,
             password: user.password || 'google_sso'
           })
-        }).catch(err => {});
+        }).catch(err => { });
       }
-    } catch (err) {}
+    } catch (err) { }
 
     if (!GOOGLE_SHEET_API_URL || GOOGLE_SHEET_API_URL.includes("YOUR_SCRIPT_ID")) return;
     try {
@@ -190,8 +222,10 @@ class AuthStore {
         email: user.email,
         name: user.name,
         role: user.role || "Guru",
+        phone: user.phone || "",
+        subject: user.subject || "",
         loginTime: new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuala_Lumpur' }),
-        authProvider: user.authProvider || "Google OAuth 2.0"
+        authProvider: user.authProvider || "DELIMa / Google SSO"
       });
 
       await fetch(GOOGLE_SHEET_API_URL, {

@@ -5,6 +5,7 @@
 class Booking {
   constructor(data) {
     this.id = data.id || `LAB-2026-${Math.floor(100 + Math.random() * 900)}`;
+    this.userId = data.userId || data.applicantId || "";
     this.labId = data.labId || "LAB-1";
     this.date = data.date;
     this.slot = data.slot;

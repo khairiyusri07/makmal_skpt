@@ -139,6 +139,7 @@ class BookingStore {
           const sheetBookings = json.data
             .map(row => {
               const rId = row.id || row.ID || row.Id;
+              const rUserId = row.userId || row.UserID || row.userid || row["UserID"] || "";
               const rDate = row.date || row.Date || row.Tarikh || row.tarikh || row["Tarikh"];
               const rSlot = row.slot || row.Slot || row["Slot Masa"] || row.slotMasa || row.SlotMasa || row["Slot"];
               const rApplicant = row.applicant || row.Applicant || row.Pemohon || row["Nama Pemohon"] || row.namaPemohon;
@@ -151,6 +152,7 @@ class BookingStore {
 
               return new Booking({
                 id: String(rId),
+                userId: String(rUserId || ""),
                 labId: 'LAB-1',
                 date: DateUtils.normalizeDate(rDate),
                 slot: DateUtils.normalizeSlot(rSlot),
@@ -203,6 +205,9 @@ class BookingStore {
   }
 
   async addBooking(bookingData) {
+    if (!bookingData.userId && this.auth && this.auth.currentUser) {
+      bookingData.userId = this.auth.currentUser.userId || (this.auth.generateUserId ? this.auth.generateUserId(this.auth.currentUser.email) : '');
+    }
     bookingData.status = "Menunggu Kelulusan";
     bookingData.date = DateUtils.normalizeDate(bookingData.date);
     bookingData.slot = DateUtils.normalizeSlot(bookingData.slot);
