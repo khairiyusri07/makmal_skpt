@@ -11,6 +11,16 @@ class AuthStore {
     this.loadSession();
   }
 
+  generateUserId(email) {
+    if (!email) return `USR-${Math.floor(1000 + Math.random() * 9000)}`;
+    const numMatch = email.match(/\d+/);
+    if (numMatch && numMatch[0]) {
+      return `USR-${numMatch[0]}`;
+    }
+    const cleanStr = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    return `USR-${cleanStr}`;
+  }
+
   loadRegisteredUsers() {
     const saved = localStorage.getItem('labbook_registered_users');
     if (saved) {
@@ -22,11 +32,19 @@ class AuthStore {
     }
     if (!this.registeredUsers || this.registeredUsers.length === 0) {
       this.registeredUsers = [
-        { name: "Cikgu Ahmad Razali", email: "g-83920192@moe-dl.edu.my", password: "password123", role: "Guru" },
-        { name: "Cikgu Siti Nurhaliza", email: "g-10293847@moe-dl.edu.my", password: "password123", role: "Guru" }
+        { userId: "USR-83920192", name: "Cikgu Ahmad Razali", email: "g-83920192@moe-dl.edu.my", password: "password123", role: "Guru" },
+        { userId: "USR-10293847", name: "Cikgu Siti Nurhaliza", email: "g-10293847@moe-dl.edu.my", password: "password123", role: "Guru" }
       ];
       this.saveRegisteredUsers();
     }
+    let updated = false;
+    this.registeredUsers.forEach(u => {
+      if (!u.userId) {
+        u.userId = this.generateUserId(u.email);
+        updated = true;
+      }
+    });
+    if (updated) this.saveRegisteredUsers();
     this.fetchUsersFromSheet();
   }
 
@@ -44,6 +62,7 @@ class AuthStore {
               const idx = this.registeredUsers.findIndex(existing => existing.email === cleanEmail);
               if (idx === -1) {
                 this.registeredUsers.push({
+                  userId: u.userId || this.generateUserId(cleanEmail),
                   name: u.name,
                   email: cleanEmail,
                   role: u.role || 'Guru',
@@ -51,6 +70,9 @@ class AuthStore {
                   subject: u.subject || '',
                   registeredAt: u.loginTime || new Date().toISOString()
                 });
+                updated = true;
+              } else if (!this.registeredUsers[idx].userId && u.userId) {
+                this.registeredUsers[idx].userId = u.userId;
                 updated = true;
               }
             }
@@ -70,6 +92,9 @@ class AuthStore {
     if (saved) {
       try {
         this.currentUser = JSON.parse(saved);
+        if (this.currentUser && !this.currentUser.userId && this.currentUser.email) {
+          this.currentUser.userId = this.generateUserId(this.currentUser.email);
+        }
       } catch (e) {
         this.currentUser = null;
       }
@@ -114,6 +139,7 @@ class AuthStore {
     }
 
     const newUser = {
+      userId: this.generateUserId(cleanEmail),
       name: cleanName,
       email: cleanEmail,
       password: password,
@@ -152,6 +178,7 @@ class AuthStore {
     }
 
     this.currentUser = {
+      userId: user.userId || this.generateUserId(user.email),
       name: user.name,
       email: user.email,
       role: user.role || "Guru",
@@ -175,6 +202,7 @@ class AuthStore {
       // Auto-register new valid DELIMa Google Sign-In user automatically
       const formattedName = name || `Cikgu (${cleanEmail.split('@')[0]})`;
       user = {
+        userId: this.generateUserId(cleanEmail),
         name: formattedName,
         email: cleanEmail,
         password: "google_sso",
@@ -186,6 +214,7 @@ class AuthStore {
     }
 
     this.currentUser = {
+      userId: user.userId || this.generateUserId(user.email),
       name: user.name,
       email: user.email,
       picture: picture || '',
@@ -207,6 +236,7 @@ class AuthStore {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            userId: user.userId || this.generateUserId(user.email),
             email: user.email,
             name: user.name,
             password: user.password || 'google_sso'
@@ -219,6 +249,7 @@ class AuthStore {
     try {
       const payload = JSON.stringify({
         action: "RECORD_USER_ACCOUNT",
+        userId: user.userId || this.generateUserId(user.email),
         email: user.email,
         name: user.name,
         role: user.role || "Guru",

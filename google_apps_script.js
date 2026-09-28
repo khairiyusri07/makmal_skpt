@@ -1,31 +1,28 @@
 /**
  * GOOGLE APPS SCRIPT FOR MAKMAL KOMPUTER SKPT
  * Menyimpan Data Tempahan (Tab: Tempahan) & Data Pengguna (Tab: Pengguna)
- * dengan Sokongan UserID Automatik.
- * 
- * CARA ATUR PROJEK GOOGLE SHEETS:
- * 1. Buka Google Sheets anda.
- * 2. Buat 2 Tab / Sheet di bahagian bawah:
- *    - Tab 1: "Tempahan" (Header: Kod Tempahan | UserID | Tarikh | Slot Masa | Pemohon | Peranan | Kelas / Subjek | Bilangan PC | Tujuan | Peralatan | Nota | Status | Tarikh Dicipta)
- *    - Tab 2: "Pengguna" (Header: UserID | Emel ID DELIMa | Nama Penuh | Peranan / Jawatan | No. Telefon | Mata Pelajaran | Log Masuk Terakhir | Penyedia Log Masuk)
- * 3. Di Google Sheets, tekan Extensions (Sambungan) > Apps Script.
- * 4. Padamkan semua kod asal dan tampal (paste) kod di bawah ini.
- * 5. Tekan "Deploy" (Laksana) > "New deployment" > Pilih Jenis "Web app".
- * 6. Set "Execute as": "Me", "Who has access": "Anyone" (Sesiapa sahaja).
- * 7. Tekan Deploy, luluskan kebenaran (Authorize Access), dan salin URL Web App yang terhasil.
- * 8. Tampal URL tersebut pada `GOOGLE_SHEET_API_URL` di dalam fail `js/config.js`.
+ * dengan Sokongan UserID Automatik & Robust Case-Insensitive Sheet Lookup.
  */
+
+function getOrCreateSheet(ss, targetName) {
+  var sheets = ss.getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    var name = sheets[i].getName().trim().toLowerCase();
+    if (name === targetName.toLowerCase()) {
+      return sheets[i];
+    }
+  }
+  var newSheet = ss.insertSheet(targetName);
+  return newSheet;
+}
 
 function doGet(e) {
   var action = e && e.parameter && e.parameter.action ? e.parameter.action : "";
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-  // 1. DAPATKAN SENARAI PENGGUNA
+  // 1. DAPATKAN SENARAI PENGGUNA (GET_USERS)
   if (action === "GET_USERS") {
-    var userSheet = ss.getSheetByName("Pengguna") || ss.getSheetByName("Users");
-    if (!userSheet) {
-      return responseJSON({ status: "success", users: [] });
-    }
+    var userSheet = getOrCreateSheet(ss, "Pengguna");
     var data = userSheet.getDataRange().getValues();
     if (data.length <= 1) {
       return responseJSON({ status: "success", users: [] });
@@ -36,7 +33,7 @@ function doGet(e) {
       if (row[0] || row[1]) {
         users.push({
           userId: String(row[0] || ""),
-          email: String(row[1] || ""),
+          email: String(row[1] || row[0] || ""),
           name: String(row[2] || ""),
           role: String(row[3] || "Guru"),
           phone: String(row[4] || ""),
@@ -50,20 +47,19 @@ function doGet(e) {
   }
 
   // 2. DAPATKAN SENARAI TEMPAHAN (Default GET)
-  var bookingSheet = ss.getSheetByName("Tempahan") || ss.getSheetByName("Bookings") || ss.getSheets()[0];
+  var bookingSheet = getOrCreateSheet(ss, "Tempahan");
   var data = bookingSheet.getDataRange().getValues();
   if (data.length <= 1) {
     return responseJSON({ status: "success", data: [] });
   }
 
   var bookings = [];
+  var hasUserIdCol = (data[0][1] && String(data[0][1]).toLowerCase().includes("user"));
 
   for (var r = 1; r < data.length; r++) {
     var row = data[r];
     if (!row[0]) continue;
     
-    // Semak format lajur (Sama ada ada lajur UserID di indeks 1 atau tidak)
-    var hasUserIdCol = (data[0][1] && String(data[0][1]).toLowerCase().includes("user"));
     var bId = row[0];
     var bUserId = hasUserIdCol ? row[1] : "";
     var bDate = hasUserIdCol ? row[2] : row[1];
@@ -102,9 +98,10 @@ function doPost(e) {
 
     // 1. TAMBAH / KEMASKINI REKOD PENGGUNA (Tab: Pengguna)
     if (data.action === "RECORD_USER_ACCOUNT") {
-      var userSheet = ss.getSheetByName("Pengguna");
-      if (!userSheet) {
-        userSheet = ss.insertSheet("Pengguna");
+      var userSheet = getOrCreateSheet(ss, "Pengguna");
+      
+      // Jika lembaran kosong, tambah tajuk lajur
+      if (userSheet.getLastRow() === 0) {
         userSheet.appendRow([
           "UserID", "Emel ID DELIMa", "Nama Penuh", "Peranan / Jawatan",
           "No. Telefon", "Mata Pelajaran", "Log Masuk Terakhir", "Penyedia Log Masuk"
@@ -122,7 +119,7 @@ function doPost(e) {
 
       // Penjanaan UserID Automatik jika tiada
       var userId = data.userId || "";
-      if (!userId) {
+      if (!userId && email) {
         var numMatch = email.match(/\d+/);
         if (numMatch) {
           userId = "USR-" + numMatch[0];
@@ -135,17 +132,20 @@ function doPost(e) {
       var allValues = userSheet.getDataRange().getValues();
       var rowIndex = -1;
 
+      // Cari mengikut emel atau UserID
       for (var i = 1; i < allValues.length; i++) {
-        var sheetEmail = String(allValues[i][1] || allValues[i][0]).toLowerCase().trim();
-        if (sheetEmail === email) {
-          rowIndex = i + 1; // Row index 1-based
+        var rowCell0 = String(allValues[i][0] || "").toLowerCase().trim();
+        var rowCell1 = String(allValues[i][1] || "").toLowerCase().trim();
+        if ((email && (rowCell0 === email || rowCell1 === email)) || (userId && rowCell0 === userId.toLowerCase())) {
+          rowIndex = i + 1; // 1-based row index
           break;
         }
       }
 
       if (rowIndex !== -1) {
-        // Kemaskini pengguna sedia ada
+        // Kemaskini baris sedia ada
         userSheet.getRange(rowIndex, 1).setValue(userId);
+        userSheet.getRange(rowIndex, 2).setValue(email);
         userSheet.getRange(rowIndex, 3).setValue(name);
         userSheet.getRange(rowIndex, 4).setValue(role);
         if (phone) userSheet.getRange(rowIndex, 5).setValue(phone);
@@ -153,7 +153,7 @@ function doPost(e) {
         userSheet.getRange(rowIndex, 7).setValue(loginTime);
         userSheet.getRange(rowIndex, 8).setValue(authProvider);
       } else {
-        // Tambah pengguna baru
+        // Tambah baris baru
         userSheet.appendRow([userId, email, name, role, phone, subject, loginTime, authProvider]);
       }
 
@@ -163,7 +163,7 @@ function doPost(e) {
     // 2. TAMBAH TEMPAHAN BARU (Tab: Tempahan)
     if (data.action === "ADD" || data.booking) {
       var booking = data.booking || data;
-      var bookingSheet = ss.getSheetByName("Tempahan") || ss.getSheetByName("Bookings") || ss.getSheets()[0];
+      var bookingSheet = getOrCreateSheet(ss, "Tempahan");
 
       if (bookingSheet.getLastRow() === 0) {
         bookingSheet.appendRow([
@@ -173,7 +173,6 @@ function doPost(e) {
         bookingSheet.getRange(1, 1, 1, 13).setFontWeight("bold").setBackground("#e8f0fe");
       }
 
-      // Pastikan UserID ada untuk tempahan
       var bookingUserId = booking.userId || "";
       if (!bookingUserId && booking.applicant) {
         var numMatch = String(booking.applicant).match(/\d+/);
@@ -201,7 +200,7 @@ function doPost(e) {
 
     // 3. BATALKAN / KEMASKINI STATUS TEMPAHAN (Tab: Tempahan)
     if (data.action === "CANCEL" || data.action === "UPDATE_STATUS") {
-      var bookingSheet = ss.getSheetByName("Tempahan") || ss.getSheetByName("Bookings") || ss.getSheets()[0];
+      var bookingSheet = getOrCreateSheet(ss, "Tempahan");
       var targetId = data.id;
       var newStatus = data.status || "Dibatalkan";
 
@@ -228,4 +227,12 @@ function doPost(e) {
 function responseJSON(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// FUNGSI UJIAN MANUALL (Jalankan di Apps Script Editor untuk menguji terus)
+function testRecordUser() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = getOrCreateSheet(ss, "Pengguna");
+  sheet.appendRow(["USR-83920192", "g-83920192@moe-dl.edu.my", "Cikgu Ahmad Razali", "Guru", "0123456789", "Sains", new Date().toLocaleString('ms-MY'), "DELIMa SSO"]);
+  Logger.log("Ujian Rekod Pengguna Berjaya!");
 }
