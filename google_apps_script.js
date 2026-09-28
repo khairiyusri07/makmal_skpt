@@ -1,7 +1,7 @@
 /**
  * GOOGLE APPS SCRIPT FOR MAKMAL KOMPUTER SKPT
  * Menyimpan Data Tempahan (Tab: Tempahan) & Data Pengguna (Tab: Pengguna)
- * dengan Sokongan UserID Automatik & Robust Case-Insensitive Sheet Lookup.
+ * dengan Sokongan UserID Automatik & Robust In-Place Row Status Update.
  */
 
 function getOrCreateSheet(ss, targetName) {
@@ -100,7 +100,6 @@ function doPost(e) {
     if (data.action === "RECORD_USER_ACCOUNT") {
       var userSheet = getOrCreateSheet(ss, "Pengguna");
       
-      // Jika lembaran kosong, tambah tajuk lajur
       if (userSheet.getLastRow() === 0) {
         userSheet.appendRow([
           "UserID", "Emel ID DELIMa", "Nama Penuh", "Peranan / Jawatan",
@@ -117,7 +116,6 @@ function doPost(e) {
       var loginTime = data.loginTime || new Date().toLocaleString('ms-MY');
       var authProvider = data.authProvider || "DELIMa / Google SSO";
 
-      // Penjanaan UserID Automatik jika tiada
       var userId = data.userId || "";
       if (!userId && email) {
         var numMatch = email.match(/\d+/);
@@ -132,18 +130,16 @@ function doPost(e) {
       var allValues = userSheet.getDataRange().getValues();
       var rowIndex = -1;
 
-      // Cari mengikut emel atau UserID
       for (var i = 1; i < allValues.length; i++) {
         var rowCell0 = String(allValues[i][0] || "").toLowerCase().trim();
         var rowCell1 = String(allValues[i][1] || "").toLowerCase().trim();
         if ((email && (rowCell0 === email || rowCell1 === email)) || (userId && rowCell0 === userId.toLowerCase())) {
-          rowIndex = i + 1; // 1-based row index
+          rowIndex = i + 1;
           break;
         }
       }
 
       if (rowIndex !== -1) {
-        // Kemaskini baris sedia ada
         userSheet.getRange(rowIndex, 1).setValue(userId);
         userSheet.getRange(rowIndex, 2).setValue(email);
         userSheet.getRange(rowIndex, 3).setValue(name);
@@ -153,16 +149,18 @@ function doPost(e) {
         userSheet.getRange(rowIndex, 7).setValue(loginTime);
         userSheet.getRange(rowIndex, 8).setValue(authProvider);
       } else {
-        // Tambah baris baru
         userSheet.appendRow([userId, email, name, role, phone, subject, loginTime, authProvider]);
       }
 
       return responseJSON({ status: "success", userId: userId, message: "Rekod pengguna diselaraskan." });
     }
 
-    // 2. TAMBAH TEMPAHAN BARU (Tab: Tempahan)
-    if (data.action === "ADD" || data.booking) {
-      var booking = data.booking || data;
+    // 2. KEMASKINI ATAU TAMBAH TEMPAHAN (Tab: Tempahan)
+    if (data.action === "ADD" || data.booking || data.action === "UPDATE_STATUS" || data.action === "CANCEL") {
+      var booking = data.booking || {};
+      var targetId = String(data.id || booking.id || "").trim();
+      var newStatus = data.status || booking.status || "";
+
       var bookingSheet = getOrCreateSheet(ss, "Tempahan");
 
       if (bookingSheet.getLastRow() === 0) {
@@ -173,6 +171,29 @@ function doPost(e) {
         bookingSheet.getRange(1, 1, 1, 13).setFontWeight("bold").setBackground("#e8f0fe");
       }
 
+      var rows = bookingSheet.getDataRange().getValues();
+      var hasUserIdCol = (rows[0][1] && String(rows[0][1]).toLowerCase().includes("user"));
+      var statusCol = hasUserIdCol ? 12 : 11; // Lajur Status (1-based index)
+
+      var existingRowIndex = -1;
+      if (targetId) {
+        for (var j = 1; j < rows.length; j++) {
+          if (String(rows[j][0]).trim().toLowerCase() === targetId.toLowerCase()) {
+            existingRowIndex = j + 1; // 1-based index
+            break;
+          }
+        }
+      }
+
+      // JIKA BARIS SEDIA ADA DIJUMPAI: Kemaskini status pada baris asal (JANGAN tambah baris baru!)
+      if (existingRowIndex !== -1) {
+        if (newStatus) {
+          bookingSheet.getRange(existingRowIndex, statusCol).setValue(newStatus);
+        }
+        return responseJSON({ status: "success", message: "Status tempahan " + targetId + " dikemaskini pada baris " + existingRowIndex });
+      }
+
+      // JIKA BARIS BELUM ADA (Tempahan Baru): Tambah baris baru
       var bookingUserId = booking.userId || "";
       if (!bookingUserId && booking.applicant) {
         var numMatch = String(booking.applicant).match(/\d+/);
@@ -180,7 +201,7 @@ function doPost(e) {
       }
 
       bookingSheet.appendRow([
-        booking.id || "",
+        targetId || booking.id || "",
         bookingUserId,
         booking.date || "",
         booking.slot || "",
@@ -191,33 +212,14 @@ function doPost(e) {
         booking.purpose || "",
         JSON.stringify(booking.equipments || []),
         booking.notes || "",
-        booking.status || "Menunggu Kelulusan",
+        booking.status || newStatus || "Menunggu Kelulusan",
         booking.createdAt || new Date().toISOString()
       ]);
 
-      return responseJSON({ status: "success", message: "Tempahan ditambah." });
+      return responseJSON({ status: "success", message: "Tempahan baru ditambah." });
     }
 
-    // 3. BATALKAN / KEMASKINI STATUS TEMPAHAN (Tab: Tempahan)
-    if (data.action === "CANCEL" || data.action === "UPDATE_STATUS") {
-      var bookingSheet = getOrCreateSheet(ss, "Tempahan");
-      var targetId = data.id;
-      var newStatus = data.status || "Dibatalkan";
-
-      var rows = bookingSheet.getDataRange().getValues();
-      var hasUserIdCol = (rows[0][1] && String(rows[0][1]).toLowerCase().includes("user"));
-      var statusCol = hasUserIdCol ? 12 : 11;
-
-      for (var j = 1; j < rows.length; j++) {
-        if (String(rows[j][0]) === String(targetId)) {
-          bookingSheet.getRange(j + 1, statusCol).setValue(newStatus);
-          return responseJSON({ status: "success", message: "Status tempahan dikemaskini." });
-        }
-      }
-      return responseJSON({ status: "error", message: "ID tempahan tidak dijumpai." });
-    }
-
-    return responseJSON({ status: "error", message: "Tindakan tidak sah." });
+    return responseJSON({ status: "error", message: "Tindakan melebihkan had." });
 
   } catch (err) {
     return responseJSON({ status: "error", message: err.toString() });
@@ -229,7 +231,6 @@ function responseJSON(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// FUNGSI UJIAN MANUALL (Jalankan di Apps Script Editor untuk menguji terus)
 function testRecordUser() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = getOrCreateSheet(ss, "Pengguna");

@@ -247,7 +247,7 @@ class BookingStore {
         });
       } catch (e) { }
 
-      this.syncToAddSheet(booking);
+      this.syncToUpdateStatusSheet(id, "Diluluskan", booking);
       setTimeout(() => {
         this.fetchFromPythonBackend();
         this.fetchFromSheet();
@@ -268,7 +268,7 @@ class BookingStore {
         });
       } catch (e) { }
 
-      this.syncToCancelSheet(id);
+      this.syncToUpdateStatusSheet(id, "Dibatalkan", booking);
       setTimeout(() => {
         this.fetchFromPythonBackend();
         this.fetchFromSheet();
@@ -292,16 +292,20 @@ class BookingStore {
     } catch (e) { }
   }
 
-  syncToCancelSheet(id) {
+  syncToUpdateStatusSheet(id, status, bookingObj) {
     if (!GOOGLE_SHEET_API_URL) return;
     try {
       fetch(GOOGLE_SHEET_API_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'CANCEL', id: id })
-      }).catch(err => console.error('Google Sheet Cancel Error:', err));
+        body: JSON.stringify({ action: 'UPDATE_STATUS', id: id, status: status, booking: bookingObj })
+      }).catch(err => console.error('Google Sheet Status Update Error:', err));
     } catch (e) { }
+  }
+
+  syncToCancelSheet(id) {
+    this.syncToUpdateStatusSheet(id, "Dibatalkan");
   }
 
   findConflict(date, slot) {
