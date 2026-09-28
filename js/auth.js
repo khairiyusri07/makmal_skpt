@@ -242,9 +242,10 @@ class AuthStore {
   }
 
   isLabCoordinator() {
+    if (this.isAdminVerified) return true;
     if (!this.currentUser) return false;
     const role = (this.currentUser.role || '').toLowerCase();
-    return role.includes('penyelaras makmal');
+    return role.includes('penyelaras') || role.includes('admin') || role.includes('pentadbir') || role.includes('ict');
   }
 
   verifyAdminPin(pin) {

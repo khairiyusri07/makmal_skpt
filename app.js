@@ -24,15 +24,14 @@ class App {
     this.headerView.render();
     this.calendarView.render();
 
-    // Kawalan paparan Tab Akses Admin (Hanya kelihatan jika Penyelaras Makmal)
+    // Kawalan paparan Tab Akses Admin
     const btnAdmin = document.getElementById('tabBtnAdmin');
-    const isCoordinator = this.authStore.isLabCoordinator();
     if (btnAdmin) {
-      btnAdmin.style.display = isCoordinator ? 'flex' : 'none';
+      btnAdmin.style.display = 'flex';
     }
 
     if (this.activeTab === 'admin') {
-      if (!isCoordinator) {
+      if (!this.authStore.isAdminVerified) {
         this.switchTab('schedule');
         return;
       }
@@ -71,11 +70,6 @@ class App {
     if (btnProfile) btnProfile.classList.remove('active');
 
     if (tabName === 'admin') {
-      if (!this.authStore.isLabCoordinator()) {
-        this.showToast("Akses Dihadkan! Hanya Penyelaras Makmal sahaja dibenarkan mengakses Tab Akses Admin.", "error");
-        this.switchTab('schedule');
-        return;
-      }
       if (!this.authStore.isAdminVerified) {
         this.modalView.openAdminAuth();
         return;
