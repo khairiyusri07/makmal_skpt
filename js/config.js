@@ -3,7 +3,7 @@
    ========================================================================== */
 
 const LABS = [
-  { id: 'LAB-1', name: 'Makmal Komputer Utama', location: 'Tingkat 1', pcs: 35, specs: 'Core i7, 16GB RAM' }
+  { id: 'LAB-1', name: 'Makmal Komputer Utama', location: 'Tingkat 1', pcs: 21, specs: 'Core i7, 16GB RAM' }
 ];
 
 // Python Flask Backend API URL Endpoint
@@ -19,7 +19,7 @@ function getBackendApiUrl(path = '') {
 }
 
 // Paste Google Apps Script Web App URL here to enable live Google Sheets sync
-const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbzq0Q1a0Bnf2wQgdUq-Bv2j_1LHZtr4zbJWu5Bz1tS-pQ9KqXdQowCeiY8HzyP1G3MI/exec";
+const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbw0GJOcCkhYZYrNWUQy8oCPtG5ptuxlPNTircspqdnO4aoYQtaVlhwLdwVOIvHmPMvw/exec";
 
 
 
