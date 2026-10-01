@@ -145,7 +145,7 @@ class CalendarView {
           } else if (!isCoordinator && isExceedingTomorrow) {
             html += `
               <div class="gcal-slot-cell empty-slot future-restricted-slot" 
-                   title="Tempahan disekat (Guru biasa hanya boleh menempah 1 hari sebelum / esok sahaja. Tarikh melebihi sehari sebelum dikhaskan untuk Penyelaras ICT)"
+                   title="Tempahan disekat (Guru biasa hanya boleh menempah 1 hari sebelum / esok sahaja.)"
                    onclick="window.app.openBookingModal('${day.dateStr}', '${slot}')">
               </div>
             `;
@@ -855,7 +855,7 @@ class ModalView {
         return;
       }
       if (dateStr > tomorrowIso) {
-        this.app.showToast("Tempahan disekat! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja). Tarikh melebihi sehari sebelum dikhaskan untuk Penyelaras ICT.", "warning");
+        this.app.showToast("Tempahan disekat! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja).", "warning");
         return;
       }
       const existingUserCount = this.store.getUserBookingCountForDate(this.store.auth.currentUser, dateStr);
@@ -977,7 +977,7 @@ class ModalView {
         return;
       }
       if (date > tomorrowIso) {
-        this.dom.conflictAlertMsg.textContent = "Amaran: Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja). Tarikh melebihi sehari sebelum disekat kecuali untuk Penyelaras ICT.";
+        this.dom.conflictAlertMsg.textContent = "Amaran: Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja)";
         this.dom.conflictAlert.style.display = 'flex';
         if (this.dom.btnSubmitBooking) this.dom.btnSubmitBooking.disabled = true;
         return;
@@ -1060,7 +1060,7 @@ class ModalView {
         return;
       }
       if (date > tomorrowIso) {
-        this.app.showToast("Gagal! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja). Tarikh melebihi sehari sebelum dikhaskan untuk Penyelaras ICT.", "error");
+        this.app.showToast("Gagal! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja)", "error");
         return;
       }
 
@@ -1290,7 +1290,7 @@ class ModalView {
       const dayDateStr = DateUtils.formatDateIso(targetDate);
       const isTahap1 = entry.level === 'Tahap 1';
       const availableClasses = isTahap1 ? (typeof CLASSES_TAHAP_1 !== 'undefined' ? CLASSES_TAHAP_1 : ["1 UTARID", "2 ZUHRAH", "3 MARIKH"])
-                                        : (typeof CLASSES_TAHAP_2 !== 'undefined' ? CLASSES_TAHAP_2 : ["4 MUSYTARI", "5 ZUHAL", "6 NEPTUN"]);
+        : (typeof CLASSES_TAHAP_2 !== 'undefined' ? CLASSES_TAHAP_2 : ["4 MUSYTARI", "5 ZUHAL", "6 NEPTUN"]);
       const badgeColor = isTahap1 ? 'background: #e0f2fe; color: #0369a1;' : 'background: #fef3c7; color: #b45309;';
       const selectBorderColor = isTahap1 ? '#38bdf8' : '#f59e0b';
       const selectBg = isTahap1 ? '#f0f9ff' : '#fffbeb';
@@ -1361,7 +1361,7 @@ class ModalView {
 
   handleClassChangeInPreview(selectEl, weekOffset, entryIndex, level) {
     const newClassName = selectEl.value;
-    const allowed = level === 'Tahap 1' 
+    const allowed = level === 'Tahap 1'
       ? (typeof CLASSES_TAHAP_1 !== 'undefined' ? CLASSES_TAHAP_1 : ["1 UTARID", "2 ZUHRAH", "3 MARIKH"])
       : (typeof CLASSES_TAHAP_2 !== 'undefined' ? CLASSES_TAHAP_2 : ["4 MUSYTARI", "5 ZUHAL", "6 NEPTUN"]);
 
@@ -1520,7 +1520,7 @@ class ModalView {
     e.preventDefault();
 
     const isFromTab = e.target && e.target.id === 'tabScheduleGeneratorForm';
-    const startSunday = isFromTab 
+    const startSunday = isFromTab
       ? (document.getElementById('tabGenStartSunday')?.value || '')
       : (this.dom.genStartSunday?.value || document.getElementById('tabGenStartSunday')?.value || '');
     const weeksCount = isFromTab
