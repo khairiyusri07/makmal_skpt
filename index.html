@@ -243,8 +243,11 @@
                   <div class="empty-icon-wrap">
                     <i data-lucide="calendar-x" style="width: 44px; height: 44px; color: var(--gcal-blue);"></i>
                   </div>
-                  <h4 id="emptyStateTitle" style="font-size: 1.15rem; font-weight: 700; color: var(--gcal-text-dark); margin-top: 12px;">Tiada Rekod Tempahan</h4>
-                  <p id="emptyStateMsg" style="font-size: 0.88rem; color: var(--gcal-text-subtle); margin-top: 6px; max-width: 420px; margin-left: auto; margin-right: auto;">
+                  <h4 id="emptyStateTitle"
+                    style="font-size: 1.15rem; font-weight: 700; color: var(--gcal-text-dark); margin-top: 12px;">Tiada
+                    Rekod Tempahan</h4>
+                  <p id="emptyStateMsg"
+                    style="font-size: 0.88rem; color: var(--gcal-text-subtle); margin-top: 6px; max-width: 420px; margin-left: auto; margin-right: auto;">
                     Anda belum membuat sebarang tempahan makmal komputer.
                   </p>
                   <button id="btnEmptyBooking" class="btn-gcal-blue"
@@ -537,48 +540,6 @@
             data-text="signin_with" data-size="large" data-logo_alignment="left" data-width="340"
             style="display: flex; justify-content: center; margin-bottom: 12px;">
           </div>
-
-          <!-- Dynamic JS SIWG Container -->
-          <div id="googleSiwgButtonContainer" style="display: flex; justify-content: center; margin-bottom: 12px;">
-          </div>
-
-          <div style="display: flex; align-items: center; margin: 16px 0; gap: 10px;">
-            <div style="flex: 1; height: 1px; background: var(--gcal-border);"></div>
-            <span style="font-size: 0.75rem; color: var(--gcal-text-subtle); font-weight: 600;">ATAU PILIH AKAUN GURU (DELIMa)</span>
-            <div style="flex: 1; height: 1px; background: var(--gcal-border);"></div>
-          </div>
-
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <button type="button" id="btnQuickLoginAhmad" class="btn-quick-login-account"
-              style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--gcal-border); border-radius: 8px; background: var(--gcal-surface); cursor: pointer; text-align: left; transition: all 0.15s ease;">
-              <div style="width: 34px; height: 34px; border-radius: 50%; background: #1a73e8; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">AR</div>
-              <div style="flex: 1;">
-                <div style="font-size: 0.84rem; font-weight: 700; color: var(--gcal-text-dark);">Cikgu Ahmad Razali</div>
-                <div style="font-size: 0.74rem; color: var(--gcal-text-subtle);">g-83920192@moe-dl.edu.my</div>
-              </div>
-              <i data-lucide="chevron-right" style="width: 16px; color: var(--gcal-text-subtle);"></i>
-            </button>
-
-            <button type="button" id="btnQuickLoginSiti" class="btn-quick-login-account"
-              style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--gcal-border); border-radius: 8px; background: var(--gcal-surface); cursor: pointer; text-align: left; transition: all 0.15s ease;">
-              <div style="width: 34px; height: 34px; border-radius: 50%; background: #1e8e3e; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">SN</div>
-              <div style="flex: 1;">
-                <div style="font-size: 0.84rem; font-weight: 700; color: var(--gcal-text-dark);">Cikgu Siti Nurhaliza</div>
-                <div style="font-size: 0.74rem; color: var(--gcal-text-subtle);">g-10293847@moe-dl.edu.my</div>
-              </div>
-              <i data-lucide="chevron-right" style="width: 16px; color: var(--gcal-text-subtle);"></i>
-            </button>
-          </div>
-
-          <form id="customDelimaForm" style="margin-top: 14px;">
-            <div class="form-group" style="margin-bottom: 10px;">
-              <label for="customDelimaEmailInput" style="font-size: 0.8rem; font-weight: 700;">Atau masukkan ID DELIMa anda:</label>
-              <input type="email" id="customDelimaEmailInput" class="form-control-custom"
-                placeholder="Contoh: g-12345678@moe-dl.edu.my" required style="font-size: 0.85rem;">
-            </div>
-            <button type="submit" class="btn-gcal-blue" style="width: 100%; border-radius: 6px; height: 38px; font-weight: 600;">
-              Masuk Dengan ID DELIMa Ini
-            </button>
           </form>
 
         </div>
@@ -601,8 +562,8 @@
         <form id="adminAuthForm">
           <div class="form-group">
             <label for="adminPinInput">PIN Admin (Default: 1234)</label>
-            <input type="password" id="adminPinInput" class="form-control-custom" placeholder="1234" required
-              autofocus style="text-align: center; font-size: 1.2rem; letter-spacing: 0.2em;">
+            <input type="password" id="adminPinInput" class="form-control-custom" placeholder="1234" required autofocus
+              style="text-align: center; font-size: 1.2rem; letter-spacing: 0.2em;">
           </div>
           <button type="submit" class="btn-gcal-blue" style="width: 100%;">Sahkan PIN Admin</button>
         </form>
@@ -610,19 +571,19 @@
     </div>
   </div>
 
-        <!-- Mobile Floating Action Button (FAB) -->
-        <button id="mobileFabBtn" class="mobile-fab-btn">
-          <svg width="24" height="24" viewBox="0 0 36 36">
-            <path fill="#4285F4" d="M16 16v14h4V20z" />
-            <path fill="#34A853" d="M30 16H20l-4 4h14z" />
-            <path fill="#FBBC05" d="M6 16h10l4-4H6z" />
-            <path fill="#EA4335" d="M20 16V6h-4v10z" />
-          </svg>
-          <span>Tempah</span>
-        </button>
+  <!-- Mobile Floating Action Button (FAB) -->
+  <button id="mobileFabBtn" class="mobile-fab-btn">
+    <svg width="24" height="24" viewBox="0 0 36 36">
+      <path fill="#4285F4" d="M16 16v14h4V20z" />
+      <path fill="#34A853" d="M30 16H20l-4 4h14z" />
+      <path fill="#FBBC05" d="M6 16h10l4-4H6z" />
+      <path fill="#EA4335" d="M20 16V6h-4v10z" />
+    </svg>
+    <span>Tempah</span>
+  </button>
 
-        <!-- Toast Notification Container -->
-        <div class="toast-container" id="toastContainer"></div>
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
 
 
 </body>
