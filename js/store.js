@@ -38,6 +38,7 @@ class BookingStore {
       } catch (e) {
         this.bookings = [];
       }
+    }
     if (!this.bookings || this.bookings.length === 0) {
       const today = new Date();
       const sunday = DateUtils.getSunday(today);
