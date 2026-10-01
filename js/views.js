@@ -1382,6 +1382,140 @@ class ModalView {
     this.app.showToast("Pilihan kelas telah ditetapkan semula kepada jadual asal mengikut tahap.", "info");
   }
 
+  showGeneratorLoading(weeksCount, totalSlots) {
+    const overlay = document.getElementById('scheduleGeneratorLoadingOverlay');
+    if (!overlay) return;
+
+    const bar = document.getElementById('generatorProgressBar');
+    const percent = document.getElementById('generatorProgressPercent');
+    const stepText = document.getElementById('generatorProgressStepText');
+    const step1 = document.getElementById('genStep1');
+    const step2 = document.getElementById('genStep2');
+    const step3 = document.getElementById('genStep3');
+    const step2Text = document.getElementById('genStep2Text');
+    const icon = document.getElementById('generatorLoadingIcon');
+    const title = document.getElementById('generatorLoadingTitle');
+    const subtitle = document.getElementById('generatorLoadingSubtitle');
+
+    if (bar) bar.style.width = '12%';
+    if (percent) percent.textContent = '12%';
+    if (stepText) stepText.textContent = 'Menyemak rotasi kelas & jadual waktu...';
+    if (title) title.textContent = 'Menjana Jadual Kelas Mingguan...';
+    if (subtitle) subtitle.textContent = 'Sila tunggu sebentar. Sistem sedang memproses rotasi adil dan menyelaraskan slot makmal.';
+    if (icon) {
+      icon.setAttribute('data-lucide', 'sparkles');
+      icon.style.color = '#2563eb';
+    }
+
+    if (step1) step1.className = 'generator-step-item active';
+    if (step2) step2.className = 'generator-step-item';
+    if (step3) step3.className = 'generator-step-item';
+    if (step2Text) step2Text.textContent = `Menjana ${totalSlots} slot jadual rasmi bagi ${weeksCount} minggu`;
+
+    // Disable buttons
+    const btnTab = document.getElementById('btnTabSubmitScheduleGenerator');
+    const btnModal = document.getElementById('btnSubmitScheduleGenerator');
+    const btnClear = document.getElementById('btnClearGeneratedSchedule');
+    const btnTabClear = document.getElementById('btnTabClearGeneratedSchedule');
+
+    if (btnTab) {
+      btnTab.disabled = true;
+      btnTab.dataset.origHtml = btnTab.innerHTML;
+      btnTab.innerHTML = `<i data-lucide="loader-2" class="spin" style="width:16px; height:16px;"></i><span>Sedang Menjana...</span>`;
+    }
+    if (btnModal) {
+      btnModal.disabled = true;
+      btnModal.dataset.origHtml = btnModal.innerHTML;
+      btnModal.innerHTML = `<i data-lucide="loader-2" class="spin" style="width:16px; height:16px;"></i><span>Sedang Menjana...</span>`;
+    }
+    if (btnClear) btnClear.disabled = true;
+    if (btnTabClear) btnTabClear.disabled = true;
+
+    overlay.classList.add('active');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  updateGeneratorProgress(percentVal, stepTextStr, stepIndex) {
+    const bar = document.getElementById('generatorProgressBar');
+    const percent = document.getElementById('generatorProgressPercent');
+    const stepText = document.getElementById('generatorProgressStepText');
+    const step1 = document.getElementById('genStep1');
+    const step2 = document.getElementById('genStep2');
+    const step3 = document.getElementById('genStep3');
+
+    if (bar) bar.style.width = `${percentVal}%`;
+    if (percent) percent.textContent = `${percentVal}%`;
+    if (stepText) stepText.textContent = stepTextStr;
+
+    if (stepIndex === 1) {
+      if (step1) step1.className = 'generator-step-item active';
+      if (step2) step2.className = 'generator-step-item';
+      if (step3) step3.className = 'generator-step-item';
+    } else if (stepIndex === 2) {
+      if (step1) step1.className = 'generator-step-item completed';
+      if (step2) step2.className = 'generator-step-item active';
+      if (step3) step3.className = 'generator-step-item';
+    } else if (stepIndex === 3) {
+      if (step1) step1.className = 'generator-step-item completed';
+      if (step2) step2.className = 'generator-step-item completed';
+      if (step3) step3.className = 'generator-step-item active';
+    }
+  }
+
+  async finishGeneratorLoading(createdCount, weeksCount) {
+    const bar = document.getElementById('generatorProgressBar');
+    const percent = document.getElementById('generatorProgressPercent');
+    const stepText = document.getElementById('generatorProgressStepText');
+    const step1 = document.getElementById('genStep1');
+    const step2 = document.getElementById('genStep2');
+    const step3 = document.getElementById('genStep3');
+    const icon = document.getElementById('generatorLoadingIcon');
+    const title = document.getElementById('generatorLoadingTitle');
+    const subtitle = document.getElementById('generatorLoadingSubtitle');
+
+    if (bar) bar.style.width = '100%';
+    if (percent) percent.textContent = '100%';
+    if (stepText) stepText.textContent = 'Janaan berjaya! Menyiapkan paparan...';
+    if (title) title.textContent = 'Jadual Kelas Berjaya Dijana!';
+    if (subtitle) subtitle.textContent = `Sebanyak ${createdCount} slot telah selesai dijadualkan bagi ${weeksCount} minggu persekolahan.`;
+
+    if (step1) step1.className = 'generator-step-item completed';
+    if (step2) step2.className = 'generator-step-item completed';
+    if (step3) step3.className = 'generator-step-item completed';
+
+    if (icon) {
+      icon.setAttribute('data-lucide', 'check-circle-2');
+      icon.style.color = '#16a34a';
+      if (window.lucide) lucide.createIcons();
+    }
+
+    await new Promise(r => setTimeout(r, 650));
+    this.hideGeneratorLoading();
+  }
+
+  hideGeneratorLoading() {
+    const overlay = document.getElementById('scheduleGeneratorLoadingOverlay');
+    if (overlay) overlay.classList.remove('active');
+
+    const btnTab = document.getElementById('btnTabSubmitScheduleGenerator');
+    const btnModal = document.getElementById('btnSubmitScheduleGenerator');
+    const btnClear = document.getElementById('btnClearGeneratedSchedule');
+    const btnTabClear = document.getElementById('btnTabClearGeneratedSchedule');
+
+    if (btnTab) {
+      btnTab.disabled = false;
+      if (btnTab.dataset.origHtml) btnTab.innerHTML = btnTab.dataset.origHtml;
+    }
+    if (btnModal) {
+      btnModal.disabled = false;
+      if (btnModal.dataset.origHtml) btnModal.innerHTML = btnModal.dataset.origHtml;
+    }
+    if (btnClear) btnClear.disabled = false;
+    if (btnTabClear) btnTabClear.disabled = false;
+
+    if (window.lucide) lucide.createIcons();
+  }
+
   async handleScheduleGeneratorSubmit(e) {
     e.preventDefault();
 
@@ -1404,7 +1538,16 @@ class ModalView {
       return;
     }
 
+    const estimatedSlots = weeksCount * 24;
+    this.showGeneratorLoading(weeksCount, estimatedSlots);
+
     try {
+      await new Promise(r => setTimeout(r, 350));
+      this.updateGeneratorProgress(35, `Mengira susunan kelas mengikut tahap bagi ${weeksCount} minggu...`, 1);
+
+      await new Promise(r => setTimeout(r, 300));
+      this.updateGeneratorProgress(65, `Menjana 4 slot berterusan bagi Tahun 1 hingga 6 (${estimatedSlots} slot)...`, 2);
+
       const res = await this.store.generateWeeklyClassSchedule({
         startSunday: startSunday,
         weeksCount: weeksCount,
@@ -1413,12 +1556,18 @@ class ModalView {
         customClasses: this.store.customWeeklyClasses
       });
 
+      this.updateGeneratorProgress(90, `Menyimpan ${res.createdCount} slot ke pangkalan data & Google Sheets...`, 3);
+      await new Promise(r => setTimeout(r, 400));
+
+      await this.finishGeneratorLoading(res.createdCount, res.weeksCount);
+
       this.closeScheduleGenerator();
       this.app.render();
 
       const rotMsg = enableRotation ? "dengan giliran kelas berbeza setiap minggu" : "secara tetap";
       this.app.showToast(`Jadual Kelas Berjaya Dijana! Sebanyak ${res.createdCount} slot telah dijadualkan ${rotMsg} bagi Tahun 1 hingga 6 (${res.weeksCount} minggu).`, "success");
     } catch (err) {
+      this.hideGeneratorLoading();
       this.app.showToast(`Ralat Janaan Jadual: ${err.message}`, "error");
     }
   }

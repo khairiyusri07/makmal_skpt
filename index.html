@@ -1299,6 +1299,50 @@
     </div>
   </div>
 
+  <!-- FULLSCREEN LOADING OVERLAY: JANA JADUAL KELAS MINGGUAN -->
+  <div class="generator-loading-overlay" id="scheduleGeneratorLoadingOverlay">
+    <div class="generator-loading-card">
+      <!-- Animated Icon Box -->
+      <div class="generator-loading-icon-wrap">
+        <div class="loading-pulse-ring"></div>
+        <div class="loading-icon-inner">
+          <i data-lucide="sparkles" id="generatorLoadingIcon" style="width: 32px; height: 32px; color: #2563eb;"></i>
+        </div>
+      </div>
+
+      <!-- Title & Subtitle -->
+      <h3 class="generator-loading-title" id="generatorLoadingTitle">Menjana Jadual Kelas Mingguan...</h3>
+      <p class="generator-loading-subtitle" id="generatorLoadingSubtitle">
+        Sila tunggu sebentar. Sistem sedang mengira rotasi kelas, mematuhi waktu rehat, dan menyelaraskan slot makmal.
+      </p>
+
+      <!-- Progress Bar Container -->
+      <div class="generator-progress-wrap">
+        <div class="generator-progress-bar" id="generatorProgressBar" style="width: 0%;"></div>
+      </div>
+      <div class="generator-progress-meta">
+        <span id="generatorProgressStepText">Memulakan janaan...</span>
+        <span id="generatorProgressPercent" style="font-weight: 700; color: #2563eb;">0%</span>
+      </div>
+
+      <!-- Live Step Checklist / Indicator -->
+      <div class="generator-steps-list">
+        <div class="generator-step-item active" id="genStep1">
+          <div class="step-dot"></div>
+          <span>Semakan rotasi & waktu rehat Tahap 1 dan Tahap 2</span>
+        </div>
+        <div class="generator-step-item" id="genStep2">
+          <div class="step-dot"></div>
+          <span id="genStep2Text">Menjana 4 slot berterusan bagi Tahun 1 hingga 6</span>
+        </div>
+        <div class="generator-step-item" id="genStep3">
+          <div class="step-dot"></div>
+          <span>Menyimpan ke pangkalan data & selaras Google Sheets</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Mobile Floating Action Button (FAB) -->
   <button id="mobileFabBtn" class="mobile-fab-btn">
     <svg width="24" height="24" viewBox="0 0 36 36">
