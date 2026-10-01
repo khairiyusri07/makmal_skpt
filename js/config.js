@@ -19,7 +19,7 @@ function getBackendApiUrl(path = '') {
 }
 
 // Paste Google Apps Script Web App URL here to enable live Google Sheets sync
-const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxt1jN0FJUTt4SfJzbv1BgS86wvt4SFuCJGdWkXQ6wUGpb2dNLYc7gNSfequC5CQBbi/exec";
+const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbzWAm7DsyhihaAjdUTFq5gblppJrWlOs5MSnoWpZoZpEKc7XQJtKcLL63kP22fO6dgb/exec";
 
 // ==========================================================================
 // AUTO CLEAR USER CACHE & AUTO RELOAD DATA IN 0.1 SECONDS (100ms)
@@ -37,14 +37,14 @@ function autoClearUserCache() {
         names.forEach(name => {
           caches.delete(name);
         });
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     // 3. Batalkan pendaftaran ServiceWorker jika wujud
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(registrations => {
         registrations.forEach(registration => registration.unregister());
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     // 4. Bersihkan cache data tempatan (localStorage) supaya data paling terkini sentiasa dimuatkan dari server

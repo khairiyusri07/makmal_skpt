@@ -138,8 +138,18 @@ class BookingStore {
                   updated = true;
                 }
               } else {
-                this.bookings.push(ab);
-                updated = true;
+                // Jika ID berbeza tetapi tarikh dan slot sama, kemaskini rekod sedia ada
+                const slotIdx = this.bookings.findIndex(b =>
+                  DateUtils.normalizeDate(b.date) === DateUtils.normalizeDate(ab.date) &&
+                  DateUtils.normalizeSlot(b.slot) === DateUtils.normalizeSlot(ab.slot)
+                );
+                if (slotIdx !== -1) {
+                  this.bookings[slotIdx] = ab;
+                  updated = true;
+                } else {
+                  this.bookings.push(ab);
+                  updated = true;
+                }
               }
             });
 
@@ -172,8 +182,17 @@ class BookingStore {
                     updated = true;
                   }
                 } else {
-                  this.bookings.push(ab);
-                  updated = true;
+                  const slotIdx = this.bookings.findIndex(b =>
+                    DateUtils.normalizeDate(b.date) === DateUtils.normalizeDate(ab.date) &&
+                    DateUtils.normalizeSlot(b.slot) === DateUtils.normalizeSlot(ab.slot)
+                  );
+                  if (slotIdx !== -1) {
+                    this.bookings[slotIdx] = ab;
+                    updated = true;
+                  } else {
+                    this.bookings.push(ab);
+                    updated = true;
+                  }
                 }
               });
               if (updated || this.bookings.length === 0) {
@@ -243,8 +262,18 @@ class BookingStore {
                   updated = true;
                 }
               } else {
-                this.bookings.push(sb);
-                updated = true;
+                // Jika ID berbeza tetapi tarikh dan slot sama, kemaskini rekod sedia ada (jangan buat baru)
+                const slotIdx = this.bookings.findIndex(b =>
+                  DateUtils.normalizeDate(b.date) === DateUtils.normalizeDate(sb.date) &&
+                  DateUtils.normalizeSlot(b.slot) === DateUtils.normalizeSlot(sb.slot)
+                );
+                if (slotIdx !== -1) {
+                  this.bookings[slotIdx] = sb;
+                  updated = true;
+                } else {
+                  this.bookings.push(sb);
+                  updated = true;
+                }
               }
             });
 
@@ -555,13 +584,24 @@ class BookingStore {
     booking.status = "Dibatalkan";
     this.save();
 
-    // Sync to Python Flask backend
+    // 1. Kemaskini status rekod sedia ada di Python backend (UPDATE, bukan cipta baru)
     try {
       await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
-        method: 'DELETE'
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: "Dibatalkan", date: booking.date, slot: booking.slot })
       });
-    } catch (e) { }
+    } catch (e) {
+      try {
+        await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: booking.date, slot: booking.slot })
+        });
+      } catch (e2) { }
+    }
 
+    // 2. Kemaskini status rekod sedia ada di Google Sheet
     this.syncToUpdateStatusSheet(id, "Dibatalkan", booking);
     setTimeout(() => {
       this.fetchFromPythonBackend();
@@ -581,7 +621,7 @@ class BookingStore {
         await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: "Diluluskan" })
+          body: JSON.stringify({ status: "Diluluskan", date: booking.date, slot: booking.slot })
         });
       } catch (e) { }
 
@@ -599,12 +639,22 @@ class BookingStore {
       booking.status = "Dibatalkan";
       this.save();
 
-      // Sync to Python Flask backend
+      // Kemaskini status rekod sedia ada di Python backend (UPDATE)
       try {
         await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
-          method: 'DELETE'
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: "Dibatalkan", date: booking.date, slot: booking.slot })
         });
-      } catch (e) { }
+      } catch (e) {
+        try {
+          await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: booking.date, slot: booking.slot })
+          });
+        } catch (e2) { }
+      }
 
       this.syncToUpdateStatusSheet(id, "Dibatalkan", booking);
       setTimeout(() => {
@@ -672,7 +722,14 @@ class BookingStore {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'UPDATE_STATUS', id: id, status: status, booking: bookingObj })
+        body: JSON.stringify({
+          action: 'UPDATE_STATUS',
+          id: id,
+          status: status,
+          date: bookingObj ? bookingObj.date : undefined,
+          slot: bookingObj ? bookingObj.slot : undefined,
+          booking: bookingObj
+        })
       }).catch(err => console.error('Google Sheet Status Update Error:', err));
     } catch (e) { }
   }

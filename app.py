@@ -296,32 +296,41 @@ def create_booking():
 
     return jsonify({"status": "success", "data": new_booking}), 201
 
-# PUT /api/bookings/<id>
-@app.route('/api/bookings/<booking_id>', methods=['PUT'])
+# PUT & PATCH /api/bookings/<id>
+@app.route('/api/bookings/<booking_id>', methods=['PUT', 'PATCH'])
 def update_booking(booking_id):
     data = request.json or {}
     conn = get_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM bookings WHERE id = ?", (booking_id,))
+    clean_id = (booking_id or '').strip()
+    cursor.execute("SELECT * FROM bookings WHERE LOWER(TRIM(id)) = LOWER(?)", (clean_id,))
     booking = cursor.fetchone()
+
+    # Jika tidak dijumpai mengikut ID, cuba cari mengikut Tarikh & Slot
+    if not booking and data.get('date') and data.get('slot'):
+        cursor.execute("SELECT * FROM bookings WHERE date = ? AND slot = ?", (data['date'], data['slot']))
+        booking = cursor.fetchone()
+
     if not booking:
         conn.close()
-        return jsonify({"status": "error", "message": "Tempahan tidak ditemui."}), 404
+        return jsonify({"status": "error", "message": "Tempahan tidak ditemui untuk dikemaskini."}), 404
 
+    target_id = booking['id']
     status = data.get('status', booking['status'])
     subject = data.get('subject', booking['subject'])
     applicant = data.get('applicant', booking['applicant'])
 
+    # Kemaskini pada rekod sedia ada (UPDATE)
     cursor.execute("""
         UPDATE bookings 
         SET status = ?, subject = ?, applicant = ?
         WHERE id = ?
-    """, (status, subject, applicant, booking_id))
+    """, (status, subject, applicant, target_id))
 
     conn.commit()
 
-    cursor.execute("SELECT * FROM bookings WHERE id = ?", (booking_id,))
+    cursor.execute("SELECT * FROM bookings WHERE id = ?", (target_id,))
     updated = dict(cursor.fetchone())
     conn.close()
 
@@ -330,12 +339,21 @@ def update_booking(booking_id):
 # DELETE /api/bookings/<id>
 @app.route('/api/bookings/<booking_id>', methods=['DELETE'])
 def delete_booking(booking_id):
+    data = request.json if (request.is_json and request.json) else {}
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("UPDATE bookings SET status = 'Dibatalkan' WHERE id = ?", (booking_id,))
+    clean_id = (booking_id or '').strip()
+
+    # 1. Kemaskini status rekod sedia ada kepada 'Dibatalkan' mengikut ID
+    cursor.execute("UPDATE bookings SET status = 'Dibatalkan' WHERE LOWER(TRIM(id)) = LOWER(?)", (clean_id,))
+
+    # 2. Jika ID tidak sepadan, cuba kemaskini mengikut Tarikh & Slot jika dibekalkan
+    if cursor.rowcount == 0 and data.get('date') and data.get('slot'):
+        cursor.execute("UPDATE bookings SET status = 'Dibatalkan' WHERE date = ? AND slot = ?", (data['date'], data['slot']))
+
     conn.commit()
     conn.close()
-    return jsonify({"status": "success", "message": f"Tempahan {booking_id} telah dibatalkan."})
+    return jsonify({"status": "success", "message": f"Tempahan {booking_id} telah berjaya dikemaskini kepada 'Dibatalkan' pada rekod sedia ada."})
 
 # GET /api/users
 @app.route('/api/users', methods=['GET'])

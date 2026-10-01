@@ -5,7 +5,65 @@
  * dan Pemprosesan Pukal (BATCH_ADD) Berprestasi Tinggi dengan LockService.
  */
 
+// [PILIHAN] Masukkan ID Google Sheet jika menggunakan skrip bebas (Standalone Script) di script.google.com
+// Contoh ID dari URL Sheet: https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
+// Jika skrip ini dibuka terus dari Google Sheet (Extensions > Apps Script), biarkan kosong "".
+var SPREADSHEET_ID = "";
+
+/**
+ * FUNGSI UJIAN: Klik butang 'Run' / 'Jalankan' pada fungsi ini untuk menguji sambungan
+ */
+function testRun() {
+  var ss = getSpreadsheet();
+  if (!ss) {
+    Logger.log("Ralat: Spreadsheet tidak dapat dikesan. Sila pastikan skrip dibuka dari Extensions > Apps Script pada Google Sheet, atau masukkan SPREADSHEET_ID.");
+    return "Ralat: Spreadsheet tidak dikesan.";
+  }
+  Logger.log("Berjaya bersambung ke Spreadsheet: " + ss.getName());
+  var sheet = getOrCreateSheet(ss, "Tempahan");
+  Logger.log("Tab 'Tempahan' sedia: " + sheet.getName());
+  var userSheet = getOrCreateSheet(ss, "Pengguna");
+  Logger.log("Tab 'Pengguna' sedia: " + userSheet.getName());
+  return "Berjaya! Pangkalan data sedia.";
+}
+
+function getSpreadsheet() {
+  var ss = null;
+  try {
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+  } catch (e) {}
+
+  if (!ss && typeof SPREADSHEET_ID !== 'undefined' && SPREADSHEET_ID && SPREADSHEET_ID.trim() !== "") {
+    try {
+      ss = SpreadsheetApp.openById(SPREADSHEET_ID.trim());
+    } catch (e2) {
+      Logger.log("Ralat membuka Spreadsheet melalui SPREADSHEET_ID: " + e2.toString());
+    }
+  }
+
+  if (!ss) {
+    try {
+      var active = SpreadsheetApp.getActiveSheet();
+      if (active && active.getParent()) {
+        ss = active.getParent();
+      }
+    } catch (e3) {}
+  }
+
+  return ss;
+}
+
 function getOrCreateSheet(ss, targetName) {
+  if (!ss || typeof ss.getSheets !== 'function') {
+    ss = getSpreadsheet();
+  }
+  if (!ss) {
+    throw new Error("Pangkalan data Google Sheet tidak ditemui! Sila pastikan: (1) Skrip ini dibuka dari Google Sheet (Extensions > Apps Script), atau (2) Masukkan SPREADSHEET_ID pada baris atas skrip jika menggunakan skrip standalone.");
+  }
+  if (!targetName) {
+    targetName = "Tempahan";
+  }
+
   var sheets = ss.getSheets();
   for (var i = 0; i < sheets.length; i++) {
     var name = sheets[i].getName().trim().toLowerCase();
@@ -34,7 +92,7 @@ function formatDateStr(val) {
 
 function doGet(e) {
   var action = e && e.parameter && e.parameter.action ? e.parameter.action : "";
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet();
 
   // 1. DAPATKAN SENARAI PENGGUNA (GET_USERS)
   if (action === "GET_USERS") {
@@ -116,7 +174,7 @@ function doPost(e) {
   try {
     var contents = e.postData.contents;
     var data = JSON.parse(contents);
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = getSpreadsheet();
 
     // 1. TAMBAH / KEMASKINI REKOD PENGGUNA (Tab: Pengguna)
     if (data.action === "RECORD_USER_ACCOUNT") {
@@ -264,6 +322,7 @@ function doPost(e) {
       var booking = data.booking || {};
       var targetId = String(data.id || booking.id || "").trim();
       var newStatus = data.status || booking.status || "";
+      var isCancellationOrStatusUpdate = (data.action === "UPDATE_STATUS" || data.action === "CANCEL" || newStatus === "Dibatalkan");
 
       var bookingSheet = getOrCreateSheet(ss, "Tempahan");
 
@@ -277,27 +336,58 @@ function doPost(e) {
 
       var rows = bookingSheet.getDataRange().getValues();
       var hasUserIdCol = (rows[0][1] && String(rows[0][1]).toLowerCase().includes("user"));
+      var dateColIdx = hasUserIdCol ? 2 : 1;
+      var slotColIdx = hasUserIdCol ? 3 : 2;
       var statusCol = hasUserIdCol ? 12 : 11; // Lajur Status (1-based index)
 
       var existingRowIndex = -1;
+
+      // 1. Cari mengikut Kod Tempahan (ID)
       if (targetId) {
+        var cleanTargetId = targetId.replace(/^'/, '').trim().toLowerCase();
         for (var j = 1; j < rows.length; j++) {
-          if (String(rows[j][0]).trim().toLowerCase() === targetId.toLowerCase()) {
+          var rowId = String(rows[j][0]).replace(/^'/, '').trim().toLowerCase();
+          if (rowId === cleanTargetId) {
             existingRowIndex = j + 1; // 1-based index
             break;
           }
         }
       }
 
-      // JIKA BARIS SEDIA ADA DIJUMPAI: Kemaskini status pada baris asal
+      // 2. Jika tidak dijumpai mengikut ID, padankan mengikut Tarikh & Slot Masa
+      if (existingRowIndex === -1 && booking.date && booking.slot) {
+        var targetDateNorm = formatDateStr(booking.date);
+        var targetSlotNorm = String(booking.slot).replace(/\s+/g, ' ').trim().toLowerCase();
+        for (var k = 1; k < rows.length; k++) {
+          var rDateNorm = formatDateStr(rows[k][dateColIdx]);
+          var rSlotNorm = String(rows[k][slotColIdx]).replace(/\s+/g, ' ').trim().toLowerCase();
+          if (rDateNorm === targetDateNorm && rSlotNorm === targetSlotNorm) {
+            existingRowIndex = k + 1;
+            break;
+          }
+        }
+      }
+
+      // JIKA BARIS SEDIA ADA DIJUMPAI: Kemaskini status pada baris asal yang sedia ada
       if (existingRowIndex !== -1) {
         if (newStatus) {
           bookingSheet.getRange(existingRowIndex, statusCol).setValue(newStatus);
         }
-        return responseJSON({ status: "success", message: "Status tempahan " + targetId + " dikemaskini pada baris " + existingRowIndex });
+        return responseJSON({
+          status: "success",
+          message: "Status tempahan " + targetId + " telah berjaya dikemaskini kepada '" + newStatus + "' pada baris sedia ada (baris " + existingRowIndex + ")."
+        });
       }
 
-      // JIKA BARIS BELUM ADA (Tempahan Baru): Tambah baris baru
+      // PENTING: JIKA TINDAKAN IALAH PEMBATALAN ATAU KEMASKINI STATUS, JANGAN SEKALI-KALI CIPTA BARIS BARU!
+      if (isCancellationOrStatusUpdate) {
+        return responseJSON({
+          status: "warning",
+          message: "Rekod tempahan " + targetId + " tidak ditemui untuk dikemaskini. Tiada baris baru dicipta kerana tindakan ialah pembatalan."
+        });
+      }
+
+      // JIKA BARIS BELUM ADA DAN BUKAN PEMBATALAN: Tambah baris baru
       var bookingUserId = booking.userId || "";
       if (!bookingUserId && booking.applicant) {
         var numMatch = String(booking.applicant).match(/\d+/);
