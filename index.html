@@ -107,6 +107,11 @@
             <i data-lucide="user-check" style="width: 18px;"></i>
             <span>Profil Saya</span>
           </div>
+          <div class="sidebar-nav-item" id="tabBtnScheduleGenerator" style="color: var(--gcal-blue); font-weight: 500;">
+            <i data-lucide="sparkles" style="width: 18px; color: var(--gcal-blue);"></i>
+            <span>Jana Jadual Kelas</span>
+            <span class="sidebar-badge" style="background: var(--gcal-blue-light); color: var(--gcal-blue-dark); display: inline-block;">Admin</span>
+          </div>
           <div class="sidebar-nav-item" id="tabBtnAdmin">
             <i data-lucide="lock" style="width: 18px;"></i>
             <span>Senarai Tempahan Makmal</span>
@@ -271,10 +276,17 @@
                   <i data-lucide="shield-check" style="color: var(--gcal-blue); width: 24px; height: 24px;"></i>
                   <h2>Rekod Tempahan Makmal (Panel Admin)</h2>
                 </div>
-                <span
-                  style="background: var(--gcal-blue-light); color: var(--gcal-blue-dark); padding: 4px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: 600;">
-                  Akses Pentadbir Disahkan
-                </span>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <button id="btnOpenScheduleGenerator" class="btn-gcal-blue"
+                    style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 7px 14px; border-radius: 8px; font-size: 0.82rem; cursor: pointer; box-shadow: var(--gcal-shadow-sm);">
+                    <i data-lucide="sparkles" style="width: 15px; height: 15px;"></i>
+                    <span>Jana Jadual Kelas Mingguan</span>
+                  </button>
+                  <span
+                    style="background: var(--gcal-blue-light); color: var(--gcal-blue-dark); padding: 4px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: 600;">
+                    Akses Pentadbir Disahkan
+                  </span>
+                </div>
               </div>
 
               <div class="admin-table-controls">
@@ -464,6 +476,39 @@
               placeholder="Sebarang maklumat tambahan..."></textarea>
           </div>
 
+          <!-- Pilihan Tempahan Berulang Khas Admin (Hanya Dipaparkan untuk Admin) -->
+          <div id="adminRecurringBookingSection"
+            style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <label for="chkAdminRecurring"
+                style="font-weight: 600; color: #166534; font-size: 0.85rem; margin: 0; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <i data-lucide="repeat" style="width: 15px; height: 15px;"></i>
+                Tempahan Berulang Tanpa Had (Pentadbir)
+              </label>
+              <input type="checkbox" id="chkAdminRecurring" style="width: 16px; height: 16px; cursor: pointer;">
+            </div>
+            <div id="adminRecurringOptions"
+              style="display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed #86efac;">
+              <div>
+                <label for="selAdminRepeatWeeks" style="font-size: 0.75rem; color: #14532d; font-weight: 600;">Bilangan Minggu</label>
+                <select id="selAdminRepeatWeeks" class="form-control-custom" style="padding: 6px 8px; font-size: 0.82rem;">
+                  <option value="1">1 Minggu (Sekali Sahaja)</option>
+                  <option value="2">2 Minggu Berturut-turut</option>
+                  <option value="4" selected>4 Minggu (1 Bulan)</option>
+                  <option value="8">8 Minggu (2 Bulan)</option>
+                  <option value="12">12 Minggu (Satu Penggal)</option>
+                </select>
+              </div>
+              <div>
+                <label for="selAdminBookingStatus" style="font-size: 0.75rem; color: #14532d; font-weight: 600;">Status Kelulusan</label>
+                <select id="selAdminBookingStatus" class="form-control-custom" style="padding: 6px 8px; font-size: 0.82rem;">
+                  <option value="Diluluskan" selected>Terus Diluluskan</option>
+                  <option value="Menunggu Kelulusan">Menunggu Kelulusan</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <div class="modal-footer">
             <button type="button" class="btn-gcal-red" id="btnCancelBooking">Batal</button>
             <button type="submit" class="btn-gcal-blue" id="btnSubmitBooking">Sahkan Tempahan</button>
@@ -570,6 +615,139 @@
               style="text-align: center; font-size: 1.2rem; letter-spacing: 0.2em;">
           </div>
           <button type="submit" class="btn-gcal-blue" style="width: 100%;">Sahkan PIN Admin</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: JANA JADUAL PENGGUNAAN MAKMAL MINGGUAN (ADMIN ONLY) -->
+  <div class="modal-overlay" id="scheduleGeneratorModal">
+    <div class="modal-container" style="max-width: 880px; width: 95%;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white;">
+        <div class="modal-title">
+          <h3 style="color: white; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="sparkles" style="width: 20px; height: 20px;"></i>
+            Jana Jadual Penggunaan Makmal Mingguan (Tahun 1 - 6)
+          </h3>
+          <p style="margin: 2px 0 0 0; font-size: 0.78rem; color: #bfdbfe;">
+            Janaan automatik 4 slot berterusan bagi setiap kelas mematuhi waktu sekolah, rehat & perhimpunan.
+          </p>
+        </div>
+        <button class="close-modal-btn" id="btnCloseScheduleGeneratorModal" style="color: white;">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px 24px; max-height: calc(85vh - 120px); overflow-y: auto;">
+        <!-- Ringkasan Peraturan Waktu Persekolahan SKPT -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px; font-size: 0.82rem;">
+          <div style="font-weight: 700; color: #1e293b; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="check-circle" style="width: 15px; height: 15px; color: #16a34a;"></i>
+            Syarat & Ketetapan Janaan Jadual SKPT:
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; color: #475569; font-size: 0.78rem;">
+            <div>• <strong>Semua Hari (Ahad - Khamis):</strong> Wajib ada penggunaan kelas setiap hari</div>
+            <div>• <strong>Slot Pelbagai & Berubah:</strong> Waktu tidak sama & bertukar setiap minggu</div>
+            <div>• <strong>Ruang Tempahan Guru:</strong> Setiap hari ada 5 - 9 slot untuk tempahan guru</div>
+            <div>• <strong>Perhimpunan Ahad (08:00 - 08:30):</strong> Dielakkan sepenuhnya</div>
+            <div>• <strong>Waktu Rehat Terpelihara:</strong> T1 (10:00-10:30) & T2 (10:30-11:00)</div>
+            <div>• <strong>Waktu Balik SKPT:</strong> T1 (12:30/1:00 PM) & T2 (1:30 PM) dipatuhi</div>
+          </div>
+        </div>
+
+        <form id="scheduleGeneratorForm">
+          <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-bottom: 18px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="genStartSunday">Bermula Minggu (Ahad) <span>*</span></label>
+              <input type="date" id="genStartSunday" class="form-control-custom" required>
+              <small id="genWeekHint" style="font-size: 0.75rem; color: #64748b; margin-top: 4px; display: block;">
+                Memuatkan tarikh minggu...
+              </small>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="genWeeksCount">Tempoh Janaan (Bilangan Minggu) <span>*</span></label>
+              <select id="genWeeksCount" class="form-control-custom" required>
+                <option value="1">1 Minggu (Minggu Terpilih Sahaja - 24 Slot)</option>
+                <option value="2">2 Minggu Berturut-turut (48 Slot)</option>
+                <option value="4" selected>4 Minggu (1 Bulan - 96 Slot)</option>
+                <option value="8">8 Minggu (2 Bulan - 192 Slot)</option>
+                <option value="12">12 Minggu (Satu Penggal Persekolahan)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 12px 14px;">
+            <label style="display: flex; align-items: flex-start; gap: 10px; font-weight: 600; font-size: 0.84rem; cursor: pointer; color: #1e1b4b; margin-bottom: 0;">
+              <input type="checkbox" id="genEnableRotation" checked style="width: 18px; height: 18px; margin-top: 2px;">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-weight: 700; color: #312e81; font-size: 0.88rem;">Gilirkan Hari & Slot Kelas Setiap Minggu (Rotasi Adil)</span>
+                  <span style="background: #4f46e5; color: white; font-size: 0.68rem; padding: 2px 7px; border-radius: 10px; font-weight: 600;">Disyorkan</span>
+                </div>
+                <div style="font-size: 0.76rem; color: #4338ca; font-weight: normal; margin-top: 3px; line-height: 1.4;">
+                  Merangkumi semua 5 hari (Ahad hingga Khamis). Hari dan slot masa setiap kelas akan berubah setiap minggu dalam kitaran 3 minggu secara adil, sambil mengekalkan waktu kosong harian untuk tempahan guru lain.
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">
+              <input type="checkbox" id="genOverwriteExisting" checked style="width: 16px; height: 16px;">
+              <span>Gantikan / batalkan tempahan lain yang bertindih dengan jadual rasmi kelas ini</span>
+            </label>
+          </div>
+
+          <!-- Pra-tonton Struktur Jadual Mingguan -->
+          <div style="margin-top: 14px;">
+            <div style="font-weight: 700; color: #1e293b; font-size: 0.85rem; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span>Pra-tonton Jadual Penggunaan (Ahad - Khamis):</span>
+                <span id="previewWeekBadge" style="font-size: 0.75rem; color: #4338ca; background: #e0e7ff; padding: 2px 8px; border-radius: 12px; font-weight: 700;">
+                  Giliran Minggu 1
+                </span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px;" id="previewRotationControls">
+                <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">Papar Giliran:</span>
+                <button type="button" class="btn-preview-week active" data-week="0" style="padding: 3px 9px; font-size: 0.72rem; border-radius: 6px; border: 1px solid #2563eb; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Minggu 1</button>
+                <button type="button" class="btn-preview-week" data-week="1" style="padding: 3px 9px; font-size: 0.72rem; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #475569; cursor: pointer; font-weight: 600;">Minggu 2</button>
+                <button type="button" class="btn-preview-week" data-week="2" style="padding: 3px 9px; font-size: 0.72rem; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #475569; cursor: pointer; font-weight: 600;">Minggu 3</button>
+              </div>
+            </div>
+
+            <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left;">
+                <thead style="background: #f1f5f9; color: #475569; font-size: 0.75rem; text-transform: uppercase;">
+                  <tr>
+                    <th style="padding: 8px 10px;">Hari & Tarikh</th>
+                    <th style="padding: 8px 10px;">Waktu Slot Kelas (4 Slot)</th>
+                    <th style="padding: 8px 10px;">Kelas & Tahap</th>
+                    <th style="padding: 8px 10px;">Mata Pelajaran & Catatan</th>
+                    <th style="padding: 8px 10px; color: #15803d; background: #f0fdf4;">Waktu Baki Boleh Ditempah Guru</th>
+                  </tr>
+                </thead>
+                <tbody id="schedulePreviewTableBody">
+                  <!-- Rendered via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="btn-gcal-red" id="btnClearGeneratedSchedule"
+              style="padding: 8px 14px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;"
+              title="Padam jadual rasmi yang telah dijana bagi minggu yang dipilih">
+              <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+              <span>Kosongkan Jadual Janaan</span>
+            </button>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn-gcal-red" id="btnCancelScheduleGenerator">Batal</button>
+              <button type="submit" class="btn-gcal-blue" id="btnSubmitScheduleGenerator"
+                style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px;">
+                <i data-lucide="sparkles" style="width: 15px; height: 15px;"></i>
+                <span id="btnSubmitScheduleGeneratorText">Jana Jadual Sekarang</span>
+              </button>
+            </div>
+          </div>
         </form>
       </div>
     </div>

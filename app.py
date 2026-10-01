@@ -172,46 +172,52 @@ def create_booking():
     if not date or not slot:
         return jsonify({"status": "error", "message": "Tarikh dan Slot Masa diperlukan."}), 400
 
-    # 1. Semakan tempahan sekurang-kurangnya sehari sebelum (Zon masa Malaysia UTC+8)
-    tz_my = datetime.timezone(datetime.timedelta(hours=8))
-    today_my = datetime.datetime.now(tz_my).date()
-
-    try:
-        booking_date = datetime.date.fromisoformat(date)
-    except Exception:
-        return jsonify({"status": "error", "message": "Format tarikh tidak sah."}), 400
-
-    if booking_date <= today_my:
-        return jsonify({
-            "status": "error",
-            "message": "Tempahan slot makmal hanya dibenarkan sekurang-kurangnya sehari sebelum tarikh penggunaan."
-        }), 400
-
-    user_id = (data.get('userId') or '').strip()
-    user_email = (data.get('userEmail') or '').strip()
+    role = data.get('role', 'Guru / Tenaga Pengajar')
+    is_admin = bool(data.get('isAdmin', False)) or any(k in str(role).lower() for k in ['admin', 'penyelaras', 'pentadbir', 'ict']) or 'Jadual Rasmi' in str(applicant)
 
     conn = get_db()
     cursor = conn.cursor()
 
-    # 2. Semakan had maksimum 2 slot pada hari yang ditempah bagi setiap pengguna
-    cursor.execute("""
-        SELECT COUNT(*) FROM bookings 
-        WHERE date = ? 
-          AND status != 'Dibatalkan'
-          AND (
-              (? != '' AND userId = ?)
-              OR (? != '' AND userEmail = ?)
-              OR (? != '' AND applicant = ?)
-          )
-    """, (date, user_id, user_id, user_email, user_email, applicant, applicant))
-    user_booking_count = cursor.fetchone()[0]
+    if not is_admin:
+        # 1. Semakan tempahan sekurang-kurangnya sehari sebelum (HANYA pengguna biasa)
+        tz_my = datetime.timezone(datetime.timedelta(hours=8))
+        today_my = datetime.datetime.now(tz_my).date()
 
-    if user_booking_count >= 2:
-        conn.close()
-        return jsonify({
-            "status": "error",
-            "message": f"Had tempahan tercapai! Pengguna telah menempah {user_booking_count} slot pada tarikh {date}. Maksimum 2 slot sehari sahaja dibenarkan bagi setiap pengguna."
-        }), 400
+        try:
+            booking_date = datetime.date.fromisoformat(date)
+        except Exception:
+            conn.close()
+            return jsonify({"status": "error", "message": "Format tarikh tidak sah."}), 400
+
+        if booking_date <= today_my:
+            conn.close()
+            return jsonify({
+                "status": "error",
+                "message": "Tempahan slot makmal hanya dibenarkan sekurang-kurangnya sehari sebelum tarikh penggunaan."
+            }), 400
+
+        user_id = (data.get('userId') or '').strip()
+        user_email = (data.get('userEmail') or '').strip()
+
+        # 2. Semakan had maksimum 2 slot pada hari yang ditempah (HANYA pengguna biasa)
+        cursor.execute("""
+            SELECT COUNT(*) FROM bookings 
+            WHERE date = ? 
+              AND status != 'Dibatalkan'
+              AND (
+                  (? != '' AND userId = ?)
+                  OR (? != '' AND userEmail = ?)
+                  OR (? != '' AND applicant = ?)
+              )
+        """, (date, user_id, user_id, user_email, user_email, applicant, applicant))
+        user_booking_count = cursor.fetchone()[0]
+
+        if user_booking_count >= 2:
+            conn.close()
+            return jsonify({
+                "status": "error",
+                "message": f"Had tempahan tercapai! Pengguna telah menempah {user_booking_count} slot pada tarikh {date}. Maksimum 2 slot sehari sahaja dibenarkan bagi setiap pengguna."
+            }), 400
 
     # 3. Check for conflict
     cursor.execute("""
@@ -221,11 +227,18 @@ def create_booking():
     existing = cursor.fetchone()
 
     if existing:
-        conn.close()
-        return jsonify({
-            "status": "error",
-            "message": f"Slot {slot} pada tarikh {date} telah pun ditempah oleh {existing['applicant']} ({existing['subject']})."
-        }), 409
+        target_id = data.get('id')
+        if existing['id'] == target_id:
+            pass # Kemaskini rekod sedia ada
+        elif is_admin and (data.get('overwrite') or (target_id and str(target_id).startswith('JDL-'))):
+            cursor.execute("UPDATE bookings SET status = 'Dibatalkan' WHERE id = ?", (existing['id'],))
+        else:
+            conn.close()
+            return jsonify({
+                "status": "error",
+                "message": f"Slot {slot} pada tarikh {date} telah pun ditempah oleh {existing['applicant']} ({existing['subject']})."
+            }), 409
+
 
     booking_id = data.get('id') or f"TB-{int(datetime.datetime.now().timestamp() * 1000) % 100000}"
     user_id = data.get('userId') or ''

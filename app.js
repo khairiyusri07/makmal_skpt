@@ -303,6 +303,76 @@ class App {
     const btnCloseAdminAuthModal = document.getElementById('btnCloseAdminAuthModal');
     if (btnCloseAdminAuthModal) btnCloseAdminAuthModal.addEventListener('click', () => this.modalView.closeAdminAuth());
 
+    // Admin Recurring Checkbox in Booking Modal
+    const chkAdminRecurring = document.getElementById('chkAdminRecurring');
+    const adminRecurringOptions = document.getElementById('adminRecurringOptions');
+    if (chkAdminRecurring && adminRecurringOptions) {
+      chkAdminRecurring.addEventListener('change', (e) => {
+        adminRecurringOptions.style.display = e.target.checked ? 'grid' : 'none';
+      });
+    }
+
+    // Schedule Generator Modal Events (Admin Only)
+    const btnOpenScheduleGenerator = document.getElementById('btnOpenScheduleGenerator');
+    if (btnOpenScheduleGenerator) {
+      btnOpenScheduleGenerator.addEventListener('click', () => this.modalView.openScheduleGenerator());
+    }
+
+    const tabBtnScheduleGenerator = document.getElementById('tabBtnScheduleGenerator');
+    if (tabBtnScheduleGenerator) {
+      tabBtnScheduleGenerator.addEventListener('click', () => {
+        this.closeMobileSidebar();
+        this.modalView.openScheduleGenerator();
+      });
+    }
+
+    const btnCloseScheduleGeneratorModal = document.getElementById('btnCloseScheduleGeneratorModal');
+    if (btnCloseScheduleGeneratorModal) {
+      btnCloseScheduleGeneratorModal.addEventListener('click', () => this.modalView.closeScheduleGenerator());
+    }
+
+    const btnCancelScheduleGenerator = document.getElementById('btnCancelScheduleGenerator');
+    if (btnCancelScheduleGenerator) {
+      btnCancelScheduleGenerator.addEventListener('click', () => this.modalView.closeScheduleGenerator());
+    }
+
+    const scheduleGeneratorForm = document.getElementById('scheduleGeneratorForm');
+    if (scheduleGeneratorForm) {
+      scheduleGeneratorForm.addEventListener('submit', (e) => this.modalView.handleScheduleGeneratorSubmit(e));
+    }
+
+    const btnClearGeneratedSchedule = document.getElementById('btnClearGeneratedSchedule');
+    if (btnClearGeneratedSchedule) {
+      btnClearGeneratedSchedule.addEventListener('click', () => this.modalView.handleClearGeneratedSchedule());
+    }
+
+    const genStartSunday = document.getElementById('genStartSunday');
+    if (genStartSunday) {
+      genStartSunday.addEventListener('change', () => this.modalView.updateSchedulePreview());
+      genStartSunday.addEventListener('input', () => this.modalView.updateSchedulePreview());
+    }
+
+    const genWeeksCount = document.getElementById('genWeeksCount');
+    if (genWeeksCount) {
+      genWeeksCount.addEventListener('change', () => this.modalView.updateSchedulePreview());
+    }
+
+    const genEnableRotation = document.getElementById('genEnableRotation');
+    if (genEnableRotation) {
+      genEnableRotation.addEventListener('change', () => this.modalView.updateSchedulePreview());
+    }
+
+    const previewRotationControls = document.getElementById('previewRotationControls');
+    if (previewRotationControls) {
+      previewRotationControls.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-preview-week');
+        if (btn) {
+          const weekOffset = parseInt(btn.dataset.week, 10) || 0;
+          this.modalView.updateSchedulePreview(weekOffset);
+        }
+      });
+    }
+
     // Slip Modal
     const btnCloseSlipModal = document.getElementById('btnCloseSlipModal');
     if (btnCloseSlipModal) btnCloseSlipModal.addEventListener('click', () => this.modalView.closeSlip());

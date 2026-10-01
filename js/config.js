@@ -137,3 +137,266 @@ class DateUtils {
     return str;
   }
 }
+
+// Templat Sesi Masa Makmal Mengikut Tahap (Mematuhi Waktu Persekolahan, Perhimpunan & Rehat)
+const TAHAP_1_SESSIONS = [
+  {
+    dayIndex: 1, // Isnin
+    dayName: "Isnin",
+    slots: ["08:00 - 08:30", "08:30 - 09:00", "09:00 - 09:30", "09:30 - 10:00"],
+    timeDesc: "08:00 AM - 10:00 AM",
+    timeNote: "Pagi sebelum Rehat Tahap 1 (10:00-10:30)"
+  },
+const ALL_CLASSES = {
+  "1 UTARID": { className: "1 UTARID", level: "Tahap 1", subject: "Literasi Digital & Asas Komputer - 1 UTARID" },
+  "2 ZUHRAH": { className: "2 ZUHRAH", level: "Tahap 1", subject: "Literasi Digital & Amali - 2 ZUHRAH" },
+  "3 MARIKH": { className: "3 MARIKH", level: "Tahap 1", subject: "Literasi Digital & Pembelajaran Interaktif - 3 MARIKH" },
+  "4 MUSYTARI": { className: "4 MUSYTARI", level: "Tahap 2", subject: "RBT & TMK - 4 MUSYTARI" },
+  "5 ZUHAL": { className: "5 ZUHAL", level: "Tahap 2", subject: "RBT (Pengaturcaraan Scratch) - 5 ZUHAL" },
+  "6 NEPTUN": { className: "6 NEPTUN", level: "Tahap 2", subject: "RBT (Robotik & Algoritma) - 6 NEPTUN" }
+};
+
+/**
+ * Matriks Rotasi Jadual Mingguan (Kitaran 3 Minggu):
+ * 1. WAJIB menggunakan SEMUA 5 hari persekolahan (Ahad hingga Khamis).
+ * 2. Slot penggunaan BERUBAH dan PELBAGAI setiap hari & minggu (08:00-10:00, 08:30-10:30, 10:30-12:30, 11:00-13:00, 11:30-13:30).
+ * 3. Setiap hari ADA WAKTU TERBUKA untuk guru lain membuat tempahan makmal (5 hingga 9 slot sehari).
+ * 4. Mematuhi perhimpunan rasmi Ahad (08:00-08:30), rehat Tahap 1 (10:00-10:30), rehat Tahap 2 (10:30-11:00), dan waktu balik SKPT.
+ */
+const ROTATING_WEEKLY_SCHEDULES = [
+  // ===================== MINGGU 1 =====================
+  [
+    {
+      dayIndex: 0,
+      dayName: "Ahad",
+      className: "4 MUSYTARI",
+      slots: ["08:30 - 09:00", "09:00 - 09:30", "09:30 - 10:00", "10:00 - 10:30"],
+      timeDesc: "08:30 AM - 10:30 AM",
+      timeNote: "Selepas Perhimpunan Rasmi Ahad (08:00-08:30) & sebelum Rehat Tahap 2 (10:30-11:00)",
+      teacherFreeTime: "10:30 AM - 02:30 PM",
+      teacherFreeSlotsCount: 7
+    },
+    {
+      dayIndex: 1,
+      dayName: "Isnin",
+      className: "1 UTARID",
+      slots: ["08:00 - 08:30", "08:30 - 09:00", "09:00 - 09:30", "09:30 - 10:00"],
+      timeDesc: "08:00 AM - 10:00 AM",
+      timeNote: "Awal pagi sebelum Rehat Tahap 1 (10:00-10:30)",
+      teacherFreeTime: "10:00 AM - 02:30 PM",
+      teacherFreeSlotsCount: 8
+    },
+    {
+      dayIndex: 2,
+      dayName: "Selasa",
+      className: "5 ZUHAL",
+      slots: ["11:00 - 11:30", "11:30 - 12:00", "12:00 - 12:30", "12:30 - 13:00"],
+      timeDesc: "11:00 AM - 01:00 PM",
+      timeNote: "Selepas Rehat Tahap 2 (10:30-11:00) & sebelum Waktu Balik (13:30)",
+      teacherFreeTime: "08:00 AM - 11:00 AM & 01:00 PM - 02:30 PM",
+      teacherFreeSlotsCount: 9
+    },
+    {
+      dayIndex: 3,
+      dayName: "Rabu",
+      className: "2 ZUHRAH",
+      slots: ["10:30 - 11:00", "11:00 - 11:30", "11:30 - 12:00", "12:00 - 12:30"],
+      timeDesc: "10:30 AM - 12:30 PM",
+      timeNote: "Selepas Rehat Tahap 1 (10:00-10:30) & tamat tepat Waktu Balik Awal Rabu (12:30)",
+      teacherFreeTime: "08:00 AM - 10:30 AM & 12:30 PM - 02:30 PM",
+      teacherFreeSlotsCount: 9
+    },
+    {
+      dayIndex: 4,
+      dayName: "Khamis",
+      className: "3 MARIKH",
+      slots: ["08:00 - 08:30", "08:30 - 09:00", "09:00 - 09:30", "09:30 - 10:00"],
+      timeDesc: "08:00 AM - 10:00 AM",
+      timeNote: "Awal pagi sebelum Rehat Tahap 1 (10:00-10:30)",
+      teacherFreeTime: "10:00 AM - 11:30 AM & 01:30 PM - 02:30 PM",
+      teacherFreeSlotsCount: 5
+    },
+    {
+      dayIndex: 4,
+      dayName: "Khamis",
+      className: "6 NEPTUN",
+      slots: ["11:30 - 12:00", "12:00 - 12:30", "12:30 - 13:00", "13:00 - 13:30"],
+      timeDesc: "11:30 AM - 01:30 PM",
+      timeNote: "Selepas Rehat Tahap 2 (10:30-11:00) & tamat tepat Waktu Balik (13:30)",
+      teacherFreeTime: "10:00 AM - 11:30 AM & 01:30 PM - 02:30 PM",
+      teacherFreeSlotsCount: 5
+    }
+  ],
+
+  // ===================== MINGGU 2 =====================
+  [
+    {
+      dayIndex: 0,
+      dayName: "Ahad",
+      className: "5 ZUHAL",
+      slots: ["08:30 - 09:00", "09:00 - 09:30", "09:30 - 10:00", "10:00 - 10:30"],
+      timeDesc: "08:30 AM - 10:30 AM",
+      timeNote: "Selepas Perhimpunan Rasmi Ahad (08:00-08:30) & sebelum Rehat Tahap 2 (10:30-11:00)",
+      teacherFreeTime: "10:30 AM - 02:30 PM",
+      teacherFreeSlotsCount: 7
+    },
+    {
+      dayIndex: 1,
+      dayName: "Isnin",
+      className: "2 ZUHRAH",
+      slots: ["08:00 - 08:30", "08:30 - 09:00", "09:00 - 09:30", "09:30 - 10:00"],
+      timeDesc: "08:00 AM - 10:00 AM",
+      timeNote: "Awal pagi sebelum Rehat Tahap 1 (10:00-10:30)",
+      teacherFreeTime: "10:00 AM - 11:00 AM & 01:00 PM - 02:30 PM",
+      teacherFreeSlotsCount: 5
+    },
+    {
+      dayIndex: 1,
+      dayName: "Isnin",
+      className: "6 NEPTUN",
+      slots: ["11:00 - 11:30", "11:30 - 12:00", "12:00 - 12:30", "12:30 - 13:00"],
+      timeDesc: "11:00 AM - 01:00 PM",
+      timeNote: "Selepas Rehat Tahap 2 (10:30-11:00) & sebelum Waktu Balik (13:30)",
+      teacherFreeTime: "10:00 AM - 11:00 AM & 01:00 PM - 02:30 PM",
+      teacherFreeSlotsCount: 5
+    },
+    {
+      dayIndex: 2,
+      dayName: "Selasa",
+      className: "3 MARIKH",
+      slots: ["10:30 - 11:00", "11:00 - 11:30", "11:30 - 12:00", "12:00 - 12:30"],
+      timeDesc: "10:30 AM - 12:30 PM",
+      timeNote: "Selepas Rehat Tahap 1 (10:00-10:30) & sebelum Waktu Balik (13:00)",
+      teacherFreeTime: "08:00 AM - 10:30 AM & 12:30 PM - 02:30 PM",
+      teacherFreeSlotsCount: 9
+    },
+    {
+      dayIndex: 3,
+      dayName: "Rabu",
+      className: "4 MUSYTARI",
+      slots: ["11:30 - 12:00", "12:00 - 12:30", "12:30 - 13:00", "13:00 - 13:30"],
+      timeDesc: "11:30 AM - 01:30 PM",
+      timeNote: "Selepas Rehat Tahap 2 (10:30-11:00) & tamat tepat Waktu Balik (13:30)",
+      teacherFreeTime: "08:00 AM - 11:30 AM & 01:30 PM - 02:30 PM",
+      teacherFreeSlotsCount: 9
+    },
+    {
+      dayIndex: 4,
+      dayName: "Khamis",
+      className: "1 UTARID",
+      slots: ["08:00 - 08:30", "08:30 - 09:00", "09:00 - 09:30", "09:30 - 10:00"],
+      timeDesc: "08:00 AM - 10:00 AM",
+      timeNote: "Awal pagi sebelum Rehat Tahap 1 (10:00-10:30) & tamat sebelum Pulang Awal (12:30)",
+      teacherFreeTime: "10:00 AM - 02:30 PM",
+      teacherFreeSlotsCount: 8
+    }
+  ],
+
+  // ===================== MINGGU 3 =====================
+  [
+    {
+      dayIndex: 0,
+      dayName: "Ahad",
+      className: "6 NEPTUN",
+      slots: ["08:30 - 09:00", "09:00 - 09:30", "09:30 - 10:00", "10:00 - 10:30"],
+      timeDesc: "08:30 AM - 10:30 AM",
+      timeNote: "Selepas Perhimpunan Rasmi Ahad (08:00-08:30) & sebelum Rehat Tahap 2 (10:30-11:00)",
+      teacherFreeTime: "10:30 AM - 02:30 PM",
+      teacherFreeSlotsCount: 7
+    },
+    {
+      dayIndex: 1,
+      dayName: "Isnin",
+      className: "4 MUSYTARI",
+      slots: ["11:00 - 11:30", "11:30 - 12:00", "12:00 - 12:30", "12:30 - 13:00"],
+      timeDesc: "11:00 AM - 01:00 PM",
+      timeNote: "Selepas Rehat Tahap 2 (10:30-11:00) & sebelum Waktu Balik (13:30)",
+      teacherFreeTime: "08:00 AM - 11:00 AM & 01:00 PM - 02:30 PM",
+      teacherFreeSlotsCount: 9
+    },
+    {
+      dayIndex: 2,
+      dayName: "Selasa",
+      className: "1 UTARID",
+      slots: ["08:00 - 08:30", "08:30 - 09:00", "09:00 - 09:30", "09:30 - 10:00"],
+      timeDesc: "08:00 AM - 10:00 AM",
+      timeNote: "Awal pagi sebelum Rehat Tahap 1 (10:00-10:30)",
+      teacherFreeTime: "10:00 AM - 02:30 PM",
+      teacherFreeSlotsCount: 8
+    },
+    {
+      dayIndex: 3,
+      dayName: "Rabu",
+      className: "3 MARIKH",
+      slots: ["10:30 - 11:00", "11:00 - 11:30", "11:30 - 12:00", "12:00 - 12:30"],
+      timeDesc: "10:30 AM - 12:30 PM",
+      timeNote: "Selepas Rehat Tahap 1 (10:00-10:30) & tamat tepat Waktu Balik Awal Rabu (12:30)",
+      teacherFreeTime: "08:00 AM - 10:30 AM & 12:30 PM - 02:30 PM",
+      teacherFreeSlotsCount: 9
+    },
+    {
+      dayIndex: 4,
+      dayName: "Khamis",
+      className: "2 ZUHRAH",
+      slots: ["08:00 - 08:30", "08:30 - 09:00", "09:00 - 09:30", "09:30 - 10:00"],
+      timeDesc: "08:00 AM - 10:00 AM",
+      timeNote: "Awal pagi sebelum Rehat Tahap 1 (10:00-10:30) & tamat sebelum Pulang Awal (12:30)",
+      teacherFreeTime: "10:00 AM - 11:30 AM & 01:30 PM - 02:30 PM",
+      teacherFreeSlotsCount: 5
+    },
+    {
+      dayIndex: 4,
+      dayName: "Khamis",
+      className: "5 ZUHAL",
+      slots: ["11:30 - 12:00", "12:00 - 12:30", "12:30 - 13:00", "13:00 - 13:30"],
+      timeDesc: "11:30 AM - 01:30 PM",
+      timeNote: "Selepas Rehat Tahap 2 (10:30-11:00) & tamat tepat Waktu Balik (13:30)",
+      teacherFreeTime: "10:00 AM - 11:30 AM & 01:30 PM - 02:30 PM",
+      teacherFreeSlotsCount: 5
+    }
+  ]
+];
+
+/**
+ * Menghasilkan jadual waktu mingguan kelas (Tahun 1 hingga 6).
+ * Menyokong rotasi adil kitaran 3 minggu merangkumi Ahad hingga Khamis dengan slot berubah-ubah.
+ * @param {number} weekOffset - Indeks minggu (0 = Minggu 1, 1 = Minggu 2, 2 = Minggu 3, dst.)
+ * @param {boolean} enableRotation - Benarkan penggiliran bergilir setiap minggu (lalai: benar)
+ */
+function getWeeklyClassSchedule(weekOffset = 0, enableRotation = true) {
+  const rotIdx = enableRotation ? (Math.abs(weekOffset) % ROTATING_WEEKLY_SCHEDULES.length) : 0;
+  const rawList = ROTATING_WEEKLY_SCHEDULES[rotIdx];
+
+  const schedule = rawList.map(entry => {
+    const classInfo = ALL_CLASSES[entry.className] || {
+      className: entry.className,
+      level: entry.className.startsWith('1') || entry.className.startsWith('2') || entry.className.startsWith('3') ? 'Tahap 1' : 'Tahap 2',
+      subject: `Pelajaran Komputer - ${entry.className}`
+    };
+
+    return {
+      dayIndex: entry.dayIndex,
+      dayName: entry.dayName,
+      className: classInfo.className,
+      level: classInfo.level,
+      subject: classInfo.subject,
+      slots: entry.slots,
+      timeDesc: entry.timeDesc,
+      teacherFreeTime: entry.teacherFreeTime,
+      teacherFreeSlotsCount: entry.teacherFreeSlotsCount,
+      notes: `Jadual Rasmi Mingguan (Giliran Minggu ${(weekOffset % 3) + 1}): ${entry.timeNote}`
+    };
+  });
+
+  // Susun mengikut hari (Ahad -> Isnin -> Selasa -> Rabu -> Khamis) dan slot masa
+  schedule.sort((a, b) => {
+    if (a.dayIndex !== b.dayIndex) return a.dayIndex - b.dayIndex;
+    return a.slots[0].localeCompare(b.slots[0]);
+  });
+
+  return schedule;
+}
+
+// Untuk keserasian kod sedia ada
+const WEEKLY_CLASS_SCHEDULE_TEMPLATE = getWeeklyClassSchedule(0, false);
+

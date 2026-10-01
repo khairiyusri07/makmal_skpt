@@ -278,24 +278,27 @@ class BookingStore {
         bookingData.role = this.auth.currentUser.role || 'Guru / Tenaga Pengajar';
       }
     }
-    bookingData.status = "Menunggu Kelulusan";
+    const isAdmin = (this.auth && (this.auth.isLabCoordinator() || this.auth.isAdminVerified)) || !!bookingData.isAdmin;
+    bookingData.status = bookingData.status || (isAdmin ? "Diluluskan" : "Menunggu Kelulusan");
     bookingData.date = DateUtils.normalizeDate(bookingData.date);
     bookingData.slot = DateUtils.normalizeSlot(bookingData.slot);
 
-    // Syarat 1: Sekurang-kurangnya sehari sebelum tarikh penggunaan
-    if (!DateUtils.isAtLeastOneDayInAdvance(bookingData.date)) {
+    // Syarat 1: Sekurang-kurangnya sehari sebelum tarikh penggunaan (HANYA pengguna biasa)
+    if (!isAdmin && !DateUtils.isAtLeastOneDayInAdvance(bookingData.date)) {
       throw new Error("Tempahan slot makmal hanya dibenarkan sekurang-kurangnya 1 hari sebelum tarikh penggunaan (mulai esok).");
     }
 
-    // Syarat 2: Maksimum 2 slot pada hari yang ditempah bagi setiap pengguna
-    const checkUser = (this.auth && this.auth.currentUser) ? this.auth.currentUser : {
-      userId: bookingData.userId,
-      email: bookingData.userEmail,
-      name: bookingData.applicant
-    };
-    const userSlotCount = this.getUserBookingCountForDate(checkUser, bookingData.date);
-    if (userSlotCount >= 2) {
-      throw new Error(`Had maksimum tempahan tercapai! Anda telah menempah 2 slot pada tarikh ${bookingData.date}. Setiap pengguna hanya dibenarkan menempah maksimum 2 slot sehari.`);
+    // Syarat 2: Maksimum 2 slot pada hari yang ditempah bagi setiap pengguna (HANYA pengguna biasa)
+    if (!isAdmin) {
+      const checkUser = (this.auth && this.auth.currentUser) ? this.auth.currentUser : {
+        userId: bookingData.userId,
+        email: bookingData.userEmail,
+        name: bookingData.applicant
+      };
+      const userSlotCount = this.getUserBookingCountForDate(checkUser, bookingData.date);
+      if (userSlotCount >= 2) {
+        throw new Error(`Had maksimum tempahan tercapai! Anda telah menempah 2 slot pada tarikh ${bookingData.date}. Setiap pengguna hanya dibenarkan menempah maksimum 2 slot sehari.`);
+      }
     }
 
     // Semakan pertindihan slot
@@ -313,7 +316,7 @@ class BookingStore {
       await fetch(`${PYTHON_API_URL}/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(booking)
+        body: JSON.stringify({ ...booking, isAdmin: isAdmin })
       });
     } catch (e) { }
 
@@ -324,6 +327,146 @@ class BookingStore {
     }, 1500);
     return booking;
   }
+
+  // Janaan Automatik Jadual Penggunaan Kelas Mingguan (Tahun 1 hingga Tahun 6)
+  // Mematuhi waktu persekolahan, perhimpunan ahad, dan waktu rehat kedua-dua tahap
+  async generateWeeklyClassSchedule(options = {}) {
+    const startSundayIso = options.startSunday ? DateUtils.normalizeDate(options.startSunday) : DateUtils.formatDateIso(this.currentSunday);
+    const weeksCount = parseInt(options.weeksCount, 10) || 1;
+    const overwriteExisting = options.overwriteExisting !== false; // lalai: benar (ganti)
+
+    const baseSunday = new Date(startSundayIso);
+    let createdCount = 0;
+    let skippedCount = 0;
+    const newBookings = [];
+
+    const enableRotation = options.enableRotation !== false; // lalai: benar (bergilir setiap minggu)
+
+    for (let w = 0; w < weeksCount; w++) {
+      const currentSunday = new Date(baseSunday);
+      currentSunday.setDate(currentSunday.getDate() + (w * 7));
+
+      // Ambil jadual mingguan mengikut giliran minggu ke-w
+      const weekSchedule = typeof getWeeklyClassSchedule === 'function'
+        ? getWeeklyClassSchedule(w, enableRotation)
+        : WEEKLY_CLASS_SCHEDULE_TEMPLATE;
+
+      for (const entry of weekSchedule) {
+        const targetDate = new Date(currentSunday);
+        targetDate.setDate(targetDate.getDate() + entry.dayIndex);
+        const dateStr = DateUtils.formatDateIso(targetDate);
+
+        for (let sIdx = 0; sIdx < entry.slots.length; sIdx++) {
+          const slot = entry.slots[sIdx];
+          const normDate = DateUtils.normalizeDate(dateStr);
+          const normSlot = DateUtils.normalizeSlot(slot);
+
+          // Semak pertindihan
+          const existingIdx = this.bookings.findIndex(b => {
+            if (b.status === "Dibatalkan") return false;
+            return DateUtils.normalizeDate(b.date) === normDate && DateUtils.normalizeSlot(b.slot) === normSlot;
+          });
+
+          if (existingIdx !== -1) {
+            const existingB = this.bookings[existingIdx];
+            if (overwriteExisting) {
+              if (existingB.id && existingB.id.startsWith('JDL-')) {
+                this.bookings.splice(existingIdx, 1);
+              } else {
+                existingB.status = "Dibatalkan";
+              }
+            } else {
+              skippedCount++;
+              continue;
+            }
+          }
+
+          const cleanClassName = entry.className.replace(/\s+/g, '_');
+          const bookingId = `JDL-${normDate.replace(/-/g, '')}-${cleanClassName}-S${sIdx + 1}`;
+
+          // Padam rekod terdahulu dengan ID yang sama jika janaan semula
+          const dupIdx = this.bookings.findIndex(b => b.id === bookingId);
+          if (dupIdx !== -1) {
+            this.bookings.splice(dupIdx, 1);
+          }
+
+          const booking = new Booking({
+            id: bookingId,
+            userId: "USR-ADMIN",
+            userEmail: "admin@moe-dl.edu.my",
+            labId: "LAB-1",
+            date: normDate,
+            slot: normSlot,
+            applicant: `Jadual Rasmi (${entry.className})`,
+            role: "Penyelaras Makmal Komputer",
+            subject: entry.subject,
+            pcCount: 35,
+            purpose: "Pelajaran & Amali Komputer Mingguan",
+            notes: `${entry.notes} (Slot ${sIdx + 1}/4 • Minggu ${w + 1})`,
+            status: "Diluluskan",
+            createdAt: new Date().toISOString()
+          });
+
+          this.bookings.unshift(booking);
+          newBookings.push(booking);
+          createdCount++;
+        }
+      }
+    }
+
+    this.save();
+
+    // Hantar rekod ke Backend API & Google Sheet secara latar belakang
+    (async () => {
+      for (const b of newBookings) {
+        try {
+          fetch(`${PYTHON_API_URL}/bookings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...b, isAdmin: true })
+          }).catch(() => {});
+          this.syncToAddSheet(b);
+        } catch (e) {}
+      }
+    })();
+
+    return {
+      success: true,
+      createdCount,
+      skippedCount,
+      weeksCount,
+      startSunday: startSundayIso,
+      enableRotation
+    };
+  }
+
+  // Mengosongkan jadual rasmi janaan automatik untuk minggu tertentu
+  async clearGeneratedScheduleForWeek(sundayIso, weeksCount = 1) {
+    const normSunday = DateUtils.normalizeDate(sundayIso);
+    const startSunday = new Date(normSunday);
+    const endDays = (weeksCount * 7) - 1;
+    const endDate = new Date(startSunday);
+    endDate.setDate(endDate.getDate() + endDays);
+    const endDateIso = DateUtils.formatDateIso(endDate);
+
+    let removedCount = 0;
+    this.bookings = this.bookings.filter(b => {
+      const bDate = DateUtils.normalizeDate(b.date);
+      if (bDate >= normSunday && bDate <= endDateIso && (b.id && b.id.startsWith('JDL-'))) {
+        removedCount++;
+        try {
+          fetch(`${PYTHON_API_URL}/bookings/${b.id}`, { method: 'DELETE' }).catch(() => {});
+          this.syncToUpdateStatusSheet(b.id, "Dibatalkan", b);
+        } catch (e) {}
+        return false;
+      }
+      return true;
+    });
+
+    this.save();
+    return removedCount;
+  }
+
 
   getUserBookings(user) {
     if (!user) return [];
