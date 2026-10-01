@@ -331,6 +331,39 @@ def get_users():
     conn.close()
     return jsonify({"status": "success", "data": rows})
 
+# PUT /api/users/<email>
+@app.route('/api/users/<email>', methods=['PUT'])
+def update_user(email):
+    data = request.json or {}
+    clean_email = email.strip().lower()
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE LOWER(email) = ?", (clean_email,))
+    user = cursor.fetchone()
+
+    if not user:
+        conn.close()
+        return jsonify({"status": "error", "message": "Pengguna tidak ditemui."}), 404
+
+    name = data.get('name', user['name'])
+    role = data.get('role', user['role'])
+    phone = data.get('phone', user['phone'])
+    subject = data.get('subject', user['subject'])
+
+    cursor.execute("""
+        UPDATE users
+        SET name = ?, role = ?, phone = ?, subject = ?
+        WHERE LOWER(email) = ?
+    """, (name, role, phone, subject, clean_email))
+
+    if data.get('password') and len(str(data.get('password')).strip()) >= 4:
+        cursor.execute("UPDATE users SET password = ? WHERE LOWER(email) = ?", (data['password'].strip(), clean_email))
+
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "success", "message": "Akaun pengguna berjaya dikemaskini."})
+
 # POST /api/auth/login
 @app.route('/api/auth/login', methods=['POST'])
 def auth_login():

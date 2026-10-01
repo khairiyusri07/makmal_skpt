@@ -107,14 +107,10 @@
             <i data-lucide="user-check" style="width: 18px;"></i>
             <span>Profil Saya</span>
           </div>
-          <div class="sidebar-nav-item" id="tabBtnScheduleGenerator" style="color: var(--gcal-blue); font-weight: 500;">
-            <i data-lucide="sparkles" style="width: 18px; color: var(--gcal-blue);"></i>
-            <span>Jana Jadual Kelas</span>
-            <span class="sidebar-badge" style="background: var(--gcal-blue-light); color: var(--gcal-blue-dark); display: inline-block;">Admin</span>
-          </div>
-          <div class="sidebar-nav-item" id="tabBtnAdmin">
-            <i data-lucide="lock" style="width: 18px;"></i>
-            <span>Senarai Tempahan Makmal</span>
+          <div class="sidebar-nav-item" id="tabBtnAdmin" style="display: none;">
+            <i data-lucide="shield-check" style="width: 18px; color: var(--gcal-blue);"></i>
+            <span>Pengurusan Penyelaras ICT</span>
+            <span class="sidebar-badge" style="background: var(--gcal-blue-light); color: var(--gcal-blue-dark); display: inline-block;">Penyelaras ICT</span>
           </div>
         </div>
       </aside>
@@ -267,66 +263,216 @@
           </div>
         </div>
 
-        <!-- TAB PANEL 2: Rekod Admin (Restricted Admin Only Access) -->
+        <!-- TAB PANEL 2: Rekod Admin & Penyelaras ICT (Restricted Penyelaras ICT Only Access) -->
         <div id="adminTabPanel" class="tab-panel">
           <div class="admin-tab-container">
-            <div class="admin-card">
+            
+            <!-- Header Card -->
+            <div class="admin-card" style="margin-bottom: 16px;">
               <div class="admin-header-flex">
                 <div class="admin-header-title">
-                  <i data-lucide="shield-check" style="color: var(--gcal-blue); width: 24px; height: 24px;"></i>
-                  <h2>Rekod Tempahan Makmal (Panel Admin)</h2>
+                  <i data-lucide="shield-check" style="color: var(--gcal-blue); width: 26px; height: 26px;"></i>
+                  <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 800; margin: 0;">Panel Pengurusan Penyelaras ICT</h2>
+                    <p style="font-size: 0.82rem; color: var(--gcal-text-subtle); margin-top: 2px;">
+                      Pengurusan menyeluruh bagi tempahan makmal, janaan jadual kelas mingguan, dan selenggara akaun pengguna.
+                    </p>
+                  </div>
                 </div>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                   <button id="btnSyncAllToSheet" class="btn-gcal-white"
                     style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 7px 14px; border-radius: 8px; font-size: 0.82rem; cursor: pointer; border: 1px solid #cbd5e1; background: white; color: #1e293b;"
                     title="Hantar dan selaras semua rekod slot makmal ke Google Sheet secara pukal">
                     <i data-lucide="cloud-upload" style="width: 15px; height: 15px; color: #16a34a;"></i>
-                    <span>Selaras Semua ke Google Sheet</span>
-                  </button>
-                  <button id="btnOpenScheduleGenerator" class="btn-gcal-blue"
-                    style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 7px 14px; border-radius: 8px; font-size: 0.82rem; cursor: pointer; box-shadow: var(--gcal-shadow-sm);">
-                    <i data-lucide="sparkles" style="width: 15px; height: 15px;"></i>
-                    <span>Jana Jadual Kelas Mingguan</span>
+                    <span>Selaras ke Google Sheet</span>
                   </button>
                   <span
                     style="background: var(--gcal-blue-light); color: var(--gcal-blue-dark); padding: 4px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: 600;">
-                    Akses Pentadbir Disahkan
+                    Akses Penyelaras ICT Disahkan
                   </span>
                 </div>
               </div>
 
-              <div class="admin-table-controls">
-                <div style="position: relative;">
-                  <i data-lucide="search"
-                    style="position: absolute; left: 10px; top: 10px; width: 18px; color: var(--gcal-text-subtle);"></i>
-                  <input type="text" id="searchInput" class="search-input-gcal"
-                    placeholder="Cari pemohon, subjek, atau kod tempahan...">
-                </div>
-
-                <select id="statusFilter" class="form-control-custom" style="width: 160px;">
-                  <option value="ALL">Semua Status</option>
-                  <option value="Diluluskan">Diluluskan</option>
-                  <option value="Dibatalkan">Dibatalkan</option>
-                </select>
-              </div>
-
-              <div style="overflow-x: auto;">
-                <table class="data-table-gcal">
-                  <thead>
-                    <tr>
-                      <th>Kod Tempahan</th>
-                      <th>Pemohon & Peranan</th>
-                      <th>Tarikh & Slot Masa</th>
-                      <th>Kelas / Subjek</th>
-                      <th>Status</th>
-                      <th style="text-align: right;">Tindakan Admin</th>
-                    </tr>
-                  </thead>
-                  <tbody id="bookingTableBody">
-                    <!-- Rendered via JavaScript -->
-                  </tbody>
-                </table>
+              <!-- Sub-Tab Navigation Bar -->
+              <div class="penyelaras-subnav-bar">
+                <button type="button" class="penyelaras-subnav-btn active" id="subtabBtnBookings" onclick="window.app.switchPenyelarasSubtab('bookings')">
+                  <i data-lucide="list" style="width: 16px;"></i>
+                  <span>Senarai Tempahan Makmal</span>
+                  <span class="subnav-badge" id="countBookingsBadge">0</span>
+                </button>
+                <button type="button" class="penyelaras-subnav-btn" id="subtabBtnGenerator" onclick="window.app.switchPenyelarasSubtab('generator')">
+                  <i data-lucide="sparkles" style="width: 16px;"></i>
+                  <span>Jana Jadual Kelas Mingguan</span>
+                </button>
+                <button type="button" class="penyelaras-subnav-btn" id="subtabBtnUsers" onclick="window.app.switchPenyelarasSubtab('users')">
+                  <i data-lucide="users" style="width: 16px;"></i>
+                  <span>Senarai Pengguna & Edit Akaun</span>
+                  <span class="subnav-badge" id="countUsersBadge">0</span>
+                </button>
               </div>
             </div>
+
+            <!-- SUB-TAB CONTENT 1: Senarai Tempahan Makmal -->
+            <div id="subtabContentBookings" class="penyelaras-subcontent active">
+              <div class="admin-card">
+                <div class="admin-table-controls">
+                  <div style="position: relative; flex: 1; max-width: 380px;">
+                    <i data-lucide="search"
+                      style="position: absolute; left: 10px; top: 10px; width: 18px; color: var(--gcal-text-subtle);"></i>
+                    <input type="text" id="searchInput" class="search-input-gcal" style="width: 100%;"
+                      placeholder="Cari pemohon, subjek, atau kod tempahan...">
+                  </div>
+
+                  <select id="statusFilter" class="form-control-custom" style="width: 160px;">
+                    <option value="ALL">Semua Status</option>
+                    <option value="Diluluskan">Diluluskan</option>
+                    <option value="Menunggu Kelulusan">Menunggu Kelulusan</option>
+                    <option value="Dibatalkan">Dibatalkan</option>
+                  </select>
+                </div>
+
+                <div style="overflow-x: auto;">
+                  <table class="data-table-gcal">
+                    <thead>
+                      <tr>
+                        <th>Kod Tempahan</th>
+                        <th>Pemohon & Peranan</th>
+                        <th>Tarikh & Slot Masa</th>
+                        <th>Kelas / Subjek</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Tindakan Admin</th>
+                      </tr>
+                    </thead>
+                    <tbody id="bookingTableBody">
+                      <!-- Rendered via JavaScript -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUB-TAB CONTENT 2: Jana Jadual Kelas Mingguan -->
+            <div id="subtabContentGenerator" class="penyelaras-subcontent" style="display: none;">
+              <div class="admin-card" style="padding: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--gcal-border-light); padding-bottom: 14px;">
+                  <div>
+                    <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--gcal-text-dark); display: flex; align-items: center; gap: 8px;">
+                      <i data-lucide="sparkles" style="color: var(--gcal-blue); width: 20px;"></i>
+                      Penjana Jadual Kelas Mingguan SKPT (Ahad - Khamis)
+                    </h3>
+                    <p style="font-size: 0.82rem; color: var(--gcal-text-subtle); margin-top: 2px;">
+                      Penjadualan automatik 4 slot berterusan mengikut kelas dan rotasi adil weekly.
+                    </p>
+                  </div>
+                  <button id="btnOpenGeneratorModalDirect" class="btn-gcal-blue" onclick="window.app.modalView.openScheduleGenerator()" style="height: 38px; padding: 0 16px; border-radius: 19px; font-weight: 600;">
+                    <i data-lucide="maximize-2" style="width: 15px; height: 15px; margin-right: 6px;"></i>
+                    Buka Paparan Penuh Modal
+                  </button>
+                </div>
+
+                <form id="tabScheduleGeneratorForm">
+                  <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-bottom: 18px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label for="tabGenStartSunday">Bermula Minggu (Ahad) <span>*</span></label>
+                      <input type="date" id="tabGenStartSunday" class="form-control-custom" required>
+                      <small id="tabGenWeekHint" style="font-size: 0.75rem; color: #64748b; margin-top: 4px; display: block;">
+                        Memuatkan tarikh...
+                      </small>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                      <label for="tabGenWeeksCount">Tempoh Janaan (Bilangan Minggu) <span>*</span></label>
+                      <select id="tabGenWeeksCount" class="form-control-custom" required>
+                        <option value="1">1 Minggu (24 Slot)</option>
+                        <option value="2">2 Minggu Berturut-turut (48 Slot)</option>
+                        <option value="4" selected>4 Minggu (1 Bulan - 96 Slot)</option>
+                        <option value="8">8 Minggu (2 Bulan - 192 Slot)</option>
+                        <option value="12">12 Minggu (1 Penggal)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 14px; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 12px 14px;">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; font-weight: 600; font-size: 0.84rem; cursor: pointer; color: #1e1b4b; margin-bottom: 0;">
+                      <input type="checkbox" id="tabGenEnableRotation" checked style="width: 18px; height: 18px; margin-top: 2px;">
+                      <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <span style="font-weight: 700; color: #312e81; font-size: 0.88rem;">Gilirkan Hari & Slot Kelas Setiap Minggu (Rotasi Adil)</span>
+                          <span style="background: #4f46e5; color: white; font-size: 0.68rem; padding: 2px 7px; border-radius: 10px; font-weight: 600;">Disyorkan</span>
+                        </div>
+                        <div style="font-size: 0.76rem; color: #4338ca; font-weight: normal; margin-top: 3px; line-height: 1.4;">
+                          Rotasi adil 5 hari (Ahad hingga Khamis) bagi Tahun 1 hingga 6.
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 16px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.82rem; cursor: pointer;">
+                      <input type="checkbox" id="tabGenOverwriteExisting" checked style="width: 16px; height: 16px;">
+                      <span>Gantikan / batalkan tempahan lain yang bertindih dengan jadual rasmi kelas ini</span>
+                    </label>
+                  </div>
+
+                  <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 14px 18px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <button type="button" class="btn-gcal-red" id="btnTabClearGeneratedSchedule" onclick="window.app.modalView.handleClearGeneratedSchedule()"
+                      style="padding: 8px 14px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+                      <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                      <span>Kosongkan Jadual Janaan</span>
+                    </button>
+                    <button type="submit" class="btn-gcal-blue" id="btnTabSubmitScheduleGenerator"
+                      style="display: inline-flex; align-items: center; gap: 6px; padding: 9px 22px; font-weight: 700; border-radius: 20px;">
+                      <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
+                      <span>Jana Jadual Rasmi Sekarang</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <!-- SUB-TAB CONTENT 3: Senarai Pengguna & Edit Akaun -->
+            <div id="subtabContentUsers" class="penyelaras-subcontent" style="display: none;">
+              <div class="admin-card" style="padding: 24px;">
+                <div class="admin-table-controls">
+                  <div style="position: relative; flex: 1; max-width: 380px;">
+                    <i data-lucide="search"
+                      style="position: absolute; left: 10px; top: 10px; width: 18px; color: var(--gcal-text-subtle);"></i>
+                    <input type="text" id="userSearchInput" class="search-input-gcal" style="width: 100%;"
+                      placeholder="Cari nama pengguna, emel DELIMa, atau peranan..." oninput="window.app.filterUsersList()">
+                  </div>
+
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <label for="userRoleFilter" style="font-size: 0.82rem; font-weight: 600; color: var(--gcal-text-subtle);">Peranan:</label>
+                    <select id="userRoleFilter" class="form-control-custom" style="width: 180px;" onchange="window.app.filterUsersList()">
+                      <option value="ALL">Semua Peranan</option>
+                      <option value="Penyelaras Makmal / ICT">Penyelaras Makmal / ICT</option>
+                      <option value="Guru / Tenaga Pengajar">Guru / Tenaga Pengajar</option>
+                      <option value="Guru Kelas">Guru Kelas</option>
+                      <option value="Pentadbir Sekolah">Pentadbir Sekolah</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                  <table class="data-table-gcal">
+                    <thead>
+                      <tr>
+                        <th>ID & Emel DELIMa</th>
+                        <th>Nama Pengguna</th>
+                        <th>Peranan / Jawatan</th>
+                        <th>No. Telefon & Subjek</th>
+                        <th>Tarikh Daftar</th>
+                        <th style="text-align: right;">Tindakan Penyelaras</th>
+                      </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                      <!-- Rendered via JavaScript -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -620,6 +766,67 @@
               style="text-align: center; font-size: 1.2rem; letter-spacing: 0.2em;">
           </div>
           <button type="submit" class="btn-gcal-blue" style="width: 100%;">Sahkan PIN Admin</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 6: EDIT AKAUN PENGGUNA (PENYELARAS ICT) -->
+  <div class="modal-overlay" id="editUserModal">
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <h3>Edit Akaun Pengguna</h3>
+          <p>Kemaskini maklumat profil dan peranan akaun pengguna.</p>
+        </div>
+        <button class="close-modal-btn" id="btnCloseEditUserModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <form id="editUserForm">
+          <input type="hidden" id="editUserId">
+
+          <div class="form-group">
+            <label for="editUserName" style="font-weight: 700;">Nama Penuh Pengguna <span>*</span></label>
+            <input type="text" id="editUserName" class="form-control-custom" required placeholder="Nama penuh mengikut rekod">
+          </div>
+
+          <div class="form-group">
+            <label for="editUserEmail" style="font-weight: 700;">Emel ID DELIMa KPM <span>*</span></label>
+            <input type="email" id="editUserEmail" class="form-control-custom" required readonly style="background: var(--gcal-surface);">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label for="editUserRole" style="font-weight: 700;">Peranan / Jawatan <span>*</span></label>
+              <select id="editUserRole" class="form-control-custom" required>
+                <option value="Guru / Tenaga Pengajar">Guru / Tenaga Pengajar</option>
+                <option value="Penyelaras Makmal / ICT">Penyelaras Makmal / ICT</option>
+                <option value="Guru Kelas">Guru Kelas</option>
+                <option value="Pentadbir Sekolah">Pentadbir Sekolah</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editUserPhone" style="font-weight: 700;">No. Telefon (WhatsApp)</label>
+              <input type="text" id="editUserPhone" class="form-control-custom" placeholder="012-3456789">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="editUserSubject" style="font-weight: 700;">Mata Pelajaran / Kelas Utama</label>
+            <input type="text" id="editUserSubject" class="form-control-custom" placeholder="Contoh: RBT / Sains">
+          </div>
+
+          <div class="form-group">
+            <label for="editUserPassword" style="font-weight: 700;">Kata Laluan Baru (Reset Akaun)</label>
+            <input type="password" id="editUserPassword" class="form-control-custom" placeholder="Biarkan kosong jika kekal">
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-gcal-red" id="btnCancelEditUser">Batal</button>
+            <button type="submit" class="btn-gcal-blue" id="btnSubmitEditUser">Simpan Perubahan Akaun</button>
+          </div>
         </form>
       </div>
     </div>

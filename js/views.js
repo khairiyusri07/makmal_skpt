@@ -217,23 +217,29 @@ class CalendarView {
 }
 
 // --------------------------------------------------------------------------
-// 3. TABLE VIEW (Record Management Table - Admin Only)
+// 3. TABLE VIEW (Record Management Table - Penyelaras ICT)
 // --------------------------------------------------------------------------
 class TableView {
   constructor(store, app) {
     this.store = store;
     this.app = app;
-    this.dom = {
-      tableBody: document.getElementById('bookingTableBody')
-    };
   }
 
   render() {
-    if (!this.dom.tableBody) return;
+    this.renderBookingsList();
+    this.renderUsersList();
+  }
+
+  renderBookingsList() {
+    const tableBody = document.getElementById('bookingTableBody');
+    if (!tableBody) return;
     const list = this.store.getFilteredBookings();
 
+    const countBadge = document.getElementById('countBookingsBadge');
+    if (countBadge) countBadge.textContent = list.length;
+
     if (list.length === 0) {
-      this.dom.tableBody.innerHTML = `
+      tableBody.innerHTML = `
         <tr>
           <td colspan="6" style="text-align: center; padding: 30px; color: var(--gcal-text-subtle);">
             Tiada rekod tempahan dijumpai.
@@ -243,7 +249,7 @@ class TableView {
       return;
     }
 
-    this.dom.tableBody.innerHTML = list.map(b => {
+    tableBody.innerHTML = list.map(b => {
       let statusBadge = '';
       let actionsHtml = '';
 
@@ -296,6 +302,90 @@ class TableView {
         </tr>
       `;
     }).join('');
+  }
+
+  renderUsersList() {
+    const userTableBody = document.getElementById('userTableBody');
+    if (!userTableBody) return;
+
+    const allUsers = this.store.auth.registeredUsers || [];
+    const searchInput = document.getElementById('userSearchInput');
+    const roleFilter = document.getElementById('userRoleFilter');
+
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedRole = roleFilter ? roleFilter.value : 'ALL';
+
+    const filteredUsers = allUsers.filter(u => {
+      const matchQuery = !query ||
+        (u.name && u.name.toLowerCase().includes(query)) ||
+        (u.email && u.email.toLowerCase().includes(query)) ||
+        (u.userId && u.userId.toLowerCase().includes(query)) ||
+        (u.role && u.role.toLowerCase().includes(query));
+
+      const matchRole = (selectedRole === 'ALL') || (u.role === selectedRole);
+      return matchQuery && matchRole;
+    });
+
+    const countUsersBadge = document.getElementById('countUsersBadge');
+    if (countUsersBadge) countUsersBadge.textContent = filteredUsers.length;
+
+    if (filteredUsers.length === 0) {
+      userTableBody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 30px; color: var(--gcal-text-subtle);">
+            Tiada rekod pengguna dijumpai.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    userTableBody.innerHTML = filteredUsers.map(u => {
+      const roleStr = u.role || 'Guru / Tenaga Pengajar';
+      let roleBadgeStyle = 'background: #e2e8f0; color: #475569;';
+      if (roleStr.includes('Penyelaras') || roleStr.includes('ICT')) {
+        roleBadgeStyle = 'background: #dbeafe; color: #1e40af; font-weight: 700;';
+      } else if (roleStr.includes('Pentadbir')) {
+        roleBadgeStyle = 'background: #fef3c7; color: #92400e; font-weight: 700;';
+      } else if (roleStr.includes('Kelas')) {
+        roleBadgeStyle = 'background: #dcfce7; color: #166534; font-weight: 600;';
+      }
+
+      const regDate = u.registeredAt ? new Date(u.registeredAt).toLocaleDateString('ms-MY') : '-';
+      const userKey = u.userId || u.email;
+
+      return `
+        <tr>
+          <td>
+            <strong style="color: var(--gcal-blue);">${u.userId || 'USR'}</strong>
+            <br><small style="color: var(--gcal-text-subtle);">${u.email}</small>
+          </td>
+          <td>
+            <strong style="font-size: 0.92rem; color: var(--gcal-text-dark);">${u.name}</strong>
+          </td>
+          <td>
+            <span style="${roleBadgeStyle} padding: 3px 10px; border-radius: 12px; font-size: 0.78rem;">
+              ${roleStr}
+            </span>
+          </td>
+          <td>
+            <strong>${u.phone || 'Tiada No'}</strong>
+            <br><small style="color: var(--gcal-text-subtle);">${u.subject || 'Mata Pelajaran'}</small>
+          </td>
+          <td>
+            <small style="color: var(--gcal-text-subtle);">${regDate}</small>
+          </td>
+          <td style="text-align: right;">
+            <button class="btn-gcal-blue" style="padding: 5px 12px; font-size: 0.78rem; font-weight: 600; border-radius: 14px; display: inline-flex; align-items: center; gap: 4px;" onclick="window.app.openEditUserModal('${userKey}')">
+              <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+              <span>Edit Akaun</span>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
   }
 }
 
@@ -1085,6 +1175,59 @@ class ModalView {
 
   closeSlip() {
     this.dom.slipModal.classList.remove('active');
+  }
+  openEditUser(userKey) {
+    const editModal = document.getElementById('editUserModal');
+    if (!editModal) return;
+
+    const user = this.store.auth.registeredUsers.find(u => u.userId === userKey || u.email === userKey);
+    if (!user) {
+      this.app.showToast("Akaun pengguna tidak dijumpai.", "error");
+      return;
+    }
+
+    const editUserId = document.getElementById('editUserId');
+    const editUserName = document.getElementById('editUserName');
+    const editUserEmail = document.getElementById('editUserEmail');
+    const editUserRole = document.getElementById('editUserRole');
+    const editUserPhone = document.getElementById('editUserPhone');
+    const editUserSubject = document.getElementById('editUserSubject');
+    const editUserPassword = document.getElementById('editUserPassword');
+
+    if (editUserId) editUserId.value = user.userId || user.email;
+    if (editUserName) editUserName.value = user.name || '';
+    if (editUserEmail) editUserEmail.value = user.email || '';
+    if (editUserRole) editUserRole.value = user.role || 'Guru / Tenaga Pengajar';
+    if (editUserPhone) editUserPhone.value = user.phone || '';
+    if (editUserSubject) editUserSubject.value = user.subject || '';
+    if (editUserPassword) editUserPassword.value = '';
+
+    editModal.classList.add('active');
+  }
+
+  closeEditUser() {
+    const editModal = document.getElementById('editUserModal');
+    if (editModal) editModal.classList.remove('active');
+  }
+
+  handleEditUserSubmit(e) {
+    e.preventDefault();
+    const userId = document.getElementById('editUserId')?.value;
+    const name = document.getElementById('editUserName')?.value;
+    const email = document.getElementById('editUserEmail')?.value;
+    const role = document.getElementById('editUserRole')?.value;
+    const phone = document.getElementById('editUserPhone')?.value;
+    const subject = document.getElementById('editUserSubject')?.value;
+    const password = document.getElementById('editUserPassword')?.value;
+
+    try {
+      const updated = this.store.auth.updateUserByAdmin(userId, { name, email, role, phone, subject, password });
+      this.closeEditUser();
+      this.app.render();
+      this.app.showToast(`Akaun ${updated.name} (${updated.email}) berjaya dikemaskini!`, "success");
+    } catch (err) {
+      this.app.showToast(err.message, "error");
+    }
   }
 }
 

@@ -296,6 +296,38 @@ class AuthStore {
     return this.currentUser;
   }
 
+  updateUserByAdmin(userId, data) {
+    if (!this.isLabCoordinator()) {
+      throw new Error("Akses dinafikan! Hanya Penyelaras ICT sahaja yang dibenarkan mengemas kini akaun pengguna.");
+    }
+    const cleanName = (data.name || '').trim();
+    if (!cleanName) throw new Error("Nama Penuh pengguna tidak boleh dibiarkan kosong.");
+
+    const user = this.registeredUsers.find(u => u.userId === userId || (data.email && u.email === data.email));
+    if (!user) throw new Error("Akaun pengguna tidak dijumpai.");
+
+    user.name = cleanName;
+    if (data.role) user.role = data.role;
+    if (data.phone !== undefined) user.phone = data.phone;
+    if (data.subject !== undefined) user.subject = data.subject;
+    if (data.password && data.password.trim().length >= 4) {
+      user.password = data.password.trim();
+    }
+
+    this.saveRegisteredUsers();
+
+    if (this.currentUser && (this.currentUser.email === user.email || this.currentUser.userId === user.userId)) {
+      this.currentUser.name = user.name;
+      this.currentUser.role = user.role;
+      this.currentUser.phone = user.phone;
+      this.currentUser.subject = user.subject;
+      this.saveSession();
+    }
+
+    this.syncAccountToSheet(user);
+    return user;
+  }
+
   logout() {
     this.currentUser = null;
     this.isAdminVerified = false;

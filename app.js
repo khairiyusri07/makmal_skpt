@@ -42,14 +42,15 @@ class App {
       this.historyView.render();
     }
 
-    // Kawalan paparan Tab Akses Admin
+    // Kawalan paparan Tab Penyelaras ICT (Hanya Boleh Dilihat Oleh Penyelaras ICT / Admin Verified)
+    const isCoordinator = this.authStore.isLabCoordinator();
     const btnAdmin = document.getElementById('tabBtnAdmin');
     if (btnAdmin) {
-      btnAdmin.style.display = 'flex';
+      btnAdmin.style.display = isCoordinator ? 'flex' : 'none';
     }
 
     if (this.activeTab === 'admin') {
-      if (!this.authStore.isAdminVerified) {
+      if (!isCoordinator) {
         this.switchTab('schedule');
         return;
       }
@@ -112,8 +113,13 @@ class App {
       if (btnHistory) btnHistory.classList.add('active');
       this.historyView.render();
     } else if (tabName === 'admin') {
-      if (!this.authStore.isAdminVerified) {
-        this.modalView.openAdminAuth();
+      if (!this.authStore.isLabCoordinator()) {
+        if (!this.authStore.isLoggedIn()) {
+          this.modalView.openLogin();
+          this.showToast("Tab ini hanya untuk akaun Penyelaras ICT sahaja.", "error");
+        } else {
+          this.modalView.openAdminAuth();
+        }
         return;
       }
       this.activeTab = 'admin';
@@ -387,6 +393,67 @@ class App {
 
     const btnPrintSlip = document.getElementById('btnPrintSlip');
     if (btnPrintSlip) btnPrintSlip.addEventListener('click', () => window.print());
+
+    // Edit User Modal Events (Penyelaras ICT)
+    const editUserForm = document.getElementById('editUserForm');
+    if (editUserForm) {
+      editUserForm.addEventListener('submit', (e) => this.modalView.handleEditUserSubmit(e));
+    }
+
+    const btnCloseEditUserModal = document.getElementById('btnCloseEditUserModal');
+    if (btnCloseEditUserModal) {
+      btnCloseEditUserModal.addEventListener('click', () => this.modalView.closeEditUser());
+    }
+
+    const btnCancelEditUser = document.getElementById('btnCancelEditUser');
+    if (btnCancelEditUser) {
+      btnCancelEditUser.addEventListener('click', () => this.modalView.closeEditUser());
+    }
+
+    const tabScheduleGeneratorForm = document.getElementById('tabScheduleGeneratorForm');
+    if (tabScheduleGeneratorForm) {
+      tabScheduleGeneratorForm.addEventListener('submit', (e) => this.modalView.handleScheduleGeneratorSubmit(e));
+    }
+  }
+
+  switchPenyelarasSubtab(subtab) {
+    const btnBookings = document.getElementById('subtabBtnBookings');
+    const btnGenerator = document.getElementById('subtabBtnGenerator');
+    const btnUsers = document.getElementById('subtabBtnUsers');
+
+    const contentBookings = document.getElementById('subtabContentBookings');
+    const contentGenerator = document.getElementById('subtabContentGenerator');
+    const contentUsers = document.getElementById('subtabContentUsers');
+
+    [btnBookings, btnGenerator, btnUsers].forEach(b => { if (b) b.classList.remove('active'); });
+    [contentBookings, contentGenerator, contentUsers].forEach(c => { if (c) c.style.display = 'none'; });
+
+    if (subtab === 'generator') {
+      if (btnGenerator) btnGenerator.classList.add('active');
+      if (contentGenerator) contentGenerator.style.display = 'block';
+      this.modalView.updateSchedulePreview();
+    } else if (subtab === 'users') {
+      if (btnUsers) btnUsers.classList.add('active');
+      if (contentUsers) contentUsers.style.display = 'block';
+      this.tableView.renderUsersList();
+    } else {
+      if (btnBookings) btnBookings.classList.add('active');
+      if (contentBookings) contentBookings.style.display = 'block';
+      this.tableView.renderBookingsList();
+    }
+    if (window.lucide) lucide.createIcons();
+  }
+
+  filterUsersList() {
+    this.tableView.renderUsersList();
+  }
+
+  openEditUserModal(userKey) {
+    if (!this.authStore.isLabCoordinator()) {
+      this.showToast("Akses dinafikan. Hanya Penyelaras ICT sahaja yang boleh edit akaun pengguna.", "error");
+      return;
+    }
+    this.modalView.openEditUser(userKey);
   }
 
   selectMiniCalDate(dateStr) {
