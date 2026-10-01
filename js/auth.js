@@ -44,8 +44,49 @@ class AuthStore {
         updated = true;
       }
     });
-    if (updated) this.saveRegisteredUsers();
+    this.fetchUsersFromBackend();
     this.fetchUsersFromSheet();
+  }
+
+  async fetchUsersFromBackend() {
+    try {
+      const apiUrl = (typeof getBackendApiUrl === 'function') ? getBackendApiUrl('/users') : `${PYTHON_API_URL}/users`;
+      let res = await fetch(apiUrl);
+      if (!res.ok && !apiUrl.startsWith('http')) {
+        res = await fetch('http://localhost:5000/api/users');
+      }
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.status === 'success' && Array.isArray(json.data)) {
+          let updated = false;
+          json.data.forEach(u => {
+            const cleanEmail = (u.email || '').trim().toLowerCase();
+            if (cleanEmail) {
+              const idx = this.registeredUsers.findIndex(existing => existing.email === cleanEmail);
+              if (idx === -1) {
+                this.registeredUsers.push({
+                  userId: u.userId || this.generateUserId(cleanEmail),
+                  name: u.name,
+                  email: cleanEmail,
+                  role: u.role || 'Guru',
+                  phone: u.phone || '',
+                  subject: u.subject || '',
+                  registeredAt: u.registeredAt || new Date().toISOString()
+                });
+                updated = true;
+              } else {
+                if (u.name) this.registeredUsers[idx].name = u.name;
+                if (u.role) this.registeredUsers[idx].role = u.role;
+                if (u.phone) this.registeredUsers[idx].phone = u.phone;
+                if (u.subject) this.registeredUsers[idx].subject = u.subject;
+                updated = true;
+              }
+            }
+          });
+          if (updated) this.saveRegisteredUsers();
+        }
+      }
+    } catch (e) { }
   }
 
   async fetchUsersFromSheet() {

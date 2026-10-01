@@ -19,6 +19,20 @@ class App {
   init() {
     this.bindEvents();
     this.render();
+
+    // Auto muat balik data segar dalam masa 0.1 saat (100 milisaat) selepas pembersihan cache
+    setTimeout(() => {
+      this.store.fetchFromPythonBackend();
+      this.store.fetchFromSheet();
+      if (typeof this.authStore.fetchUsersFromBackend === 'function') {
+        this.authStore.fetchUsersFromBackend();
+      }
+      if (typeof this.authStore.fetchUsersFromSheet === 'function') {
+        this.authStore.fetchUsersFromSheet();
+      }
+      this.render();
+      console.log("[LabBook System] Data makmal & pengguna berjaya dimuatkan semula dalam masa 0.1 saat!");
+    }, 100);
   }
 
   render() {
@@ -267,7 +281,17 @@ class App {
 
     const formSlot = document.getElementById('formSlot');
     if (formSlot) {
-      formSlot.addEventListener('change', () => this.modalView.checkConflict());
+      formSlot.addEventListener('change', () => this.modalView.handleSlot1Change());
+    }
+
+    const formSlotCount = document.getElementById('formSlotCount');
+    if (formSlotCount) {
+      formSlotCount.addEventListener('change', () => this.modalView.updateSlotCountUI());
+    }
+
+    const formSlot2 = document.getElementById('formSlot2');
+    if (formSlot2) {
+      formSlot2.addEventListener('change', () => this.modalView.checkConflict());
     }
 
     // Login & Google SSO & Registration Events

@@ -406,7 +406,12 @@ class ModalView {
 
       formLab: document.getElementById('formLab'),
       formDate: document.getElementById('formDate'),
+      formSlotCount: document.getElementById('formSlotCount'),
+      formSlotLabelText: document.getElementById('formSlotLabelText'),
       formSlot: document.getElementById('formSlot'),
+      formSlot2Group: document.getElementById('formSlot2Group'),
+      formSlot2: document.getElementById('formSlot2'),
+      slotCountHint: document.getElementById('slotCountHint'),
       formApplicant: document.getElementById('formApplicant'),
       formSubject: document.getElementById('formSubject'),
       formNotes: document.getElementById('formNotes'),
@@ -789,6 +794,30 @@ class ModalView {
     this.dom.formSlot.value = slotStr || TIME_SLOTS[0];
     this.dom.formApplicant.value = this.store.auth.currentUser.name;
 
+    // Pengurusan kuota bilangan slot dalam borang
+    if (this.dom.formSlotCount) {
+      const targetDate = this.dom.formDate.value;
+      const existingUserCount = (!isAdmin && targetDate && this.store.auth.currentUser)
+        ? this.store.getUserBookingCountForDate(this.store.auth.currentUser, targetDate)
+        : 0;
+
+      const opt2 = this.dom.formSlotCount.querySelector('option[value="2"]');
+      if (!isAdmin && existingUserCount === 1) {
+        this.dom.formSlotCount.value = "1";
+        if (opt2) opt2.disabled = true;
+        if (this.dom.slotCountHint) {
+          this.dom.slotCountHint.innerHTML = `<span style="color:#d97706;"><i data-lucide="alert-circle" style="width:11px; height:11px; display:inline-block; vertical-align:middle;"></i> Baki kuota: 1 slot lagi untuk tarikh ini</span>`;
+        }
+      } else {
+        if (opt2) opt2.disabled = false;
+        this.dom.formSlotCount.value = "1";
+        if (this.dom.slotCountHint) {
+          this.dom.slotCountHint.innerHTML = `<span style="color:#16a34a;"><i data-lucide="check-circle" style="width:11px; height:11px; display:inline-block; vertical-align:middle;"></i> Anda boleh tempah 2 slot sekaligus (1 jam)</span>`;
+        }
+      }
+      this.updateSlotCountUI();
+    }
+
     // Papar pilihan tempahan berulang sekiranya pengguna adalah Admin
     if (this.dom.adminRecurringBookingSection) {
       if (isAdmin) {
@@ -804,6 +833,40 @@ class ModalView {
     this.dom.bookingModal.classList.add('active');
   }
 
+  updateSlotCountUI() {
+    const isTwoSlots = (this.dom.formSlotCount && this.dom.formSlotCount.value === "2");
+    if (this.dom.formSlot2Group) {
+      this.dom.formSlot2Group.style.display = isTwoSlots ? "block" : "none";
+    }
+    if (this.dom.formSlotLabelText) {
+      this.dom.formSlotLabelText.textContent = isTwoSlots ? "Slot Masa 1" : "Slot Masa";
+    }
+    if (isTwoSlots && this.dom.formSlot && this.dom.formSlot2) {
+      // Cadangkan slot berturutan secara automatik
+      const slot1 = this.dom.formSlot.value;
+      const idx = TIME_SLOTS.indexOf(slot1);
+      if (idx !== -1 && idx + 1 < TIME_SLOTS.length) {
+        this.dom.formSlot2.value = TIME_SLOTS[idx + 1];
+      } else if (idx !== -1 && idx - 1 >= 0) {
+        this.dom.formSlot2.value = TIME_SLOTS[idx - 1];
+      }
+    }
+    this.checkConflict();
+    if (window.lucide) lucide.createIcons();
+  }
+
+  handleSlot1Change() {
+    const isTwoSlots = (this.dom.formSlotCount && this.dom.formSlotCount.value === "2");
+    if (isTwoSlots && this.dom.formSlot && this.dom.formSlot2) {
+      const slot1 = this.dom.formSlot.value;
+      const idx = TIME_SLOTS.indexOf(slot1);
+      if (idx !== -1 && idx + 1 < TIME_SLOTS.length) {
+        this.dom.formSlot2.value = TIME_SLOTS[idx + 1];
+      }
+    }
+    this.checkConflict();
+  }
+
   closeBooking() {
     this.dom.bookingModal.classList.remove('active');
     this.dom.bookingForm.reset();
@@ -813,11 +876,19 @@ class ModalView {
     if (this.dom.conflictAlert) {
       this.dom.conflictAlert.style.display = 'none';
     }
+    if (this.dom.formSlot2Group) {
+      this.dom.formSlot2Group.style.display = 'none';
+    }
+    if (this.dom.formSlotLabelText) {
+      this.dom.formSlotLabelText.textContent = 'Slot Masa';
+    }
   }
 
   checkConflict() {
     const date = this.dom.formDate.value;
     const slot = this.dom.formSlot.value;
+    const isTwoSlots = (this.dom.formSlotCount && this.dom.formSlotCount.value === "2");
+    const slot2 = isTwoSlots && this.dom.formSlot2 ? this.dom.formSlot2.value : null;
     const isAdmin = (this.store.auth && (this.store.auth.isLabCoordinator() || this.store.auth.isAdminVerified));
 
     // 1. Semakan tempahan sekurang-kurangnya sehari sebelum (HANYA pengguna biasa)
@@ -836,23 +907,45 @@ class ModalView {
     };
     if (!isAdmin && date && currentUser) {
       const userDaySlots = this.store.getUserBookingCountForDate(currentUser, date);
-      if (userDaySlots >= 2) {
-        this.dom.conflictAlertMsg.textContent = `Amaran: Had tempahan tercapai! Anda telah menempah ${userDaySlots} slot pada tarikh ${date}. Setiap pengguna hanya dibenarkan menempah maksimum 2 slot sehari.`;
+      const requestedSlots = isTwoSlots ? 2 : 1;
+      if (userDaySlots + requestedSlots > 2) {
+        this.dom.conflictAlertMsg.textContent = `Amaran: Had tempahan tercapai! Anda telah ada ${userDaySlots} slot pada tarikh ${date}. Setiap pengguna hanya dibenarkan maksimum 2 slot sehari.`;
         this.dom.conflictAlert.style.display = 'flex';
         if (this.dom.btnSubmitBooking) this.dom.btnSubmitBooking.disabled = true;
         return;
       }
     }
 
-    // 3. Semakan pertindihan slot dengan tempahan sedia ada
-    const conflict = this.store.findConflict(date, slot);
-    if (conflict) {
-      this.dom.conflictAlertMsg.textContent = `Amaran: Slot masa ini telah ditempah oleh ${conflict.applicant} (${conflict.subject})!`;
+    // 3. Semakan jika slot 1 dan slot 2 adalah sama
+    if (isTwoSlots && slot === slot2) {
+      this.dom.conflictAlertMsg.textContent = "Amaran: Slot Masa 1 dan Slot Masa 2 tidak boleh sama! Sila pilih slot kedua yang berbeza.";
+      this.dom.conflictAlert.style.display = 'flex';
+      if (this.dom.btnSubmitBooking) this.dom.btnSubmitBooking.disabled = true;
+      return;
+    }
+
+    // 4. Semakan pertindihan slot 1 dengan tempahan sedia ada
+    const conflict1 = this.store.findConflict(date, slot);
+    if (conflict1) {
+      this.dom.conflictAlertMsg.textContent = `Amaran: Slot Masa 1 (${slot}) telah ditempah oleh ${conflict1.applicant} (${conflict1.subject})!`;
       this.dom.conflictAlert.style.display = 'flex';
       if (!isAdmin && this.dom.btnSubmitBooking) {
         this.dom.btnSubmitBooking.disabled = true;
       }
       return;
+    }
+
+    // 5. Semakan pertindihan slot 2 jika dipilih 2 slot sekaligus
+    if (isTwoSlots && slot2) {
+      const conflict2 = this.store.findConflict(date, slot2);
+      if (conflict2) {
+        this.dom.conflictAlertMsg.textContent = `Amaran: Slot Masa 2 (${slot2}) telah ditempah oleh ${conflict2.applicant} (${conflict2.subject})!`;
+        this.dom.conflictAlert.style.display = 'flex';
+        if (!isAdmin && this.dom.btnSubmitBooking) {
+          this.dom.btnSubmitBooking.disabled = true;
+        }
+        return;
+      }
     }
 
     // Jika semua syarat dipenuhi
@@ -870,6 +963,8 @@ class ModalView {
 
     const date = this.dom.formDate.value;
     const slot = this.dom.formSlot.value;
+    const isTwoSlots = (this.dom.formSlotCount && this.dom.formSlotCount.value === "2");
+    const slot2 = isTwoSlots && this.dom.formSlot2 ? this.dom.formSlot2.value : null;
     const isAdmin = (this.store.auth && (this.store.auth.isLabCoordinator() || this.store.auth.isAdminVerified));
 
     if (!isAdmin) {
@@ -881,16 +976,32 @@ class ModalView {
 
       // 2. Semakan had maksimum 2 slot sehari
       const existingCount = this.store.getUserBookingCountForDate(this.store.auth.currentUser, date);
-      if (existingCount >= 2) {
-        this.app.showToast(`Gagal! Anda telah menempah 2 slot pada tarikh ${date}. Maksimum 2 slot sehari sahaja dibenarkan bagi setiap pengguna.`, "error");
+      const requestedSlots = isTwoSlots ? 2 : 1;
+      if (existingCount + requestedSlots > 2) {
+        this.app.showToast(`Gagal! Anda telah menempah ${existingCount} slot pada tarikh ${date}. Maksimum 2 slot sehari sahaja dibenarkan bagi setiap pengguna.`, "error");
         return;
       }
 
-      // 3. Semakan pertindihan slot
-      const conflict = this.store.findConflict(date, slot);
-      if (conflict) {
-        this.app.showToast(`Gagal! Slot masa ini telah ditempah oleh ${conflict.applicant}. Sila pilih slot lain.`, "error");
+      // 3. Semakan jika slot 1 dan slot 2 adalah sama
+      if (isTwoSlots && slot === slot2) {
+        this.app.showToast("Gagal! Slot Masa 1 dan Slot Masa 2 tidak boleh sama.", "error");
         return;
+      }
+
+      // 4. Semakan pertindihan slot 1
+      const conflict1 = this.store.findConflict(date, slot);
+      if (conflict1) {
+        this.app.showToast(`Gagal! Slot Masa 1 (${slot}) telah ditempah oleh ${conflict1.applicant}. Sila pilih slot lain.`, "error");
+        return;
+      }
+
+      // 5. Semakan pertindihan slot 2
+      if (isTwoSlots && slot2) {
+        const conflict2 = this.store.findConflict(date, slot2);
+        if (conflict2) {
+          this.app.showToast(`Gagal! Slot Masa 2 (${slot2}) telah ditempah oleh ${conflict2.applicant}. Sila pilih slot lain.`, "error");
+          return;
+        }
       }
     }
 
@@ -910,7 +1021,8 @@ class ModalView {
         curDate.setDate(curDate.getDate() + (w * 7));
         const curDateStr = DateUtils.formatDateIso(curDate);
 
-        const newB = await this.store.addBooking({
+        // Tempahan Slot 1
+        const newB1 = await this.store.addBooking({
           labId: "LAB-1",
           date: curDateStr,
           slot: slot,
@@ -922,7 +1034,24 @@ class ModalView {
           status: bookingStatus,
           isAdmin: isAdmin
         });
-        createdBookings.push(newB);
+        createdBookings.push(newB1);
+
+        // Tempahan Slot 2 (jika dipilih 2 slot sekaligus)
+        if (isTwoSlots && slot2) {
+          const newB2 = await this.store.addBooking({
+            labId: "LAB-1",
+            date: curDateStr,
+            slot: slot2,
+            applicant: applicant,
+            subject: subject,
+            pcCount: 35,
+            purpose: isRecurring ? "Tempahan Berulang Mingguan (Admin)" : "",
+            notes: notes + (isRecurring ? ` (Minggu ${w + 1}/${repeatWeeks} - Slot 2)` : ''),
+            status: bookingStatus,
+            isAdmin: isAdmin
+          });
+          createdBookings.push(newB2);
+        }
       }
 
       this.closeBooking();
@@ -930,6 +1059,8 @@ class ModalView {
 
       if (isRecurring && repeatWeeks > 1) {
         this.app.showToast(`Tempahan Berulang Berjaya! Sebanyak ${repeatWeeks} minggu telah ditempah tanpa had oleh Pentadbir.`, "success");
+      } else if (isTwoSlots) {
+        this.app.showToast(`Berjaya! Sebanyak 2 slot makmal (${slot} & ${slot2}) telah berjaya ditempah sekaligus! (${bookingStatus})`, "success");
       } else {
         this.app.showToast(`Permohonan Dihantar! Kod Tempahan: ${createdBookings[0].id} (${bookingStatus})`, "success");
       }

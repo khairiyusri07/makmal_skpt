@@ -588,8 +588,41 @@
             </div>
 
             <div class="form-group">
-              <label for="formSlot">Slot Masa<span>*</span></label>
+              <label for="formSlotCount">Bilangan Slot <span>*</span></label>
+              <select id="formSlotCount" class="form-control-custom">
+                <option value="1">1 Slot Sahaja (30 Minit)</option>
+                <option value="2">2 Slot Sekaligus (1 Jam)</option>
+              </select>
+              <small id="slotCountHint" style="display:block; font-size: 0.72rem; color: #16a34a; margin-top: 4px; line-height: 1.3; font-weight: 600;">
+                <i data-lucide="check-circle" style="width: 11px; height: 11px; display: inline-block; vertical-align: middle; margin-right: 2px;"></i>
+                Anda boleh tempah 2 slot sekaligus
+              </small>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;" id="slotSelectorsContainer">
+            <div class="form-group" id="formSlot1Group">
+              <label for="formSlot"><span id="formSlotLabelText">Slot Masa</span> <span>*</span></label>
               <select id="formSlot" class="form-control-custom" required>
+                <option value="08:00 - 08:30">08:00 AM - 08:30 AM</option>
+                <option value="08:30 - 09:00">08:30 AM - 09:00 AM</option>
+                <option value="09:00 - 09:30">09:00 AM - 09:30 AM</option>
+                <option value="09:30 - 10:00">09:30 AM - 10:00 AM</option>
+                <option value="10:00 - 10:30">10:00 AM - 10:30 AM</option>
+                <option value="10:30 - 11:00">10:30 AM - 11:00 AM</option>
+                <option value="11:00 - 11:30">11:00 AM - 11:30 AM</option>
+                <option value="11:30 - 12:00">11:30 AM - 12:00 PM</option>
+                <option value="12:00 - 12:30">12:00 PM - 12:30 PM</option>
+                <option value="12:30 - 13:00">12:30 PM - 01:00 PM</option>
+                <option value="13:00 - 13:30">01:00 PM - 01:30 PM</option>
+                <option value="13:30 - 14:00">01:30 PM - 02:00 PM</option>
+                <option value="14:00 - 14:30">02:00 PM - 02:30 PM</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="formSlot2Group" style="display: none;">
+              <label for="formSlot2">Slot Masa 2 (Sekaligus) <span>*</span></label>
+              <select id="formSlot2" class="form-control-custom">
                 <option value="08:00 - 08:30">08:00 AM - 08:30 AM</option>
                 <option value="08:30 - 09:00">08:30 AM - 09:00 AM</option>
                 <option value="09:00 - 09:30">09:00 AM - 09:30 AM</option>

@@ -22,7 +22,7 @@ function getBackendApiUrl(path = '') {
 const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxt1jN0FJUTt4SfJzbv1BgS86wvt4SFuCJGdWkXQ6wUGpb2dNLYc7gNSfequC5CQBbi/exec";
 
 // ==========================================================================
-// AUTO CLEAR USER CACHE AT WEBSITE LOAD / ENTRY
+// AUTO CLEAR USER CACHE & AUTO RELOAD DATA IN 0.1 SECONDS (100ms)
 // ==========================================================================
 function autoClearUserCache() {
   try {
@@ -54,9 +54,38 @@ function autoClearUserCache() {
       localStorage.removeItem('labbook_bookings_cache');
     }
 
-    console.log("[LabBook System] Cache tempatan pengguna telah dibersihkan secara automatik pada waktu masuk laman web.");
+    console.log("[LabBook System] Cache tempatan pengguna telah dibersihkan. Memulakan muat balik data dalam masa 0.1 saat...");
   } catch (e) {
     console.warn("Gagal membersihkan cache secara automatik:", e);
+  }
+
+  // 5. Auto muat balik data dalam masa 0.1 saat (100 milisaat)
+  setTimeout(() => {
+    reloadFreshData();
+  }, 100);
+}
+
+// Fungsi muat balik data segar daripada pangkalan data / pelayan
+function reloadFreshData() {
+  try {
+    if (typeof window !== 'undefined' && window.app) {
+      if (window.app.store) {
+        window.app.store.fetchFromPythonBackend();
+        window.app.store.fetchFromSheet();
+      }
+      if (window.app.authStore) {
+        if (typeof window.app.authStore.fetchUsersFromBackend === 'function') {
+          window.app.authStore.fetchUsersFromBackend();
+        }
+        if (typeof window.app.authStore.fetchUsersFromSheet === 'function') {
+          window.app.authStore.fetchUsersFromSheet();
+        }
+      }
+      window.app.render();
+      console.log("[LabBook System] Data makmal & pengguna berjaya dimuatkan semula dalam masa 0.1 saat!");
+    }
+  } catch (err) {
+    console.warn("Ralat memuat balik data selepas pembersihan cache:", err);
   }
 }
 
