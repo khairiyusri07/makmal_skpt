@@ -143,7 +143,7 @@ class BookingStore {
       const res = await fetch(GOOGLE_SHEET_API_URL);
       if (res.ok) {
         const json = await res.json();
-        if (json && json.status === 'success' && Array.isArray(json.data) && json.data.length > 0) {
+        if (json && json.status === 'success' && Array.isArray(json.data)) {
           const sheetBookings = json.data
             .map(row => {
               const rId = row.id || row.ID || row.Id;
@@ -177,31 +177,57 @@ class BookingStore {
             })
             .filter(b => b !== null);
 
-          if (sheetBookings.length > 0) {
-            let updated = false;
-            sheetBookings.forEach(sb => {
-              const idx = this.bookings.findIndex(b => b.id === sb.id);
-              if (idx !== -1) {
-                if (this.bookings[idx].status !== sb.status ||
-                  this.bookings[idx].date !== sb.date ||
-                  this.bookings[idx].slot !== sb.slot ||
-                  this.bookings[idx].subject !== sb.subject ||
-                  this.bookings[idx].applicant !== sb.applicant) {
-                  this.bookings[idx] = sb;
-                  updated = true;
-                }
-              } else {
-                this.bookings.push(sb);
-                updated = true;
-              }
-            });
+          // Selaraskan data tempatan dengan Google Sheet
+          let hasChanges = false;
+          const sheetMap = new Map();
+          sheetBookings.forEach(sb => sheetMap.set(sb.id, sb));
 
-            if (updated || this.bookings.length === 0) {
-              this.save();
-              if (window.app) {
-                window.app.render();
+          const now = Date.now();
+          const reconciled = [];
+
+          // Semak rekod sedia ada dalam cache
+          for (const b of this.bookings) {
+            if (sheetMap.has(b.id)) {
+              const sb = sheetMap.get(b.id);
+              if (b.status !== sb.status ||
+                b.date !== sb.date ||
+                b.slot !== sb.slot ||
+                b.subject !== sb.subject ||
+                b.applicant !== sb.applicant ||
+                b.role !== sb.role ||
+                b.userId !== sb.userId ||
+                b.userEmail !== sb.userEmail) {
+                reconciled.push(sb);
+                hasChanges = true;
+              } else {
+                reconciled.push(b);
+              }
+              sheetMap.delete(b.id);
+            } else {
+              // Jika baru dibuat secara tempatan (< 20 saat), kekalkan sementara proses hantar ke sheet berlangsung
+              const createdAge = b.createdAt ? (now - new Date(b.createdAt).getTime()) : 999999;
+              if (createdAge < 20000) {
+                reconciled.push(b);
+              } else {
+                // Rekod dipadam di Google Sheet, buang daripada cache
+                hasChanges = true;
               }
             }
+          }
+
+          // Masukkan rekod baru daripada Google Sheet
+          for (const [id, sb] of sheetMap.entries()) {
+            reconciled.push(sb);
+            hasChanges = true;
+          }
+
+          if (hasChanges || this.bookings.length !== reconciled.length) {
+            this.bookings = reconciled;
+            this.save();
+            if (window.app) {
+              window.app.render();
+            }
+            console.log(`[LabBook System] Tempahan berjaya dikemaskini dari Google Sheet: ${this.bookings.length} rekod.`);
           }
         }
       }
@@ -234,14 +260,15 @@ class BookingStore {
     bookingData.date = DateUtils.normalizeDate(bookingData.date);
     bookingData.slot = DateUtils.normalizeSlot(bookingData.slot);
 
-    // Syarat 1: Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja)
+    // Syarat 1: Guru biasa hanya dibenarkan menempah bagi hari semasa dan hari seterusnya sahaja
     if (!isAdmin) {
+      const todayIso = DateUtils.getTodayIso();
       const tomorrowIso = DateUtils.getTomorrowIso();
-      if (bookingData.date < tomorrowIso) {
-        throw new Error("Tempahan slot makmal hanya dibenarkan sekurang-kurangnya 1 hari sebelum tarikh penggunaan.");
+      if (bookingData.date < todayIso) {
+        throw new Error("Tempahan slot makmal tidak dibenarkan bagi tarikh yang telah berlalu.");
       }
       if (bookingData.date > tomorrowIso) {
-        throw new Error("Tempahan disekat! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja)");
+        throw new Error("Tempahan disekat! Guru biasa hanya dibenarkan menempah bagi hari semasa dan hari seterusnya sahaja.");
       }
     }
 

@@ -131,21 +131,22 @@ class CalendarView {
           `;
         } else {
           const isCoordinator = (this.store.auth && (this.store.auth.isLabCoordinator() || this.store.auth.isAdminVerified));
+          const todayIso = DateUtils.getTodayIso();
           const tomorrowIso = DateUtils.getTomorrowIso();
-          const isPastOrToday = day.dateStr < tomorrowIso;
+          const isPast = day.dateStr < todayIso;
           const isExceedingTomorrow = day.dateStr > tomorrowIso;
 
-          if (!isCoordinator && isPastOrToday) {
+          if (!isCoordinator && isPast) {
             html += `
               <div class="gcal-slot-cell empty-slot past-slot" 
-                   title="Tempahan ditutup (Hanya dibenarkan 1 hari sebelum / tarikh esok sahaja)"
+                   title="Tempahan ditutup (Tarikh telah berlalu)"
                    onclick="window.app.openBookingModal('${day.dateStr}', '${slot}')">
               </div>
             `;
           } else if (!isCoordinator && isExceedingTomorrow) {
             html += `
               <div class="gcal-slot-cell empty-slot future-restricted-slot" 
-                   title="Tempahan disekat (Guru biasa hanya boleh menempah 1 hari sebelum / esok sahaja.)"
+                   title="Tempahan disekat (Hanya dibenarkan untuk hari semasa dan hari seterusnya sahaja)"
                    onclick="window.app.openBookingModal('${day.dateStr}', '${slot}')">
               </div>
             `;
@@ -873,24 +874,25 @@ class ModalView {
     }
 
     const isAdmin = (this.store.auth && (this.store.auth.isLabCoordinator() || this.store.auth.isAdminVerified));
+    const todayIso = DateUtils.getTodayIso();
     const tomorrowIso = DateUtils.getTomorrowIso();
     if (this.dom.formDate) {
       if (isAdmin) {
         this.dom.formDate.removeAttribute('min');
         this.dom.formDate.removeAttribute('max');
       } else {
-        this.dom.formDate.min = tomorrowIso;
+        this.dom.formDate.min = todayIso;
         this.dom.formDate.max = tomorrowIso;
       }
     }
 
     if (!isAdmin && dateStr) {
-      if (dateStr < tomorrowIso) {
-        this.app.showToast("Tempahan ditutup! Guru biasa tidak boleh menempah bagi hari ini atau tarikh lepas.", "warning");
+      if (dateStr < todayIso) {
+        this.app.showToast("Tempahan ditutup! Tidak boleh menempah bagi tarikh lepas.", "warning");
         return;
       }
       if (dateStr > tomorrowIso) {
-        this.app.showToast("Tempahan disekat! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja).", "warning");
+        this.app.showToast("Tempahan disekat! Guru biasa hanya dibenarkan menempah bagi hari semasa dan hari seterusnya sahaja.", "warning");
         return;
       }
       const existingUserCount = this.store.getUserBookingCountForDate(this.store.auth.currentUser, dateStr);
@@ -901,7 +903,7 @@ class ModalView {
     }
 
     this.dom.formLab.value = "LAB-1";
-    this.dom.formDate.value = dateStr || (isAdmin ? DateUtils.formatDateIso(new Date()) : tomorrowIso);
+    this.dom.formDate.value = dateStr || (isAdmin ? DateUtils.formatDateIso(new Date()) : todayIso);
     this.dom.formSlot.value = slotStr || TIME_SLOTS[0];
     this.dom.formApplicant.value = this.store.auth.currentUser.name;
 
@@ -1002,17 +1004,18 @@ class ModalView {
     const slot2 = isTwoSlots && this.dom.formSlot2 ? this.dom.formSlot2.value : null;
     const isAdmin = (this.store.auth && (this.store.auth.isLabCoordinator() || this.store.auth.isAdminVerified));
 
-    // 1. Semakan tarikh tempahan bagi pengguna biasa: MESTI 1 hari sebelum sahaja (esok)
+    // 1. Semakan tarikh tempahan bagi pengguna biasa: Hari semasa dan hari seterusnya sahaja
     if (!isAdmin && date) {
+      const todayIso = DateUtils.getTodayIso();
       const tomorrowIso = DateUtils.getTomorrowIso();
-      if (date < tomorrowIso) {
-        this.dom.conflictAlertMsg.textContent = "Amaran: Tempahan slot makmal mesti dibuat sekurang-kurangnya 1 hari sebelum tarikh penggunaan (mulai esok).";
+      if (date < todayIso) {
+        this.dom.conflictAlertMsg.textContent = "Amaran: Tempahan slot makmal tidak dibenarkan bagi tarikh yang telah berlalu.";
         this.dom.conflictAlert.style.display = 'flex';
         if (this.dom.btnSubmitBooking) this.dom.btnSubmitBooking.disabled = true;
         return;
       }
       if (date > tomorrowIso) {
-        this.dom.conflictAlertMsg.textContent = "Amaran: Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja)";
+        this.dom.conflictAlertMsg.textContent = "Amaran: Guru biasa hanya dibenarkan menempah bagi hari semasa dan hari seterusnya sahaja.";
         this.dom.conflictAlert.style.display = 'flex';
         if (this.dom.btnSubmitBooking) this.dom.btnSubmitBooking.disabled = true;
         return;
@@ -1088,14 +1091,15 @@ class ModalView {
     const isAdmin = (this.store.auth && (this.store.auth.isLabCoordinator() || this.store.auth.isAdminVerified));
 
     if (!isAdmin) {
-      // 1. Semakan tarikh tempahan: Guru biasa hanya 1 hari sebelum (esok sahaja)
+      // 1. Semakan tarikh tempahan: Guru biasa hanya hari semasa dan hari seterusnya sahaja
+      const todayIso = DateUtils.getTodayIso();
       const tomorrowIso = DateUtils.getTomorrowIso();
-      if (date < tomorrowIso) {
-        this.app.showToast("Gagal! Tempahan slot makmal mesti dibuat sekurang-kurangnya 1 hari sebelum tarikh penggunaan.", "error");
+      if (date < todayIso) {
+        this.app.showToast("Gagal! Tempahan tidak dibenarkan bagi tarikh yang telah berlalu.", "error");
         return;
       }
       if (date > tomorrowIso) {
-        this.app.showToast("Gagal! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja)", "error");
+        this.app.showToast("Gagal! Guru biasa hanya dibenarkan menempah bagi hari semasa dan hari seterusnya sahaja.", "error");
         return;
       }
 

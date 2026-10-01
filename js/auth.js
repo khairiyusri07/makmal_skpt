@@ -44,8 +44,8 @@ class AuthStore {
         updated = true;
       }
     });
-    this.fetchUsersFromBackend();
     this.fetchUsersFromSheet();
+    this.fetchUsersFromBackend();
   }
 
   async fetchUsersFromBackend() {

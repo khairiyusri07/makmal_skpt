@@ -20,19 +20,32 @@ class App {
     this.bindEvents();
     this.render();
 
-    // Auto muat balik data segar dalam masa 0.1 saat (100 milisaat) selepas pembersihan cache
-    setTimeout(() => {
+    // Benda paling pertama perlu buat: Kemas kini data terus daripada Google Sheet
+    this.syncFromSheetFirst();
+  }
+
+  async syncFromSheetFirst() {
+    try {
+      console.log("[LabBook System] Memulakan penyelarasan data daripada Google Sheet...");
+      await Promise.allSettled([
+        this.store.fetchFromSheet(),
+        (this.authStore && typeof this.authStore.fetchUsersFromSheet === 'function')
+          ? this.authStore.fetchUsersFromSheet()
+          : Promise.resolve()
+      ]);
+      this.render();
+      console.log("[LabBook System] Data makmal & pengguna berjaya diselaraskan daripada Google Sheet!");
+    } catch (e) {
+      console.warn("Ralat penyelarasan awal Google Sheet:", e);
+    }
+
+    // Selaraskan juga dengan pelayan tempatan jika wujud
+    try {
       this.store.fetchFromPythonBackend();
-      this.store.fetchFromSheet();
-      if (typeof this.authStore.fetchUsersFromBackend === 'function') {
+      if (this.authStore && typeof this.authStore.fetchUsersFromBackend === 'function') {
         this.authStore.fetchUsersFromBackend();
       }
-      if (typeof this.authStore.fetchUsersFromSheet === 'function') {
-        this.authStore.fetchUsersFromSheet();
-      }
-      this.render();
-      console.log("[LabBook System] Data makmal & pengguna berjaya dimuatkan semula dalam masa 0.1 saat!");
-    }, 100);
+    } catch (e) { }
   }
 
   render() {

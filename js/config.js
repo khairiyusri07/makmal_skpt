@@ -163,15 +163,16 @@ class DateUtils {
   static isAtLeastOneDayInAdvance(dateInput) {
     const norm = DateUtils.normalizeDate(dateInput);
     if (!norm) return false;
-    const tomorrowIso = DateUtils.getTomorrowIso();
-    return norm >= tomorrowIso;
+    const todayIso = DateUtils.getTodayIso();
+    return norm >= todayIso;
   }
 
   static isAllowedForRegularUser(dateInput) {
     const norm = DateUtils.normalizeDate(dateInput);
     if (!norm) return false;
+    const todayIso = DateUtils.getTodayIso();
     const tomorrowIso = DateUtils.getTomorrowIso();
-    return norm === tomorrowIso;
+    return norm >= todayIso && norm <= tomorrowIso;
   }
 
   static getDayNameMy(dateInput) {
