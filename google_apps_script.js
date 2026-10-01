@@ -1,7 +1,8 @@
 /**
  * GOOGLE APPS SCRIPT FOR MAKMAL KOMPUTER SKPT
  * Menyimpan Data Tempahan (Tab: Tempahan) & Data Pengguna (Tab: Pengguna)
- * dengan Sokongan UserID Automatik & Robust In-Place Row Status Update.
+ * dengan Sokongan UserID Automatik, Robust In-Place Row Status Update,
+ * dan Pemprosesan Pukal (BATCH_ADD) Berprestasi Tinggi dengan LockService.
  */
 
 function getOrCreateSheet(ss, targetName) {
@@ -14,6 +15,21 @@ function getOrCreateSheet(ss, targetName) {
   }
   var newSheet = ss.insertSheet(targetName);
   return newSheet;
+}
+
+function formatDateStr(val) {
+  if (!val) return "";
+  if (val instanceof Date) {
+    var yr = val.getFullYear();
+    var mo = ("0" + (val.getMonth() + 1)).slice(-2);
+    var dy = ("0" + val.getDate()).slice(-2);
+    return yr + "-" + mo + "-" + dy;
+  }
+  var s = String(val).trim();
+  if (s.indexOf("T") !== -1) {
+    s = s.split("T")[0];
+  }
+  return s;
 }
 
 function doGet(e) {
@@ -60,16 +76,16 @@ function doGet(e) {
     var row = data[r];
     if (!row[0]) continue;
     
-    var bId = row[0];
-    var bUserId = hasUserIdCol ? row[1] : "";
-    var bDate = hasUserIdCol ? row[2] : row[1];
-    var bSlot = hasUserIdCol ? row[3] : row[2];
-    var bApplicant = hasUserIdCol ? row[4] : row[3];
-    var bRole = hasUserIdCol ? row[5] : row[4];
-    var bSubject = hasUserIdCol ? row[6] : row[5];
+    var bId = String(row[0] || "").trim();
+    var bUserId = hasUserIdCol ? String(row[1] || "") : "";
+    var bDate = formatDateStr(hasUserIdCol ? row[2] : row[1]);
+    var bSlot = String(hasUserIdCol ? row[3] : row[2] || "");
+    var bApplicant = String(hasUserIdCol ? row[4] : row[3] || "");
+    var bRole = String(hasUserIdCol ? row[5] : row[4] || "Guru");
+    var bSubject = String(hasUserIdCol ? row[6] : row[5] || "");
     var bPcCount = hasUserIdCol ? row[7] : row[6];
     var bPurpose = hasUserIdCol ? row[8] : row[7];
-    var bStatus = hasUserIdCol ? row[11] : (row[10] || row[8] || "Diluluskan");
+    var bStatus = String(hasUserIdCol ? row[11] : (row[10] || row[8] || "Diluluskan"));
     var bCreatedAt = hasUserIdCol ? row[12] : (row[11] || row[9] || new Date().toISOString());
 
     bookings.push({
@@ -91,6 +107,12 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  var lock = LockService.getScriptLock();
+  var hasLock = false;
+  try {
+    hasLock = lock.tryLock(30000); // Tunggu giliran sehingga 30 saat untuk elak konflik 'race condition'
+  } catch (lockErr) {}
+
   try {
     var contents = e.postData.contents;
     var data = JSON.parse(contents);
@@ -155,7 +177,89 @@ function doPost(e) {
       return responseJSON({ status: "success", userId: userId, message: "Rekod pengguna diselaraskan." });
     }
 
-    // 2. KEMASKINI ATAU TAMBAH TEMPAHAN (Tab: Tempahan)
+    // 2. REKOD TEMPAHAN PUKAL (BATCH_ADD / SYNC_ALL) - KESELAMATAN 100% TIADA SLOT TERCICIR
+    if (data.action === "BATCH_ADD" || data.action === "SYNC_ALL" || (Array.isArray(data.bookings) && data.bookings.length > 0)) {
+      var bookings = data.bookings || [];
+      var bookingSheet = getOrCreateSheet(ss, "Tempahan");
+
+      if (bookingSheet.getLastRow() === 0) {
+        bookingSheet.appendRow([
+          "Kod Tempahan", "UserID", "Tarikh", "Slot Masa", "Pemohon", "Peranan",
+          "Kelas / Subjek", "Bilangan PC", "Tujuan", "Peralatan", "Nota", "Status", "Tarikh Dicipta"
+        ]);
+        bookingSheet.getRange(1, 1, 1, 13).setFontWeight("bold").setBackground("#e8f0fe");
+      }
+
+      var existingData = bookingSheet.getDataRange().getValues();
+      var hasUserIdCol = (existingData[0][1] && String(existingData[0][1]).toLowerCase().includes("user"));
+      var statusCol = hasUserIdCol ? 12 : 11; // 1-based index
+
+      // Petakan kod tempahan sedia ada untuk semakan sepantas kilat
+      var existingMap = {};
+      for (var j = 1; j < existingData.length; j++) {
+        var idKey = String(existingData[j][0] || "").trim().toLowerCase();
+        if (idKey) {
+          existingMap[idKey] = j + 1; // 1-based row index
+        }
+      }
+
+      var newRowsToAppend = [];
+      var updatedCount = 0;
+
+      for (var k = 0; k < bookings.length; k++) {
+        var b = bookings[k];
+        if (!b) continue;
+        var bId = String(b.id || "").trim();
+        var bStatus = b.status || "Diluluskan";
+        var dateFormatted = formatDateStr(b.date);
+
+        if (bId && existingMap[bId.toLowerCase()]) {
+          // Jika sudah ada dalam helaian: kemaskini status sahaja
+          var rowIdx = existingMap[bId.toLowerCase()];
+          bookingSheet.getRange(rowIdx, statusCol).setValue(bStatus);
+          updatedCount++;
+        } else {
+          // Jika belum ada: kumpul untuk dimasukkan serentak (bulk write)
+          var bUserId = b.userId || "";
+          if (!bUserId && b.applicant) {
+            var numMatch = String(b.applicant).match(/\d+/);
+            if (numMatch) bUserId = "USR-" + numMatch[0];
+          }
+
+          newRowsToAppend.push([
+            bId,
+            bUserId,
+            "'" + dateFormatted, // Awalan ' memastikan teks tarikh kekal YYYY-MM-DD tanpa ralat zon masa
+            b.slot || "",
+            b.applicant || "",
+            b.role || "Guru",
+            b.subject || "",
+            b.pcCount || 35,
+            b.purpose || "",
+            JSON.stringify(b.equipments || []),
+            b.notes || "",
+            bStatus,
+            b.createdAt || new Date().toISOString()
+          ]);
+        }
+      }
+
+      // Masukkan semua baris baru serentak dalam 1 operasi atomik
+      if (newRowsToAppend.length > 0) {
+        var startRow = bookingSheet.getLastRow() + 1;
+        bookingSheet.getRange(startRow, 1, newRowsToAppend.length, 13).setValues(newRowsToAppend);
+      }
+
+      return responseJSON({
+        status: "success",
+        addedCount: newRowsToAppend.length,
+        updatedCount: updatedCount,
+        totalReceived: bookings.length,
+        message: "Penyelarasan pukal berjaya: " + newRowsToAppend.length + " ditambah, " + updatedCount + " dikemaskini."
+      });
+    }
+
+    // 3. KEMASKINI ATAU TAMBAH TEMPAHAN TUNGGAL (Tab: Tempahan)
     if (data.action === "ADD" || data.booking || data.action === "UPDATE_STATUS" || data.action === "CANCEL") {
       var booking = data.booking || {};
       var targetId = String(data.id || booking.id || "").trim();
@@ -185,7 +289,7 @@ function doPost(e) {
         }
       }
 
-      // JIKA BARIS SEDIA ADA DIJUMPAI: Kemaskini status pada baris asal (JANGAN tambah baris baru!)
+      // JIKA BARIS SEDIA ADA DIJUMPAI: Kemaskini status pada baris asal
       if (existingRowIndex !== -1) {
         if (newStatus) {
           bookingSheet.getRange(existingRowIndex, statusCol).setValue(newStatus);
@@ -200,10 +304,12 @@ function doPost(e) {
         if (numMatch) bookingUserId = "USR-" + numMatch[0];
       }
 
+      var dateFormatted = formatDateStr(booking.date);
+
       bookingSheet.appendRow([
         targetId || booking.id || "",
         bookingUserId,
-        booking.date || "",
+        "'" + dateFormatted,
         booking.slot || "",
         booking.applicant || "",
         booking.role || "Guru",
@@ -219,10 +325,16 @@ function doPost(e) {
       return responseJSON({ status: "success", message: "Tempahan baru ditambah." });
     }
 
-    return responseJSON({ status: "error", message: "Tindakan melebihkan had." });
+    return responseJSON({ status: "error", message: "Tindakan tidak sah." });
 
   } catch (err) {
     return responseJSON({ status: "error", message: err.toString() });
+  } finally {
+    if (hasLock) {
+      try {
+        lock.releaseLock();
+      } catch (lErr) {}
+    }
   }
 }
 

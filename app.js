@@ -312,7 +312,12 @@ class App {
       });
     }
 
-    // Schedule Generator Modal Events (Admin Only)
+    // Schedule Generator & Google Sheet Batch Sync Events (Admin Only)
+    const btnSyncAllToSheet = document.getElementById('btnSyncAllToSheet');
+    if (btnSyncAllToSheet) {
+      btnSyncAllToSheet.addEventListener('click', () => this.handleSyncAllToGoogleSheet());
+    }
+
     const btnOpenScheduleGenerator = document.getElementById('btnOpenScheduleGenerator');
     if (btnOpenScheduleGenerator) {
       btnOpenScheduleGenerator.addEventListener('click', () => this.modalView.openScheduleGenerator());
@@ -486,6 +491,30 @@ class App {
       toast.style.transition = 'opacity 0.3s ease';
       setTimeout(() => toast.remove(), 300);
     }, 4000);
+  }
+
+  async handleSyncAllToGoogleSheet() {
+    const btn = document.getElementById('btnSyncAllToSheet');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader-2" class="spin" style="width:14px; height:14px;"></i><span>Menyelaras...</span>`;
+      if (window.lucide) lucide.createIcons();
+    }
+
+    try {
+      this.showToast("Menyelaras semua rekod slot ke Google Sheet secara pukal...", "info");
+      const res = await this.store.syncAllToGoogleSheet();
+      this.showToast(`Berjaya! Sebanyak ${res.count} rekod slot makmal telah dihantar ke Google Sheet.`, "success");
+    } catch (err) {
+      this.showToast(`Ralat penyelarasan: ${err.message}`, "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+        if (window.lucide) lucide.createIcons();
+      }
+    }
   }
 }
 

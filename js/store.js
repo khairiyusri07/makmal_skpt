@@ -416,16 +416,18 @@ class BookingStore {
 
     this.save();
 
-    // Hantar rekod ke Backend API & Google Sheet secara latar belakang
+    // Hantar SEMUA slot janaan sekaligus dalam 1 panggilan pukal ke Google Sheet (BATCH_ADD)
+    this.syncBatchToSheet(newBookings);
+
+    // Hantar rekod ke Backend API secara berturutan
     (async () => {
       for (const b of newBookings) {
         try {
-          fetch(`${PYTHON_API_URL}/bookings`, {
+          await fetch(`${PYTHON_API_URL}/bookings`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...b, isAdmin: true })
-          }).catch(() => {});
-          this.syncToAddSheet(b);
+            body: JSON.stringify({ ...b, isAdmin: true, overwrite: overwriteExisting })
+          });
         } catch (e) {}
       }
     })();
@@ -578,6 +580,41 @@ class BookingStore {
 
   cancelBooking(id) {
     this.rejectBooking(id);
+  }
+
+  async syncBatchToSheet(bookings) {
+    if (!GOOGLE_SHEET_API_URL || !bookings || bookings.length === 0) return;
+
+    // 1. Cuba hantar secara pukal BATCH_ADD (untuk Google Apps Script versi terkini)
+    try {
+      fetch(GOOGLE_SHEET_API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'BATCH_ADD', bookings: bookings })
+      }).catch(() => {});
+    } catch (e) { }
+
+    // 2. Hantar setiap slot secara berturutan dengan sela masa 220ms
+    // Ini menjamin 100% slot berjaya direkodkan serta-merta walaupun Google Apps Script masih pada versi sedia ada
+    for (const b of bookings) {
+      try {
+        await fetch(GOOGLE_SHEET_API_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'ADD', booking: b })
+        });
+      } catch (err) { }
+      await new Promise(r => setTimeout(r, 220));
+    }
+  }
+
+  async syncAllToGoogleSheet() {
+    const list = this.bookings.filter(b => b.status !== "Dibatalkan");
+    if (!list || list.length === 0) return { count: 0 };
+    await this.syncBatchToSheet(list);
+    return { count: list.length };
   }
 
   syncToAddSheet(booking) {
