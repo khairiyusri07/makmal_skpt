@@ -10,6 +10,7 @@ class BookingStore {
     this.searchQuery = "";
     this.statusFilter = "ALL";
     this.dayFilter = "ALL";
+    this.userFilter = "ALL";
     this.customWeeklyClasses = this.loadCustomWeeklyClasses();
     this.load();
     this.startAutoPolling(500);
@@ -716,6 +717,15 @@ class BookingStore {
         } catch (e) {
           return false;
         }
+      });
+    }
+    if (this.userFilter && this.userFilter !== "ALL") {
+      const target = this.userFilter.toLowerCase().trim();
+      list = list.filter(b => {
+        const uEmail = (b.userEmail || '').toLowerCase().trim();
+        const uId = (b.userId || '').toLowerCase().trim();
+        const uApp = (b.applicant || '').toLowerCase().trim();
+        return uEmail === target || uId === target || uApp === target;
       });
     }
     return list;

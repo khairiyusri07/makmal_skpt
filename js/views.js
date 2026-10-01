@@ -244,6 +244,23 @@ class TableView {
   renderBookingsList() {
     const tableBody = document.getElementById('bookingTableBody');
     if (!tableBody) return;
+
+    // Dynamically populate userBookingFilter dropdown if needed
+    const userFilterEl = document.getElementById('userBookingFilter');
+    if (userFilterEl) {
+      const allUsers = this.store.auth.registeredUsers || [];
+      const currentSelected = this.store.userFilter || 'ALL';
+      let optionsHtml = '<option value="ALL">Semua Pengguna</option>';
+      allUsers.forEach(u => {
+        const val = u.email || u.userId || u.name;
+        const isSel = (currentSelected.toLowerCase() === (u.email || '').toLowerCase() ||
+          currentSelected.toLowerCase() === (u.userId || '').toLowerCase() ||
+          currentSelected.toLowerCase() === (u.name || '').toLowerCase());
+        optionsHtml += `<option value="${val}" ${isSel ? 'selected' : ''}>${u.name} (${u.userId || u.role || 'Guru'})</option>`;
+      });
+      userFilterEl.innerHTML = optionsHtml;
+    }
+
     const list = this.store.getFilteredBookings();
 
     const countBadge = document.getElementById('countBookingsBadge');
@@ -355,7 +372,7 @@ class TableView {
     if (filteredUsers.length === 0) {
       userTableBody.innerHTML = `
         <tr>
-          <td colspan="6" style="text-align: center; padding: 30px; color: var(--gcal-text-subtle);">
+          <td colspan="7" style="text-align: center; padding: 30px; color: var(--gcal-text-subtle);">
             Tiada rekod pengguna dijumpai.
           </td>
         </tr>
@@ -377,6 +394,13 @@ class TableView {
       const regDate = u.registeredAt ? new Date(u.registeredAt).toLocaleDateString('ms-MY') : '-';
       const userKey = u.userId || u.email;
 
+      // Hitung statistik penggunaan makmal pengguna
+      const userBookings = this.store.getUserBookings(u);
+      const totalBookings = userBookings.length;
+      const approvedCount = userBookings.filter(b => b.status === "Diluluskan").length;
+      const pendingCount = userBookings.filter(b => b.status === "Menunggu Kelulusan").length;
+      const cancelledCount = userBookings.filter(b => b.status === "Dibatalkan").length;
+
       return `
         <tr>
           <td>
@@ -392,17 +416,38 @@ class TableView {
             </span>
           </td>
           <td>
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              <div>
+                <span style="background: ${totalBookings > 0 ? 'var(--gcal-blue-light)' : '#f1f5f9'}; color: ${totalBookings > 0 ? 'var(--gcal-blue-dark)' : '#64748b'}; font-weight: 700; font-size: 0.78rem; padding: 2px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px;">
+                  <i data-lucide="calendar" style="width: 12px; height: 12px;"></i>
+                  ${totalBookings} Tempahan
+                </span>
+              </div>
+              <div style="font-size: 0.72rem; color: var(--gcal-text-subtle); display: flex; gap: 6px; flex-wrap: wrap;">
+                <span style="color: var(--gcal-green); font-weight: 600;">✓ ${approvedCount} Lulus</span>
+                ${pendingCount > 0 ? `<span style="color: var(--gcal-amber); font-weight: 600;">⏱ ${pendingCount} Tunggu</span>` : ''}
+                ${cancelledCount > 0 ? `<span style="color: var(--gcal-red); font-weight: 600;">✕ ${cancelledCount} Batal</span>` : ''}
+              </div>
+            </div>
+          </td>
+          <td>
             <strong>${u.phone || 'Tiada No'}</strong>
             <br><small style="color: var(--gcal-text-subtle);">${u.subject || 'Mata Pelajaran'}</small>
           </td>
           <td>
             <small style="color: var(--gcal-text-subtle);">${regDate}</small>
           </td>
-          <td style="text-align: right;">
-            <button class="btn-gcal-blue" style="padding: 5px 12px; font-size: 0.78rem; font-weight: 600; border-radius: 14px; display: inline-flex; align-items: center; gap: 4px;" onclick="window.app.openEditUserModal('${userKey}')">
-              <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
-              <span>Edit Akaun</span>
-            </button>
+          <td style="text-align: right; white-space: nowrap;">
+            <div style="display: flex; gap: 6px; justify-content: flex-end;">
+              <button class="btn-gcal-blue" style="padding: 5px 12px; font-size: 0.78rem; font-weight: 600; border-radius: 14px; display: inline-flex; align-items: center; gap: 4px;" onclick="window.app.openUserUsageHistory('${userKey}')" title="Lihat rekod penggunaan makmal oleh guru ini">
+                <i data-lucide="history" style="width: 14px; height: 14px;"></i>
+                <span>Rekod Penggunaan</span>
+              </button>
+              <button class="btn-gcal-white" style="padding: 5px 10px; font-size: 0.78rem; font-weight: 600; border-radius: 14px; border: 1px solid #cbd5e1; background: white; color: #334155; display: inline-flex; align-items: center; gap: 4px;" onclick="window.app.openEditUserModal('${userKey}')" title="Edit akaun pengguna">
+                <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                <span>Edit</span>
+              </button>
+            </div>
           </td>
         </tr>
       `;
@@ -1525,6 +1570,222 @@ class ModalView {
     } catch (err) {
       this.app.showToast(err.message, "error");
     }
+  }
+
+  openUserUsageHistory(userKey) {
+    const modalEl = document.getElementById('userUsageModal');
+    if (!modalEl) return;
+
+    const allUsers = this.store.auth.registeredUsers || [];
+    const user = allUsers.find(u => u.userId === userKey || u.email === userKey || u.name === userKey) || {
+      userId: userKey,
+      name: userKey,
+      email: userKey,
+      role: 'Guru / Tenaga Pengajar'
+    };
+
+    this.currentUserUsageUser = user;
+
+    // Reset filters
+    const searchInput = document.getElementById('userUsageSearchInput');
+    const statusFilter = document.getElementById('userUsageStatusFilter');
+    if (searchInput) searchInput.value = '';
+    if (statusFilter) statusFilter.value = 'ALL';
+
+    this.renderUserUsageModal();
+    modalEl.classList.add('active');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  closeUserUsageHistory() {
+    const modalEl = document.getElementById('userUsageModal');
+    if (modalEl) modalEl.classList.remove('active');
+    this.currentUserUsageUser = null;
+  }
+
+  renderUserUsageModal() {
+    if (!this.currentUserUsageUser) return;
+    const u = this.currentUserUsageUser;
+
+    const modalTitle = document.getElementById('userUsageModalTitle');
+    if (modalTitle) {
+      modalTitle.textContent = `Rekod Penggunaan Makmal: ${u.name || u.userId}`;
+    }
+
+    // Populate user profile banner
+    const profileHeader = document.getElementById('userUsageProfileHeader');
+    if (profileHeader) {
+      const roleStr = u.role || 'Guru / Tenaga Pengajar';
+      let roleBadgeStyle = 'background: #e2e8f0; color: #475569;';
+      if (roleStr.includes('Penyelaras') || roleStr.includes('ICT')) {
+        roleBadgeStyle = 'background: #dbeafe; color: #1e40af; font-weight: 700;';
+      } else if (roleStr.includes('Pentadbir')) {
+        roleBadgeStyle = 'background: #fef3c7; color: #92400e; font-weight: 700;';
+      } else if (roleStr.includes('Kelas')) {
+        roleBadgeStyle = 'background: #dcfce7; color: #166534; font-weight: 600;';
+      }
+
+      const regDate = u.registeredAt ? new Date(u.registeredAt).toLocaleDateString('ms-MY') : '-';
+
+      profileHeader.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; box-shadow: 0 2px 4px rgba(37,99,235,0.2);">
+            ${(u.name || 'G').charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <strong style="font-size: 1.05rem; color: var(--gcal-text-dark);">${u.name}</strong>
+              <span style="${roleBadgeStyle} padding: 2px 8px; border-radius: 12px; font-size: 0.74rem;">${roleStr}</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--gcal-text-subtle); margin-top: 3px; display: flex; gap: 12px; flex-wrap: wrap;">
+              <span><strong>ID:</strong> ${u.userId || 'USR'}</span>
+              <span><strong>Emel DELIMa:</strong> ${u.email || '-'}</span>
+              <span><strong>No. Tel:</strong> ${u.phone || 'Tiada'}</span>
+              <span><strong>Subjek:</strong> ${u.subject || 'Umum'}</span>
+              <span><strong>Tarikh Daftar:</strong> ${regDate}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Calculate overall stats for this user
+    const userBookings = this.store.getUserBookings(u);
+    const totalCount = userBookings.length;
+    const approvedCount = userBookings.filter(b => b.status === "Diluluskan").length;
+    const pendingCount = userBookings.filter(b => b.status === "Menunggu Kelulusan").length;
+    const cancelledCount = userBookings.filter(b => b.status === "Dibatalkan").length;
+
+    const elTotal = document.getElementById('userUsageStatTotal');
+    const elApproved = document.getElementById('userUsageStatApproved');
+    const elPending = document.getElementById('userUsageStatPending');
+    const elCancelled = document.getElementById('userUsageStatCancelled');
+
+    if (elTotal) elTotal.textContent = totalCount;
+    if (elApproved) elApproved.textContent = approvedCount;
+    if (elPending) elPending.textContent = pendingCount;
+    if (elCancelled) elCancelled.textContent = cancelledCount;
+
+    this.renderUserUsageBookings();
+  }
+
+  renderUserUsageBookings() {
+    if (!this.currentUserUsageUser) return;
+    const u = this.currentUserUsageUser;
+
+    const searchInput = document.getElementById('userUsageSearchInput');
+    const statusFilter = document.getElementById('userUsageStatusFilter');
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedStatus = statusFilter ? statusFilter.value : 'ALL';
+
+    const allUserBookings = this.store.getUserBookings(u);
+
+    const filtered = allUserBookings.filter(b => {
+      const matchQuery = !query ||
+        (b.id && b.id.toLowerCase().includes(query)) ||
+        (b.subject && b.subject.toLowerCase().includes(query)) ||
+        (b.slot && b.slot.toLowerCase().includes(query)) ||
+        (b.date && b.date.toLowerCase().includes(query));
+
+      const matchStatus = (selectedStatus === 'ALL') || (b.status === selectedStatus);
+      return matchQuery && matchStatus;
+    });
+
+    const tableEl = document.getElementById('userUsageBookingsTable');
+    const emptyEl = document.getElementById('userUsageEmptyState');
+    const tbody = document.getElementById('userUsageTableBody');
+    const footerCount = document.getElementById('userUsageFooterCount');
+
+    if (footerCount) {
+      footerCount.textContent = `Menunjukkan ${filtered.length} daripada ${allUserBookings.length} rekod tempahan`;
+    }
+
+    if (filtered.length === 0) {
+      if (tableEl) tableEl.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = 'block';
+      if (tbody) tbody.innerHTML = '';
+      return;
+    }
+
+    if (tableEl) tableEl.style.display = 'table';
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    if (tbody) {
+      tbody.innerHTML = filtered.map(b => {
+        let statusBadge = '';
+        let actionsHtml = '';
+
+        if (b.status === "Diluluskan") {
+          statusBadge = `<span style="background: var(--gcal-green-light); color: var(--gcal-green); padding: 3px 8px; border-radius: 12px; font-weight: 600; font-size: 0.78rem;">Diluluskan</span>`;
+          actionsHtml = `
+            <button class="btn-gcal-blue" style="padding: 4px 9px; font-size: 0.75rem;" onclick="window.app.openSlip('${b.id}')" title="Cetak / Papar Slip Rasmi">
+              Slip
+            </button>
+            <button class="btn-gcal-red" style="padding: 4px 9px; font-size: 0.75rem;" onclick="window.app.rejectBookingFromUsage('${b.id}')" title="Batalkan tempahan ini">
+              Batal
+            </button>
+          `;
+        } else if (b.status === "Menunggu Kelulusan") {
+          statusBadge = `<span style="background: var(--gcal-amber-light); color: var(--gcal-amber); padding: 3px 8px; border-radius: 12px; font-weight: 600; font-size: 0.78rem;">Menunggu</span>`;
+          actionsHtml = `
+            <button class="btn-gcal-green" style="padding: 4px 9px; font-size: 0.75rem;" onclick="window.app.approveBookingFromUsage('${b.id}')" title="Luluskan tempahan ini">
+              Luluskan
+            </button>
+            <button class="btn-gcal-red" style="padding: 4px 9px; font-size: 0.75rem;" onclick="window.app.rejectBookingFromUsage('${b.id}')" title="Tolak permohonan">
+              Tolak
+            </button>
+          `;
+        } else {
+          statusBadge = `<span style="background: var(--gcal-red-light); color: var(--gcal-red); padding: 3px 8px; border-radius: 12px; font-weight: 600; font-size: 0.78rem;">Dibatalkan</span>`;
+          actionsHtml = `
+            <button class="btn-gcal-blue" style="padding: 4px 9px; font-size: 0.75rem;" onclick="window.app.openSlip('${b.id}')" title="Cetak / Papar Slip">
+              Slip
+            </button>
+          `;
+        }
+
+        let dayName = '';
+        if (b.date) {
+          try {
+            const parts = b.date.split('-');
+            if (parts.length === 3) {
+              const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+              dayName = DAY_NAMES_MY[d.getDay()] || '';
+            }
+          } catch (e) { }
+        }
+        const dateDisplay = dayName ? `${dayName}, ${b.date}` : b.date;
+
+        return `
+          <tr>
+            <td><strong style="color: var(--gcal-blue);">${b.id}</strong></td>
+            <td>
+              <strong style="color: var(--gcal-text-dark);">${dateDisplay}</strong>
+            </td>
+            <td>
+              <span style="font-weight: 600; color: #334155;">${b.slot}</span>
+            </td>
+            <td>
+              <strong>${b.subject}</strong>
+              ${b.notes ? `<br><small style="color: var(--gcal-text-subtle); font-style: italic;">${b.notes}</small>` : ''}
+            </td>
+            <td>
+              <span style="font-size: 0.78rem; background: #f1f5f9; padding: 2px 7px; border-radius: 8px; color: #475569; font-weight: 600;">
+                ${b.pcCount || 35} PC
+              </span>
+            </td>
+            <td>${statusBadge}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <div style="display: flex; gap: 4px; justify-content: flex-end;">
+                ${actionsHtml}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    if (window.lucide) lucide.createIcons();
   }
 }
 

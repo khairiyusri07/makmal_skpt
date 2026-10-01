@@ -317,7 +317,7 @@
                 <button type="button" class="penyelaras-subnav-btn" id="subtabBtnUsers"
                   onclick="window.app.switchPenyelarasSubtab('users')">
                   <i data-lucide="users" style="width: 16px;"></i>
-                  <span>Senarai Pengguna & Edit Akaun</span>
+                  <span>Senarai Pengguna & Rekod Penggunaan</span>
                   <span class="subnav-badge" id="countUsersBadge">0</span>
                 </button>
               </div>
@@ -327,7 +327,7 @@
             <div id="subtabContentBookings" class="penyelaras-subcontent active">
               <div class="admin-card">
                 <div class="admin-table-controls">
-                  <div style="position: relative; flex: 1; max-width: 320px;">
+                  <div style="position: relative; flex: 1; max-width: 300px;">
                     <i data-lucide="search"
                       style="position: absolute; left: 10px; top: 10px; width: 18px; color: var(--gcal-text-subtle);"></i>
                     <input type="text" id="searchInput" class="search-input-gcal" style="width: 100%;"
@@ -336,9 +336,17 @@
 
                   <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <div style="display: flex; align-items: center; gap: 6px;">
+                      <label for="userBookingFilter"
+                        style="font-size: 0.82rem; font-weight: 600; color: var(--gcal-text-subtle);">Pengguna:</label>
+                      <select id="userBookingFilter" class="form-control-custom" style="width: 180px;">
+                        <option value="ALL">Semua Pengguna</option>
+                      </select>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 6px;">
                       <label for="dayFilter"
                         style="font-size: 0.82rem; font-weight: 600; color: var(--gcal-text-subtle);">Hari:</label>
-                      <select id="dayFilter" class="form-control-custom" style="width: 140px;">
+                      <select id="dayFilter" class="form-control-custom" style="width: 130px;">
                         <option value="ALL">Semua Hari</option>
                         <option value="Ahad">Ahad</option>
                         <option value="Isnin">Isnin</option>
@@ -353,7 +361,7 @@
                     <div style="display: flex; align-items: center; gap: 6px;">
                       <label for="statusFilter"
                         style="font-size: 0.82rem; font-weight: 600; color: var(--gcal-text-subtle);">Status:</label>
-                      <select id="statusFilter" class="form-control-custom" style="width: 150px;">
+                      <select id="statusFilter" class="form-control-custom" style="width: 140px;">
                         <option value="ALL">Semua Status</option>
                         <option value="Diluluskan">Diluluskan</option>
                         <option value="Menunggu Kelulusan">Menunggu Kelulusan</option>
@@ -571,6 +579,7 @@
                         <th>ID & Emel DELIMa</th>
                         <th>Nama Pengguna</th>
                         <th>Peranan / Jawatan</th>
+                        <th>Penggunaan Makmal</th>
                         <th>No. Telefon & Subjek</th>
                         <th>Tarikh Daftar</th>
                         <th style="text-align: right;">Tindakan Penyelaras</th>
@@ -1000,6 +1009,122 @@
             <button type="submit" class="btn-gcal-blue" id="btnSubmitEditUser">Simpan Perubahan Akaun</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: REKOD PENGGUNAAN MAKMAL PENGGUNA (PENYELARAS ICT ONLY) -->
+  <div class="modal-overlay" id="userUsageModal">
+    <div class="modal-container" style="max-width: 920px; width: 95%;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white;">
+        <div class="modal-title">
+          <h3 style="color: white; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="history" style="width: 22px; height: 22px;"></i>
+            <span id="userUsageModalTitle">Rekod Penggunaan Makmal Pengguna</span>
+          </h3>
+          <p style="margin: 2px 0 0 0; font-size: 0.78rem; color: #bfdbfe;" id="userUsageModalSubtitle">
+            Analisis sejarah penggunaan dan tempahan slot makmal komputer sekolah oleh guru.
+          </p>
+        </div>
+        <button class="close-modal-btn" id="btnCloseUserUsageModal" style="color: white;">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 20px 24px; max-height: calc(85vh - 120px); overflow-y: auto;">
+        <!-- Maklumat Ringkas Pengguna -->
+        <div id="userUsageProfileHeader"
+          style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- KPI Summary Cards -->
+        <div class="history-stats-grid" style="margin-bottom: 20px;">
+          <div class="history-stat-card active" style="cursor: default;">
+            <div class="stat-icon-wrap blue"><i data-lucide="calendar"></i></div>
+            <div class="stat-content">
+              <div class="stat-number" id="userUsageStatTotal">0</div>
+              <div class="stat-label">Jumlah Tempahan</div>
+            </div>
+          </div>
+          <div class="history-stat-card" style="cursor: default;">
+            <div class="stat-icon-wrap green"><i data-lucide="check-circle-2"></i></div>
+            <div class="stat-content">
+              <div class="stat-number" id="userUsageStatApproved">0</div>
+              <div class="stat-label">Diluluskan</div>
+            </div>
+          </div>
+          <div class="history-stat-card" style="cursor: default;">
+            <div class="stat-icon-wrap amber"><i data-lucide="clock"></i></div>
+            <div class="stat-content">
+              <div class="stat-number" id="userUsageStatPending">0</div>
+              <div class="stat-label">Menunggu Kelulusan</div>
+            </div>
+          </div>
+          <div class="history-stat-card" style="cursor: default;">
+            <div class="stat-icon-wrap red"><i data-lucide="x-circle"></i></div>
+            <div class="stat-content">
+              <div class="stat-number" id="userUsageStatCancelled">0</div>
+              <div class="stat-label">Dibatalkan</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Controls Dalam Modal -->
+        <div class="admin-table-controls"
+          style="margin-bottom: 14px; gap: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+          <div style="position: relative; flex: 1; max-width: 320px;">
+            <i data-lucide="search"
+              style="position: absolute; left: 10px; top: 10px; width: 16px; color: var(--gcal-text-subtle);"></i>
+            <input type="text" id="userUsageSearchInput" class="search-input-gcal"
+              style="width: 100%; font-size: 0.82rem; padding-left: 32px;"
+              placeholder="Cari kod tempahan, subjek, kelas, tarikh...">
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <label for="userUsageStatusFilter"
+              style="font-size: 0.8rem; font-weight: 600; color: var(--gcal-text-subtle);">Status:</label>
+            <select id="userUsageStatusFilter" class="form-control-custom"
+              style="width: 160px; font-size: 0.8rem; height: 36px;">
+              <option value="ALL">Semua Status</option>
+              <option value="Diluluskan">Diluluskan</option>
+              <option value="Menunggu Kelulusan">Menunggu Kelulusan</option>
+              <option value="Dibatalkan">Dibatalkan</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Senarai Jadual Tempahan Pengguna -->
+        <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <table class="data-table-gcal" id="userUsageBookingsTable">
+            <thead>
+              <tr>
+                <th>Kod Tempahan</th>
+                <th>Tarikh & Hari</th>
+                <th>Slot Masa</th>
+                <th>Kelas & Subjek</th>
+                <th>Murid / Komputer</th>
+                <th>Status</th>
+                <th style="text-align: right;">Tindakan</th>
+              </tr>
+            </thead>
+            <tbody id="userUsageTableBody">
+              <!-- Rendered via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State Dalam Modal -->
+        <div id="userUsageEmptyState"
+          style="display: none; text-align: center; padding: 36px 20px; color: var(--gcal-text-subtle);">
+          <i data-lucide="calendar-x" style="width: 40px; height: 40px; color: #94a3b8; margin-bottom: 8px;"></i>
+          <h4 style="font-size: 1rem; font-weight: 700; color: #475569; margin-bottom: 4px;">Tiada Rekod Tempahan</h4>
+          <p style="font-size: 0.8rem; color: #64748b; margin: 0;">Pengguna ini belum mempunyai rekod tempahan makmal komputer.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer"
+        style="padding: 12px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 0.8rem; color: #64748b;" id="userUsageFooterCount">0 rekod ditemui</div>
+        <button type="button" class="btn-gcal-blue" id="btnCloseUserUsageBtn"
+          style="padding: 7px 20px; border-radius: 18px; font-weight: 600;">Tutup</button>
       </div>
     </div>
   </div>

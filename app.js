@@ -271,6 +271,15 @@ class App {
       });
     }
 
+    const userBookingFilter = document.getElementById('userBookingFilter');
+    if (userBookingFilter) {
+      userBookingFilter.addEventListener('change', (e) => {
+        this.store.userFilter = e.target.value;
+        this.tableView.renderBookingsList();
+        if (window.lucide) lucide.createIcons();
+      });
+    }
+
     // Modal Events
     const btnCloseBookingModal = document.getElementById('btnCloseBookingModal');
     if (btnCloseBookingModal) btnCloseBookingModal.addEventListener('click', () => this.modalView.closeBooking());
@@ -481,6 +490,34 @@ class App {
     if (tabScheduleGeneratorForm) {
       tabScheduleGeneratorForm.addEventListener('submit', (e) => this.modalView.handleScheduleGeneratorSubmit(e));
     }
+
+    // User Usage History Modal Events (Penyelaras ICT)
+    const btnCloseUserUsageModal = document.getElementById('btnCloseUserUsageModal');
+    if (btnCloseUserUsageModal) {
+      btnCloseUserUsageModal.addEventListener('click', () => this.modalView.closeUserUsageHistory());
+    }
+
+    const btnCloseUserUsageBtn = document.getElementById('btnCloseUserUsageBtn');
+    if (btnCloseUserUsageBtn) {
+      btnCloseUserUsageBtn.addEventListener('click', () => this.modalView.closeUserUsageHistory());
+    }
+
+    const userUsageModal = document.getElementById('userUsageModal');
+    if (userUsageModal) {
+      userUsageModal.addEventListener('click', (e) => {
+        if (e.target === userUsageModal) this.modalView.closeUserUsageHistory();
+      });
+    }
+
+    const userUsageSearchInput = document.getElementById('userUsageSearchInput');
+    if (userUsageSearchInput) {
+      userUsageSearchInput.addEventListener('input', () => this.modalView.renderUserUsageBookings());
+    }
+
+    const userUsageStatusFilter = document.getElementById('userUsageStatusFilter');
+    if (userUsageStatusFilter) {
+      userUsageStatusFilter.addEventListener('change', () => this.modalView.renderUserUsageBookings());
+    }
   }
 
   switchPenyelarasSubtab(subtab) {
@@ -521,6 +558,28 @@ class App {
       return;
     }
     this.modalView.openEditUser(userKey);
+  }
+
+  openUserUsageHistory(userKey) {
+    if (!this.authStore.isLabCoordinator()) {
+      this.showToast("Akses dinafikan. Hanya Penyelaras ICT sahaja yang boleh melihat rekod penggunaan pengguna.", "error");
+      return;
+    }
+    this.modalView.openUserUsageHistory(userKey);
+  }
+
+  approveBookingFromUsage(id) {
+    this.approveBooking(id);
+    if (this.modalView && this.modalView.currentUserUsageUser) {
+      this.modalView.renderUserUsageModal();
+    }
+  }
+
+  rejectBookingFromUsage(id) {
+    this.rejectBooking(id);
+    if (this.modalView && this.modalView.currentUserUsageUser) {
+      this.modalView.renderUserUsageModal();
+    }
   }
 
   selectMiniCalDate(dateStr) {

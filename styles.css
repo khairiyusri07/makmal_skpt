@@ -17,7 +17,7 @@
   --gcal-blue-hover: #1765cc;
   --gcal-blue-light: #e8f0fe;
   --gcal-blue-dark: #185abc;
-  
+
   --gcal-green: #1e8e3e;
   --gcal-green-light: #e6f4ea;
   --gcal-amber: #d97706;
@@ -32,21 +32,24 @@
 
   /* Typography & Shadows */
   --gcal-font: 'Plus Jakarta Sans', -apple-system, Roboto, Arial, sans-serif;
-  --gcal-shadow-sm: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
-  --gcal-shadow-md: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
-  --gcal-shadow-lg: 0 4px 16px 0 rgba(60,64,67,0.2);
+  --gcal-shadow-sm: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  --gcal-shadow-md: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
+  --gcal-shadow-lg: 0 4px 16px 0 rgba(60, 64, 67, 0.2);
   --gcal-radius: 8px;
   --gcal-radius-pill: 24px;
 }
 
 /* Reset & Global */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -280,7 +283,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: background 0.15s ease;
 }
 
@@ -504,7 +507,8 @@ html, body {
   grid-template-columns: 80px repeat(7, 1fr);
   min-width: 900px;
   width: 100%;
-  padding-right: 10px; /* Matches scrollbar width of grid body */
+  padding-right: 10px;
+  /* Matches scrollbar width of grid body */
   border-bottom: 2px solid var(--gcal-border-grid);
   background: var(--gcal-bg);
   user-select: none;
@@ -674,7 +678,7 @@ html, body {
 }
 
 .gcal-slot-cell.empty-slot.future-restricted-slot:hover::after {
-  content: 'Khas Penyelaras';
+  content: 'Belum dibuka';
   background: #64748b;
   color: #ffffff;
   font-size: 0.68rem;
@@ -833,7 +837,9 @@ html, body {
   cursor: pointer;
 }
 
-.btn-gcal-blue:hover { background: var(--gcal-blue-hover); }
+.btn-gcal-blue:hover {
+  background: var(--gcal-blue-hover);
+}
 
 .btn-gcal-green {
   background: var(--gcal-green);
@@ -855,6 +861,24 @@ html, body {
   font-weight: 600;
   font-size: 0.8rem;
   cursor: pointer;
+}
+
+.btn-gcal-white, .btn-gcal-secondary {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-gcal-white:hover, .btn-gcal-secondary:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
 }
 
 /* --------------------------------------------------------------------------
@@ -955,7 +979,9 @@ html, body {
   justify-content: center;
 }
 
-.close-modal-btn:hover { background: var(--gcal-hover); }
+.close-modal-btn:hover {
+  background: var(--gcal-hover);
+}
 
 .modal-body {
   padding: 24px;
@@ -1060,9 +1086,18 @@ html, body {
     background: #ffffff !important;
     color: #000000 !important;
   }
-  .gcal-topbar, .gcal-sidebar, .gcal-right-bar, .modal-header, .modal-footer, .gcal-main-content, .mobile-fab-btn, .bottom-nav-mobile {
+
+  .gcal-topbar,
+  .gcal-sidebar,
+  .gcal-right-bar,
+  .modal-header,
+  .modal-footer,
+  .gcal-main-content,
+  .mobile-fab-btn,
+  .bottom-nav-mobile {
     display: none !important;
   }
+
   .modal-overlay {
     position: static !important;
     background: transparent !important;
@@ -1070,9 +1105,11 @@ html, body {
     width: 100% !important;
     height: auto !important;
   }
+
   .modal-overlay.active {
     display: block !important;
   }
+
   .modal-container {
     box-shadow: none !important;
     border: none !important;
@@ -1080,9 +1117,11 @@ html, body {
     width: 100% !important;
     margin: 0 !important;
   }
+
   .modal-body {
     padding: 0 !important;
   }
+
   .slip-card {
     border: 2px solid #202124 !important;
     padding: 24px !important;
@@ -1147,6 +1186,7 @@ html, body {
 }
 
 @media (max-width: 768px) {
+
   /* Show Mobile FAB */
   .mobile-fab-btn {
     display: flex;
@@ -1680,11 +1720,13 @@ html, body {
   .history-stats-grid {
     grid-template-columns: 1fr;
   }
+
   .history-controls {
     flex-direction: column;
     align-items: stretch;
   }
-  .history-controls > div {
+
+  .history-controls>div {
     max-width: 100% !important;
   }
 }
@@ -1804,4 +1846,3 @@ html, body {
 .penyelaras-subcontent {
   margin-top: 14px;
 }
-
