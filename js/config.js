@@ -21,6 +21,48 @@ function getBackendApiUrl(path = '') {
 // Paste Google Apps Script Web App URL here to enable live Google Sheets sync
 const GOOGLE_SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxt1jN0FJUTt4SfJzbv1BgS86wvt4SFuCJGdWkXQ6wUGpb2dNLYc7gNSfequC5CQBbi/exec";
 
+// ==========================================================================
+// AUTO CLEAR USER CACHE AT WEBSITE LOAD / ENTRY
+// ==========================================================================
+function autoClearUserCache() {
+  try {
+    // 1. Bersihkan sessionStorage
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.clear();
+    }
+
+    // 2. Bersihkan CacheStorage API (PWA & HTTP Web Caches)
+    if (typeof window !== 'undefined' && 'caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => {
+          caches.delete(name);
+        });
+      }).catch(() => {});
+    }
+
+    // 3. Batalkan pendaftaran ServiceWorker jika wujud
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => registration.unregister());
+      }).catch(() => {});
+    }
+
+    // 4. Bersihkan cache data tempatan (localStorage) supaya data paling terkini sentiasa dimuatkan dari server
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('labbook_bookings');
+      localStorage.removeItem('labbook_bookings_v4');
+      localStorage.removeItem('labbook_bookings_cache');
+    }
+
+    console.log("[LabBook System] Cache tempatan pengguna telah dibersihkan secara automatik pada waktu masuk laman web.");
+  } catch (e) {
+    console.warn("Gagal membersihkan cache secara automatik:", e);
+  }
+}
+
+// Jalankan pembersihan cache serta-merta pada permulaan muat laman
+autoClearUserCache();
+
 
 
 // Ganti dengan Google Client ID anda daripada Google Cloud Console
