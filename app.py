@@ -108,7 +108,10 @@ def init_db():
                 "Menunggu Kelulusan", datetime.datetime.now().isoformat()
             )
         ]
-        cursor.executemany("INSERT INTO bookings VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", sample_bookings)
+        cursor.executemany("""
+            INSERT INTO bookings (id, labId, date, slot, applicant, role, subject, pcCount, purpose, equipments, notes, status, createdAt)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, sample_bookings)
 
     conn.commit()
     conn.close()

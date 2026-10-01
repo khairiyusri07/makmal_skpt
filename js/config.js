@@ -174,6 +174,22 @@ class DateUtils {
     return norm === tomorrowIso;
   }
 
+  static getDayNameMy(dateInput) {
+    const norm = DateUtils.normalizeDate(dateInput);
+    if (!norm) return '';
+    try {
+      const parts = norm.split('-');
+      if (parts.length === 3) {
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        return DAY_NAMES_MY[d.getDay()] || '';
+      }
+      const d = new Date(norm);
+      return DAY_NAMES_MY[d.getDay()] || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
   static normalizeDate(dateInput) {
     if (!dateInput) return '';
     let str = String(dateInput).trim();

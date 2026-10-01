@@ -562,7 +562,7 @@ class App {
 
   openUserUsageHistory(userKey) {
     if (!this.authStore.isLabCoordinator()) {
-      this.showToast("Akses dinafikan. Hanya Penyelaras ICT sahaja yang boleh melihat rekod penggunaan pengguna.", "error");
+      this.showToast("Akses dinafikan", "error");
       return;
     }
     this.modalView.openUserUsageHistory(userKey);

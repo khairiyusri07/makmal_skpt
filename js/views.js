@@ -261,21 +261,60 @@ class TableView {
       userFilterEl.innerHTML = optionsHtml;
     }
 
+    // Synchronize day filter dropdown & day pills
+    const curDay = this.store.dayFilter || 'ALL';
+    const dayFilterEl = document.getElementById('dayFilter');
+    if (dayFilterEl && dayFilterEl.value !== curDay) {
+      dayFilterEl.value = curDay;
+    }
+
+    const dayPills = document.querySelectorAll('#bookingDayPillsBar .day-filter-pill');
+    if (dayPills && dayPills.length > 0) {
+      dayPills.forEach(pill => {
+        if (pill.getAttribute('data-day') === curDay) {
+          pill.classList.add('active');
+        } else {
+          pill.classList.remove('active');
+        }
+      });
+    }
+
+    const statusFilterEl = document.getElementById('statusFilter');
+    if (statusFilterEl && this.store.statusFilter && statusFilterEl.value !== this.store.statusFilter) {
+      statusFilterEl.value = this.store.statusFilter;
+    }
+
     const list = this.store.getFilteredBookings();
 
     const countBadge = document.getElementById('countBookingsBadge');
     if (countBadge) countBadge.textContent = list.length;
 
     if (list.length === 0) {
+      const filterDayNotice = (curDay !== 'ALL') ? ` pada hari <strong>${curDay}</strong>` : '';
       tableBody.innerHTML = `
         <tr>
-          <td colspan="6" style="text-align: center; padding: 30px; color: var(--gcal-text-subtle);">
-            Tiada rekod tempahan dijumpai.
+          <td colspan="6" style="text-align: center; padding: 36px 16px; color: var(--gcal-text-subtle);">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+              <i data-lucide="filter-x" style="width: 32px; height: 32px; color: #94a3b8;"></i>
+              <span style="font-size: 0.95rem; font-weight: 600; color: #475569;">Tiada rekod tempahan dijumpai${filterDayNotice}.</span>
+              <small style="color: #94a3b8;">Sila cuba tukar pilihan penapis hari atau status di atas.</small>
+            </div>
           </td>
         </tr>
       `;
+      if (window.lucide) lucide.createIcons();
       return;
     }
+
+    const dayColors = {
+      'Ahad': { bg: '#fee2e2', text: '#991b1b', border: '#fca5a5' },
+      'Isnin': { bg: '#e0e7ff', text: '#3730a3', border: '#c7d2fe' },
+      'Selasa': { bg: '#fef3c7', text: '#92400e', border: '#fde68a' },
+      'Rabu': { bg: '#dcfce7', text: '#166534', border: '#86efac' },
+      'Khamis': { bg: '#f3e8ff', text: '#6b21a8', border: '#d8b4fe' },
+      'Jumaat': { bg: '#ccfbf1', text: '#115e59', border: '#99f6e4' },
+      'Sabtu': { bg: '#ffedd5', text: '#9a3412', border: '#fed7aa' }
+    };
 
     tableBody.innerHTML = list.map(b => {
       let statusBadge = '';
@@ -310,17 +349,9 @@ class TableView {
         `;
       }
 
-      let dayName = '';
-      if (b.date) {
-        try {
-          const parts = b.date.split('-');
-          if (parts.length === 3) {
-            const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-            dayName = DAY_NAMES_MY[d.getDay()] || '';
-          }
-        } catch (e) { }
-      }
-      const dateDisplay = dayName ? `${dayName}, ${b.date}` : b.date;
+      const dayName = DateUtils.getDayNameMy ? DateUtils.getDayNameMy(b.date) : '';
+      const dc = dayColors[dayName] || { bg: '#f1f5f9', text: '#475569', border: '#cbd5e1' };
+      const dayBadge = dayName ? `<span style="background: ${dc.bg}; color: ${dc.text}; border: 1px solid ${dc.border}; padding: 2px 7px; border-radius: 6px; font-weight: 700; font-size: 0.74rem;">${dayName}</span>` : '';
 
       return `
         <tr>
@@ -331,8 +362,11 @@ class TableView {
             <br><small style="color: var(--gcal-text-subtle);">${b.role}</small>
           </td>
           <td>
-            <strong style="color: var(--gcal-text-dark);">${dateDisplay}</strong>
-            <br><small style="color: var(--gcal-text-subtle);">${b.slot}</small>
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+              ${dayBadge}
+              <strong style="color: var(--gcal-text-dark);">${b.date}</strong>
+            </div>
+            <small style="color: var(--gcal-text-subtle);">${b.slot}</small>
           </td>
           <td><strong>${b.subject}</strong></td>
           <td>${statusBadge}</td>
@@ -342,6 +376,7 @@ class TableView {
         </tr>
       `;
     }).join('');
+    if (window.lucide) lucide.createIcons();
   }
 
   renderUsersList() {

@@ -356,7 +356,7 @@ class BookingStore {
             date: normDate,
             slot: normSlot,
             applicant: `Jadual Rasmi (${entry.className})`,
-            role: "Penyelaras Makmal Komputer",
+            role: "Penyelaras ICT",
             subject: entry.subject,
             pcCount: 35,
             purpose: "Pelajaran & Amali Komputer Mingguan",
