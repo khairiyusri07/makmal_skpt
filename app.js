@@ -262,6 +262,15 @@ class App {
       });
     }
 
+    const dayFilter = document.getElementById('dayFilter');
+    if (dayFilter) {
+      dayFilter.addEventListener('change', (e) => {
+        this.store.dayFilter = e.target.value;
+        this.tableView.render();
+        if (window.lucide) lucide.createIcons();
+      });
+    }
+
     // Modal Events
     const btnCloseBookingModal = document.getElementById('btnCloseBookingModal');
     if (btnCloseBookingModal) btnCloseBookingModal.addEventListener('click', () => this.modalView.closeBooking());

@@ -280,7 +280,17 @@ class TableView {
             Slip
           </button>
         `;
+      let dayName = '';
+      if (b.date) {
+        try {
+          const parts = b.date.split('-');
+          if (parts.length === 3) {
+            const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            dayName = DAY_NAMES_MY[d.getDay()] || '';
+          }
+        } catch (e) {}
       }
+      const dateDisplay = dayName ? `${dayName}, ${b.date}` : b.date;
 
       return `
         <tr>
@@ -291,7 +301,7 @@ class TableView {
             <br><small style="color: var(--gcal-text-subtle);">${b.role}</small>
           </td>
           <td>
-            <strong>${b.date}</strong>
+            <strong style="color: var(--gcal-text-dark);">${dateDisplay}</strong>
             <br><small style="color: var(--gcal-text-subtle);">${b.slot}</small>
           </td>
           <td><strong>${b.subject}</strong></td>

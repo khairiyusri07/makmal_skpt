@@ -9,6 +9,7 @@ class BookingStore {
     this.currentSunday = DateUtils.getSunday(new Date());
     this.searchQuery = "";
     this.statusFilter = "ALL";
+    this.dayFilter = "ALL";
     this.load();
     this.startAutoPolling(500);
 
@@ -665,6 +666,23 @@ class BookingStore {
     }
     if (this.statusFilter !== "ALL") {
       list = list.filter(b => b.status === this.statusFilter);
+    }
+    if (this.dayFilter && this.dayFilter !== "ALL") {
+      list = list.filter(b => {
+        if (!b.date) return false;
+        try {
+          const parts = b.date.split('-');
+          if (parts.length === 3) {
+            const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            const dayName = DAY_NAMES_MY[d.getDay()];
+            return dayName === this.dayFilter;
+          }
+          const d = new Date(b.date);
+          return DAY_NAMES_MY[d.getDay()] === this.dayFilter;
+        } catch (e) {
+          return false;
+        }
+      });
     }
     return list;
   }
