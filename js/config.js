@@ -167,6 +167,13 @@ class DateUtils {
     return norm >= tomorrowIso;
   }
 
+  static isAllowedForRegularUser(dateInput) {
+    const norm = DateUtils.normalizeDate(dateInput);
+    if (!norm) return false;
+    const tomorrowIso = DateUtils.getTomorrowIso();
+    return norm === tomorrowIso;
+  }
+
   static normalizeDate(dateInput) {
     if (!dateInput) return '';
     let str = String(dateInput).trim();
@@ -217,6 +224,9 @@ const ALL_CLASSES = {
   "5 ZUHAL": { className: "5 ZUHAL", level: "Tahap 2", subject: "5 ZUHAL" },
   "6 NEPTUN": { className: "6 NEPTUN", level: "Tahap 2", subject: "6 NEPTUN" }
 };
+
+const CLASSES_TAHAP_1 = ["1 UTARID", "2 ZUHRAH", "3 MARIKH"];
+const CLASSES_TAHAP_2 = ["4 MUSYTARI", "5 ZUHAL", "6 NEPTUN"];
 
 /**
  * Matriks Rotasi Jadual Mingguan (Kitaran 3 Minggu):
@@ -422,18 +432,46 @@ const ROTATING_WEEKLY_SCHEDULES = [
 /**
  * Menghasilkan jadual waktu mingguan kelas (Tahun 1 hingga 6).
  * Menyokong rotasi adil kitaran 3 minggu merangkumi Ahad hingga Khamis dengan slot berubah-ubah.
+ * Menyokong pilihan penyesuaian kelas oleh Admin yang mematuhi Tahap secara ketat.
  * @param {number} weekOffset - Indeks minggu (0 = Minggu 1, 1 = Minggu 2, 2 = Minggu 3, dst.)
  * @param {boolean} enableRotation - Benarkan penggiliran bergilir setiap minggu (lalai: benar)
+ * @param {Object} customOverrides - Pilihan kelas kustom pentadbir { weekIndex: { entryIndex: className } }
  */
-function getWeeklyClassSchedule(weekOffset = 0, enableRotation = true) {
+function getWeeklyClassSchedule(weekOffset = 0, enableRotation = true, customOverrides = null) {
   const rotIdx = enableRotation ? (Math.abs(weekOffset) % ROTATING_WEEKLY_SCHEDULES.length) : 0;
   const rawList = ROTATING_WEEKLY_SCHEDULES[rotIdx];
 
-  const schedule = rawList.map(entry => {
-    const classInfo = ALL_CLASSES[entry.className] || {
-      className: entry.className,
-      level: entry.className.startsWith('1') || entry.className.startsWith('2') || entry.className.startsWith('3') ? 'Tahap 1' : 'Tahap 2',
-      subject: `Pelajaran Komputer - ${entry.className}`
+  const schedule = rawList.map((entry, entryIndex) => {
+    const defaultLevel = entry.className.startsWith('1') || entry.className.startsWith('2') || entry.className.startsWith('3') ? 'Tahap 1' : 'Tahap 2';
+    let chosenClassName = entry.className;
+
+    // Periksa jika pentadbir telah mengubah suai kelas bagi slot ini
+    if (customOverrides) {
+      let customClass = null;
+      if (customOverrides[rotIdx] && customOverrides[rotIdx][entryIndex]) {
+        customClass = customOverrides[rotIdx][entryIndex];
+      } else if (customOverrides[String(rotIdx)] && customOverrides[String(rotIdx)][entryIndex]) {
+        customClass = customOverrides[String(rotIdx)][entryIndex];
+      } else if (customOverrides[entryIndex]) {
+        customClass = customOverrides[entryIndex];
+      }
+
+      if (customClass) {
+        // PENGESAHAN KETAT MENGIKUT TAHAP:
+        // Jika slot Tahap 1 -> MESTI dalam CLASSES_TAHAP_1 (1 UTARID, 2 ZUHRAH, 3 MARIKH)
+        // Jika slot Tahap 2 -> MESTI dalam CLASSES_TAHAP_2 (4 MUSYTARI, 5 ZUHAL, 6 NEPTUN)
+        if (defaultLevel === 'Tahap 1' && CLASSES_TAHAP_1.includes(customClass)) {
+          chosenClassName = customClass;
+        } else if (defaultLevel === 'Tahap 2' && CLASSES_TAHAP_2.includes(customClass)) {
+          chosenClassName = customClass;
+        }
+      }
+    }
+
+    const classInfo = ALL_CLASSES[chosenClassName] || {
+      className: chosenClassName,
+      level: defaultLevel,
+      subject: `Pelajaran Komputer - ${chosenClassName}`
     };
 
     return {
@@ -441,7 +479,7 @@ function getWeeklyClassSchedule(weekOffset = 0, enableRotation = true) {
       dayName: entry.dayName,
       className: classInfo.className,
       level: classInfo.level,
-      subject: classInfo.subject,
+      subject: `Pelajaran Komputer - ${classInfo.className}`,
       slots: entry.slots,
       timeDesc: entry.timeDesc,
       teacherFreeTime: entry.teacherFreeTime,

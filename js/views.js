@@ -130,11 +130,22 @@ class CalendarView {
             </div>
           `;
         } else {
-          const isPastOrToday = !DateUtils.isAtLeastOneDayInAdvance(day.dateStr);
-          if (isPastOrToday) {
+          const isCoordinator = (this.store.auth && (this.store.auth.isLabCoordinator() || this.store.auth.isAdminVerified));
+          const tomorrowIso = DateUtils.getTomorrowIso();
+          const isPastOrToday = day.dateStr < tomorrowIso;
+          const isExceedingTomorrow = day.dateStr > tomorrowIso;
+
+          if (!isCoordinator && isPastOrToday) {
             html += `
               <div class="gcal-slot-cell empty-slot past-slot" 
-                   title="Tempahan ditutup (perlu sekurang-kurangnya 1 hari sebelum)"
+                   title="Tempahan ditutup (Hanya dibenarkan 1 hari sebelum / tarikh esok sahaja)"
+                   onclick="window.app.openBookingModal('${day.dateStr}', '${slot}')">
+              </div>
+            `;
+          } else if (!isCoordinator && isExceedingTomorrow) {
+            html += `
+              <div class="gcal-slot-cell empty-slot future-restricted-slot" 
+                   title="Tempahan disekat (Guru biasa hanya boleh menempah 1 hari sebelum / esok sahaja. Tarikh melebihi sehari sebelum dikhaskan untuk Penyelaras ICT)"
                    onclick="window.app.openBookingModal('${day.dateStr}', '${slot}')">
               </div>
             `;
@@ -786,14 +797,20 @@ class ModalView {
     if (this.dom.formDate) {
       if (isAdmin) {
         this.dom.formDate.removeAttribute('min');
+        this.dom.formDate.removeAttribute('max');
       } else {
         this.dom.formDate.min = tomorrowIso;
+        this.dom.formDate.max = tomorrowIso;
       }
     }
 
     if (!isAdmin && dateStr) {
-      if (!DateUtils.isAtLeastOneDayInAdvance(dateStr)) {
-        this.app.showToast("Tempahan slot makmal hanya dibenarkan sekurang-kurangnya 1 hari sebelum tarikh penggunaan (mulai esok).", "warning");
+      if (dateStr < tomorrowIso) {
+        this.app.showToast("Tempahan ditutup! Guru biasa tidak boleh menempah bagi hari ini atau tarikh lepas.", "warning");
+        return;
+      }
+      if (dateStr > tomorrowIso) {
+        this.app.showToast("Tempahan disekat! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja). Tarikh melebihi sehari sebelum dikhaskan untuk Penyelaras ICT.", "warning");
         return;
       }
       const existingUserCount = this.store.getUserBookingCountForDate(this.store.auth.currentUser, dateStr);
@@ -905,12 +922,21 @@ class ModalView {
     const slot2 = isTwoSlots && this.dom.formSlot2 ? this.dom.formSlot2.value : null;
     const isAdmin = (this.store.auth && (this.store.auth.isLabCoordinator() || this.store.auth.isAdminVerified));
 
-    // 1. Semakan tempahan sekurang-kurangnya sehari sebelum (HANYA pengguna biasa)
-    if (!isAdmin && date && !DateUtils.isAtLeastOneDayInAdvance(date)) {
-      this.dom.conflictAlertMsg.textContent = "Amaran: Tempahan slot makmal mesti dibuat sekurang-kurangnya 1 hari sebelum tarikh penggunaan (mulai esok).";
-      this.dom.conflictAlert.style.display = 'flex';
-      if (this.dom.btnSubmitBooking) this.dom.btnSubmitBooking.disabled = true;
-      return;
+    // 1. Semakan tarikh tempahan bagi pengguna biasa: MESTI 1 hari sebelum sahaja (esok)
+    if (!isAdmin && date) {
+      const tomorrowIso = DateUtils.getTomorrowIso();
+      if (date < tomorrowIso) {
+        this.dom.conflictAlertMsg.textContent = "Amaran: Tempahan slot makmal mesti dibuat sekurang-kurangnya 1 hari sebelum tarikh penggunaan (mulai esok).";
+        this.dom.conflictAlert.style.display = 'flex';
+        if (this.dom.btnSubmitBooking) this.dom.btnSubmitBooking.disabled = true;
+        return;
+      }
+      if (date > tomorrowIso) {
+        this.dom.conflictAlertMsg.textContent = "Amaran: Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja). Tarikh melebihi sehari sebelum disekat kecuali untuk Penyelaras ICT.";
+        this.dom.conflictAlert.style.display = 'flex';
+        if (this.dom.btnSubmitBooking) this.dom.btnSubmitBooking.disabled = true;
+        return;
+      }
     }
 
     // 2. Semakan had maksimum 2 slot sehari bagi setiap pengguna (HANYA pengguna biasa)
@@ -982,9 +1008,14 @@ class ModalView {
     const isAdmin = (this.store.auth && (this.store.auth.isLabCoordinator() || this.store.auth.isAdminVerified));
 
     if (!isAdmin) {
-      // 1. Semakan sekurang-kurangnya sehari sebelum
-      if (!DateUtils.isAtLeastOneDayInAdvance(date)) {
+      // 1. Semakan tarikh tempahan: Guru biasa hanya 1 hari sebelum (esok sahaja)
+      const tomorrowIso = DateUtils.getTomorrowIso();
+      if (date < tomorrowIso) {
         this.app.showToast("Gagal! Tempahan slot makmal mesti dibuat sekurang-kurangnya 1 hari sebelum tarikh penggunaan.", "error");
+        return;
+      }
+      if (date > tomorrowIso) {
+        this.app.showToast("Gagal! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja). Tarikh melebihi sehari sebelum dikhaskan untuk Penyelaras ICT.", "error");
         return;
       }
 
@@ -1133,18 +1164,26 @@ class ModalView {
       this.previewWeekOffset = 0;
     }
 
-    if (!this.dom.schedulePreviewTableBody) return;
+    const modalTableBody = this.dom.schedulePreviewTableBody || document.getElementById('schedulePreviewTableBody');
+    const tabTableBody = document.getElementById('tabSchedulePreviewTableBody');
+    if (!modalTableBody && !tabTableBody) return;
 
-    const startSundayIso = this.dom.genStartSunday ? this.dom.genStartSunday.value : DateUtils.formatDateIso(new Date());
+    const startSundayIso = (this.dom.genStartSunday && this.dom.genStartSunday.value)
+      || (document.getElementById('tabGenStartSunday') && document.getElementById('tabGenStartSunday').value)
+      || DateUtils.formatDateIso(new Date());
     const baseSunday = startSundayIso ? new Date(startSundayIso) : new Date();
 
-    if (this.dom.genWeekHint) {
-      const endThu = new Date(baseSunday);
-      endThu.setDate(endThu.getDate() + 4);
-      this.dom.genWeekHint.textContent = `Minggu Persekolahan Bermula: ${DateUtils.formatDateIso(baseSunday)} (Ahad) hingga ${DateUtils.formatDateIso(endThu)} (Khamis)`;
-    }
+    const endThu = new Date(baseSunday);
+    endThu.setDate(endThu.getDate() + 4);
+    const hintText = `Minggu Persekolahan Bermula: ${DateUtils.formatDateIso(baseSunday)} (Ahad) hingga ${DateUtils.formatDateIso(endThu)} (Khamis)`;
 
-    const weeksCount = this.dom.genWeeksCount ? parseInt(this.dom.genWeeksCount.value, 10) || 1 : 1;
+    if (this.dom.genWeekHint) this.dom.genWeekHint.textContent = hintText;
+    const tabHint = document.getElementById('tabGenWeekHint');
+    if (tabHint) tabHint.textContent = hintText;
+
+    const weeksCount = (this.dom.genWeeksCount && parseInt(this.dom.genWeeksCount.value, 10))
+      || (document.getElementById('tabGenWeeksCount') && parseInt(document.getElementById('tabGenWeeksCount').value, 10))
+      || 1;
     const totalSlots = weeksCount * 24;
     const isRotation = this.dom.genEnableRotation ? this.dom.genEnableRotation.checked : true;
 
@@ -1153,55 +1192,88 @@ class ModalView {
       this.dom.btnSubmitScheduleGeneratorText.textContent = `Jana ${totalSlots} Slot (${weeksCount} Minggu ${rotText})`;
     }
 
-    // Kemas kini butang tab minggu pratonton
-    if (this.dom.previewRotationControls) {
-      const buttons = this.dom.previewRotationControls.querySelectorAll('.btn-preview-week');
-      buttons.forEach(btn => {
-        const bWeek = parseInt(btn.dataset.week, 10);
-        if (bWeek === this.previewWeekOffset) {
-          btn.classList.add('active');
-          btn.style.background = '#2563eb';
-          btn.style.color = '#ffffff';
-          btn.style.borderColor = '#2563eb';
-        } else {
-          btn.classList.remove('active');
-          btn.style.background = '#ffffff';
-          btn.style.color = '#475569';
-          btn.style.borderColor = '#cbd5e1';
-        }
-      });
-    }
-
-    if (this.dom.previewWeekBadge) {
-      if (isRotation) {
-        this.dom.previewWeekBadge.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4px;">🔄 Giliran Minggu ${this.previewWeekOffset + 1} (Berubah)</span>`;
-        this.dom.previewWeekBadge.style.background = '#e0e7ff';
-        this.dom.previewWeekBadge.style.color = '#3730a3';
-      } else {
-        this.dom.previewWeekBadge.textContent = 'Jadual Tetap (Sama Setiap Minggu)';
-        this.dom.previewWeekBadge.style.background = '#f1f5f9';
-        this.dom.previewWeekBadge.style.color = '#475569';
+    // Kemas kini butang tab minggu pratonton di kedua-dua modal & subtab
+    ['previewRotationControls', 'tabPreviewRotationControls'].forEach(ctrlId => {
+      const ctrl = document.getElementById(ctrlId);
+      if (ctrl) {
+        const buttons = ctrl.querySelectorAll('.btn-preview-week');
+        buttons.forEach(btn => {
+          const bWeek = parseInt(btn.dataset.week, 10);
+          if (bWeek === this.previewWeekOffset) {
+            btn.classList.add('active');
+            btn.style.background = '#2563eb';
+            btn.style.color = '#ffffff';
+            btn.style.borderColor = '#2563eb';
+          } else {
+            btn.classList.remove('active');
+            btn.style.background = '#ffffff';
+            btn.style.color = '#475569';
+            btn.style.borderColor = '#cbd5e1';
+          }
+        });
       }
-    }
+    });
+
+    ['previewWeekBadge', 'tabPreviewWeekBadge'].forEach(badgeId => {
+      const badge = document.getElementById(badgeId);
+      if (badge) {
+        if (isRotation) {
+          badge.innerHTML = `<span style="display:inline-flex; align-items:center; gap:4px;">🔄 Giliran Minggu ${this.previewWeekOffset + 1} (Berubah)</span>`;
+          badge.style.background = '#e0e7ff';
+          badge.style.color = '#3730a3';
+        } else {
+          badge.textContent = 'Jadual Tetap (Sama Setiap Minggu)';
+          badge.style.background = '#f1f5f9';
+          badge.style.color = '#475569';
+        }
+      }
+    });
 
     // Kira tarikh sebenar bagi minggu pratonton yang sedang dipaparkan
     const previewSunday = new Date(baseSunday);
     previewSunday.setDate(previewSunday.getDate() + (this.previewWeekOffset * 7));
 
+    // Dapatkan jadual dengan mengambil kira pilihan kelas yang telah diubah suai oleh Admin mengikut Tahap
     const schedule = typeof getWeeklyClassSchedule === 'function'
-      ? getWeeklyClassSchedule(this.previewWeekOffset, isRotation)
+      ? getWeeklyClassSchedule(this.previewWeekOffset, isRotation, this.store.customWeeklyClasses)
       : WEEKLY_CLASS_SCHEDULE_TEMPLATE;
 
     let rowsHtml = '';
-    schedule.forEach(entry => {
+    schedule.forEach((entry, entryIndex) => {
       const targetDate = new Date(previewSunday);
       targetDate.setDate(targetDate.getDate() + entry.dayIndex);
       const dayDateStr = DateUtils.formatDateIso(targetDate);
       const isTahap1 = entry.level === 'Tahap 1';
+      const availableClasses = isTahap1 ? (typeof CLASSES_TAHAP_1 !== 'undefined' ? CLASSES_TAHAP_1 : ["1 UTARID", "2 ZUHRAH", "3 MARIKH"])
+                                        : (typeof CLASSES_TAHAP_2 !== 'undefined' ? CLASSES_TAHAP_2 : ["4 MUSYTARI", "5 ZUHAL", "6 NEPTUN"]);
       const badgeColor = isTahap1 ? 'background: #e0f2fe; color: #0369a1;' : 'background: #fef3c7; color: #b45309;';
-      const classPillStyle = isRotation
-        ? 'background: #f0fdf4; border: 1px solid #86efac; color: #166534;'
-        : 'background: #f8fafc; border: 1px solid #e2e8f0; color: #0f172a;';
+      const selectBorderColor = isTahap1 ? '#38bdf8' : '#f59e0b';
+      const selectBg = isTahap1 ? '#f0f9ff' : '#fffbeb';
+      const selectTextColor = isTahap1 ? '#0369a1' : '#92400e';
+
+      // Dropdown kelas HANYA menyenaraikan kelas dalam Tahap yang sama (Wajib mengikut Tahap)
+      const optionsHtml = availableClasses.map(cls => `
+        <option value="${cls}" ${cls === entry.className ? 'selected' : ''}>
+          ${cls}
+        </option>
+      `).join('');
+
+      const classDropdownHtml = `
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <select class="schedule-class-select" 
+            data-week="${this.previewWeekOffset}" 
+            data-entry-idx="${entryIndex}" 
+            data-level="${entry.level}"
+            title="Tukar kelas bagi slot ini (Hanya kelas ${entry.level})"
+            style="font-family: inherit; font-weight: 700; font-size: 0.84rem; padding: 4px 8px; border-radius: 6px; border: 1.5px solid ${selectBorderColor}; background: ${selectBg}; color: ${selectTextColor}; cursor: pointer; outline: none; height: 32px;"
+            onchange="window.app.modalView.handleClassChangeInPreview(this, ${this.previewWeekOffset}, ${entryIndex}, '${entry.level}')">
+            ${optionsHtml}
+          </select>
+          <span style="${badgeColor} padding: 2px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 700; white-space: nowrap;">
+            ${entry.level}
+          </span>
+        </div>
+      `;
 
       const teacherFreeBadge = entry.teacherFreeTime
         ? `<div style="display: inline-flex; align-items: center; gap: 5px; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 4px 8px; border-radius: 6px;">
@@ -1224,17 +1296,10 @@ class ModalView {
             <br><small style="color: #64748b;">4 Slot Berterusan (${entry.slots[0].split('-')[0].trim()} - ${entry.slots[3].split('-')[1].trim()})</small>
           </td>
           <td style="padding: 10px 10px;">
-            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-              <span style="font-weight: 700; font-size: 0.85rem; padding: 3px 8px; border-radius: 6px; display: inline-block; ${classPillStyle}">
-                ${entry.className}
-              </span>
-              <span style="${badgeColor} padding: 2px 7px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">
-                ${entry.level}
-              </span>
-            </div>
+            ${classDropdownHtml}
           </td>
           <td style="padding: 10px 10px;">
-            <div style="font-weight: 600; color: #334155; font-size: 0.78rem;">${entry.subject}</div>
+            <div class="schedule-subject-text" style="font-weight: 600; color: #334155; font-size: 0.78rem;">${entry.subject}</div>
             <div style="font-size: 0.7rem; color: #64748b; margin-top: 2px;">${entry.notes}</div>
           </td>
           <td style="padding: 10px 10px;">
@@ -1244,16 +1309,50 @@ class ModalView {
       `;
     });
 
-    this.dom.schedulePreviewTableBody.innerHTML = rowsHtml;
+    if (modalTableBody) modalTableBody.innerHTML = rowsHtml;
+    if (tabTableBody) tabTableBody.innerHTML = rowsHtml;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  handleClassChangeInPreview(selectEl, weekOffset, entryIndex, level) {
+    const newClassName = selectEl.value;
+    const allowed = level === 'Tahap 1' 
+      ? (typeof CLASSES_TAHAP_1 !== 'undefined' ? CLASSES_TAHAP_1 : ["1 UTARID", "2 ZUHRAH", "3 MARIKH"])
+      : (typeof CLASSES_TAHAP_2 !== 'undefined' ? CLASSES_TAHAP_2 : ["4 MUSYTARI", "5 ZUHAL", "6 NEPTUN"]);
+
+    if (!allowed.includes(newClassName)) {
+      this.app.showToast(`Ralat: ${newClassName} bukan kelas dalam ${level}!`, "error");
+      selectEl.value = allowed[0];
+      return;
+    }
+
+    this.store.setCustomWeeklyClass(weekOffset, entryIndex, newClassName);
+    this.updateSchedulePreview(weekOffset);
+    this.app.showToast(`Kelas berjaya ditukar kepada "${newClassName}" (${level}).`, "success");
+  }
+
+  handleResetCustomClasses() {
+    this.store.resetCustomWeeklyClasses();
+    this.updateSchedulePreview(this.previewWeekOffset);
+    this.app.showToast("Pilihan kelas telah ditetapkan semula kepada jadual asal mengikut tahap.", "info");
   }
 
   async handleScheduleGeneratorSubmit(e) {
     e.preventDefault();
 
-    const startSunday = this.dom.genStartSunday ? this.dom.genStartSunday.value : '';
-    const weeksCount = this.dom.genWeeksCount ? parseInt(this.dom.genWeeksCount.value, 10) || 1 : 1;
-    const overwriteExisting = this.dom.genOverwriteExisting ? this.dom.genOverwriteExisting.checked : true;
-    const enableRotation = this.dom.genEnableRotation ? this.dom.genEnableRotation.checked : true;
+    const isFromTab = e.target && e.target.id === 'tabScheduleGeneratorForm';
+    const startSunday = isFromTab 
+      ? (document.getElementById('tabGenStartSunday')?.value || '')
+      : (this.dom.genStartSunday?.value || document.getElementById('tabGenStartSunday')?.value || '');
+    const weeksCount = isFromTab
+      ? (parseInt(document.getElementById('tabGenWeeksCount')?.value, 10) || 1)
+      : (parseInt(this.dom.genWeeksCount?.value, 10) || 1);
+    const overwriteExisting = isFromTab
+      ? (document.getElementById('tabGenOverwriteExisting')?.checked ?? true)
+      : (this.dom.genOverwriteExisting?.checked ?? true);
+    const enableRotation = isFromTab
+      ? (document.getElementById('tabGenEnableRotation')?.checked ?? true)
+      : (this.dom.genEnableRotation?.checked ?? true);
 
     if (!startSunday) {
       this.app.showToast("Sila pilih tarikh mula Ahad terlebih dahulu.", "error");
@@ -1265,7 +1364,8 @@ class ModalView {
         startSunday: startSunday,
         weeksCount: weeksCount,
         overwriteExisting: overwriteExisting,
-        enableRotation: enableRotation
+        enableRotation: enableRotation,
+        customClasses: this.store.customWeeklyClasses
       });
 
       this.closeScheduleGenerator();
@@ -1279,8 +1379,12 @@ class ModalView {
   }
 
   async handleClearGeneratedSchedule() {
-    const startSunday = this.dom.genStartSunday ? this.dom.genStartSunday.value : '';
-    const weeksCount = this.dom.genWeeksCount ? parseInt(this.dom.genWeeksCount.value, 10) || 1 : 1;
+    const startSunday = (this.dom.genStartSunday && this.dom.genStartSunday.value)
+      || (document.getElementById('tabGenStartSunday') && document.getElementById('tabGenStartSunday').value)
+      || '';
+    const weeksCount = (this.dom.genWeeksCount && parseInt(this.dom.genWeeksCount.value, 10))
+      || (document.getElementById('tabGenWeeksCount') && parseInt(document.getElementById('tabGenWeeksCount').value, 10))
+      || 1;
 
     if (!startSunday) {
       this.app.showToast("Sila pilih tarikh mula Ahad terlebih dahulu.", "error");

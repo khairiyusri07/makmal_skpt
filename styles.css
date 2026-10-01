@@ -664,6 +664,25 @@ html, body {
   color: #ffffff;
 }
 
+.gcal-slot-cell.empty-slot.future-restricted-slot {
+  cursor: not-allowed;
+  background-color: rgba(248, 250, 252, 0.7);
+}
+
+.gcal-slot-cell.empty-slot.future-restricted-slot:hover {
+  background: #f1f5f9;
+}
+
+.gcal-slot-cell.empty-slot.future-restricted-slot:hover::after {
+  content: 'Khas Penyelaras';
+  background: #64748b;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
 /* Event Block Card */
 .gcal-event-block {
   height: 100%;
@@ -1679,16 +1698,34 @@ html, body {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-#schedulePreviewTableBody tr:hover {
+#schedulePreviewTableBody tr:hover,
+#tabSchedulePreviewTableBody tr:hover {
   background-color: #f8fafc;
 }
 
-#schedulePreviewTableBody tr:nth-child(even) {
+#schedulePreviewTableBody tr:nth-child(even),
+#tabSchedulePreviewTableBody tr:nth-child(even) {
   background-color: #fafbfc;
 }
 
-#schedulePreviewTableBody tr:nth-child(even):hover {
+#schedulePreviewTableBody tr:nth-child(even):hover,
+#tabSchedulePreviewTableBody tr:nth-child(even):hover {
   background-color: #f1f5f9;
+}
+
+.schedule-class-select {
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.schedule-class-select:hover {
+  filter: brightness(0.97);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.schedule-class-select:focus {
+  border-color: var(--gcal-blue, #2563eb) !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
 }
 
 #adminRecurringBookingSection {

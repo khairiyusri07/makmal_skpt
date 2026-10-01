@@ -458,6 +458,68 @@
                     </label>
                   </div>
 
+                  <!-- Pra-tonton Struktur Jadual Mingguan (Sub-tab) -->
+                  <div style="margin-top: 18px; margin-bottom: 20px;">
+                    <div
+                      style="font-weight: 700; color: #1e293b; font-size: 0.85rem; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span>Pra-tonton Jadual Penggunaan (Ahad - Khamis):</span>
+                        <span id="tabPreviewWeekBadge"
+                          style="font-size: 0.75rem; color: #4338ca; background: #e0e7ff; padding: 2px 8px; border-radius: 12px; font-weight: 700;">
+                          Giliran Minggu 1
+                        </span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 6px;" id="tabPreviewRotationControls">
+                        <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">Papar Giliran:</span>
+                        <button type="button" class="btn-preview-week active" data-week="0"
+                          style="padding: 3px 9px; font-size: 0.72rem; border-radius: 6px; border: 1px solid #2563eb; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Minggu
+                          1</button>
+                        <button type="button" class="btn-preview-week" data-week="1"
+                          style="padding: 3px 9px; font-size: 0.72rem; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #475569; cursor: pointer; font-weight: 600;">Minggu
+                          2</button>
+                        <button type="button" class="btn-preview-week" data-week="2"
+                          style="padding: 3px 9px; font-size: 0.72rem; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #475569; cursor: pointer; font-weight: 600;">Minggu
+                          3</button>
+                        <button type="button" class="btn-gcal-secondary"
+                          onclick="window.app.modalView.handleResetCustomClasses()"
+                          style="padding: 3px 10px; font-size: 0.72rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;"
+                          title="Kembalikan susunan kelas asal mengikut tahap">
+                          <i data-lucide="rotate-ccw" style="width: 12px; height: 12px;"></i>
+                          <span>Set Semula</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div
+                      style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 6px 12px; margin-bottom: 8px; font-size: 0.76rem; color: #166534; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                      <span><i data-lucide="info"
+                          style="width: 13px; height: 13px; vertical-align: middle; margin-right: 4px;"></i><strong>Pilihan
+                          Ubah Kelas:</strong> Anda boleh menukar kelas bagi setiap slot masa mengikut <strong>Tahap 1
+                          (Tahun 1-3)</strong> atau <strong>Tahap 2 (Tahun 4-6)</strong>.</span>
+                      <span style="font-size: 0.72rem; color: #15803d; font-weight: 600;">* Mematuhi waktu rehat
+                        kedua-dua tahap</span>
+                    </div>
+
+                    <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+                      <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left;">
+                        <thead
+                          style="background: #f1f5f9; color: #475569; font-size: 0.75rem; text-transform: uppercase;">
+                          <tr>
+                            <th style="padding: 8px 10px;">Hari & Tarikh</th>
+                            <th style="padding: 8px 10px;">Waktu Slot Kelas (4 Slot)</th>
+                            <th style="padding: 8px 10px;">Kelas & Tahap (Pilih Mengikut Tahap)</th>
+                            <th style="padding: 8px 10px;">Mata Pelajaran & Catatan</th>
+                            <th style="padding: 8px 10px; color: #15803d; background: #f0fdf4;">Waktu Baki Boleh
+                              Ditempah Guru</th>
+                          </tr>
+                        </thead>
+                        <tbody id="tabSchedulePreviewTableBody">
+                          <!-- Rendered via JavaScript -->
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
                   <div
                     style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 14px 18px; border-radius: 8px; border: 1px solid #e2e8f0;">
                     <button type="button" class="btn-gcal-red" id="btnTabClearGeneratedSchedule"
@@ -629,7 +691,7 @@
                 style="display:block; font-size: 0.72rem; color: var(--gcal-text-subtle); margin-top: 4px; line-height: 1.3;">
                 <i data-lucide="info"
                   style="width: 11px; height: 11px; display: inline-block; vertical-align: middle; margin-right: 2px;"></i>
-                Sekurang-kurangnya 1 hari sebelum • Maksimum 2 slot sehari
+                1 hari sebelum sahaja (esok)
               </small>
             </div>
 
@@ -1040,7 +1102,7 @@
                   Giliran Minggu 1
                 </span>
               </div>
-              <div style="display: flex; align-items: center; gap: 4px;" id="previewRotationControls">
+              <div style="display: flex; align-items: center; gap: 6px;" id="previewRotationControls">
                 <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">Papar Giliran:</span>
                 <button type="button" class="btn-preview-week active" data-week="0"
                   style="padding: 3px 9px; font-size: 0.72rem; border-radius: 6px; border: 1px solid #2563eb; background: #2563eb; color: white; cursor: pointer; font-weight: 600;">Minggu
@@ -1051,7 +1113,24 @@
                 <button type="button" class="btn-preview-week" data-week="2"
                   style="padding: 3px 9px; font-size: 0.72rem; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #475569; cursor: pointer; font-weight: 600;">Minggu
                   3</button>
+                <button type="button" class="btn-gcal-secondary"
+                  onclick="window.app.modalView.handleResetCustomClasses()"
+                  style="padding: 3px 10px; font-size: 0.72rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;"
+                  title="Kembalikan susunan kelas asal mengikut tahap">
+                  <i data-lucide="rotate-ccw" style="width: 12px; height: 12px;"></i>
+                  <span>Set Semula</span>
+                </button>
               </div>
+            </div>
+
+            <div
+              style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 6px 12px; margin-bottom: 8px; font-size: 0.76rem; color: #166534; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+              <span><i data-lucide="info"
+                  style="width: 13px; height: 13px; vertical-align: middle; margin-right: 4px;"></i><strong>Pilihan Ubah
+                  Kelas:</strong> Anda boleh menukar kelas bagi setiap slot masa mengikut <strong>Tahap 1 (Tahun
+                  1-3)</strong> atau <strong>Tahap 2 (Tahun 4-6)</strong>.</span>
+              <span style="font-size: 0.72rem; color: #15803d; font-weight: 600;">* Mematuhi waktu rehat kedua-dua
+                tahap</span>
             </div>
 
             <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
@@ -1060,7 +1139,7 @@
                   <tr>
                     <th style="padding: 8px 10px;">Hari & Tarikh</th>
                     <th style="padding: 8px 10px;">Waktu Slot Kelas (4 Slot)</th>
-                    <th style="padding: 8px 10px;">Kelas & Tahap</th>
+                    <th style="padding: 8px 10px;">Kelas & Tahap (Pilih Mengikut Tahap)</th>
                     <th style="padding: 8px 10px;">Mata Pelajaran & Catatan</th>
                     <th style="padding: 8px 10px; color: #15803d; background: #f0fdf4;">Waktu Baki Boleh Ditempah Guru
                     </th>

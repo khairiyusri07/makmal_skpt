@@ -10,6 +10,7 @@ class BookingStore {
     this.searchQuery = "";
     this.statusFilter = "ALL";
     this.dayFilter = "ALL";
+    this.customWeeklyClasses = this.loadCustomWeeklyClasses();
     this.load();
     this.startAutoPolling(500);
 
@@ -284,9 +285,15 @@ class BookingStore {
     bookingData.date = DateUtils.normalizeDate(bookingData.date);
     bookingData.slot = DateUtils.normalizeSlot(bookingData.slot);
 
-    // Syarat 1: Sekurang-kurangnya sehari sebelum tarikh penggunaan (HANYA pengguna biasa)
-    if (!isAdmin && !DateUtils.isAtLeastOneDayInAdvance(bookingData.date)) {
-      throw new Error("Tempahan slot makmal hanya dibenarkan sekurang-kurangnya 1 hari sebelum tarikh penggunaan (mulai esok).");
+    // Syarat 1: Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja)
+    if (!isAdmin) {
+      const tomorrowIso = DateUtils.getTomorrowIso();
+      if (bookingData.date < tomorrowIso) {
+        throw new Error("Tempahan slot makmal hanya dibenarkan sekurang-kurangnya 1 hari sebelum tarikh penggunaan.");
+      }
+      if (bookingData.date > tomorrowIso) {
+        throw new Error("Tempahan disekat! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja). Tarikh melebihi sehari sebelum dikhaskan untuk Penyelaras ICT.");
+      }
     }
 
     // Syarat 2: Maksimum 2 slot pada hari yang ditempah bagi setiap pengguna (HANYA pengguna biasa)
@@ -342,14 +349,15 @@ class BookingStore {
     const newBookings = [];
 
     const enableRotation = options.enableRotation !== false; // lalai: benar (bergilir setiap minggu)
+    const customClasses = options.customClasses || this.customWeeklyClasses || null;
 
     for (let w = 0; w < weeksCount; w++) {
       const currentSunday = new Date(baseSunday);
       currentSunday.setDate(currentSunday.getDate() + (w * 7));
 
-      // Ambil jadual mingguan mengikut giliran minggu ke-w
+      // Ambil jadual mingguan mengikut giliran minggu ke-w dan mengambil kira penyesuaian kelas admin
       const weekSchedule = typeof getWeeklyClassSchedule === 'function'
-        ? getWeeklyClassSchedule(w, enableRotation)
+        ? getWeeklyClassSchedule(w, enableRotation, customClasses)
         : WEEKLY_CLASS_SCHEDULE_TEMPLATE;
 
       for (const entry of weekSchedule) {
@@ -441,6 +449,32 @@ class BookingStore {
       startSunday: startSundayIso,
       enableRotation
     };
+  }
+
+  loadCustomWeeklyClasses() {
+    try {
+      const raw = localStorage.getItem('makmal_custom_weekly_classes');
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  setCustomWeeklyClass(weekIndex, entryIndex, newClassName) {
+    if (!this.customWeeklyClasses) this.customWeeklyClasses = {};
+    const wKey = String(Math.abs(parseInt(weekIndex, 10) || 0) % 3);
+    if (!this.customWeeklyClasses[wKey]) this.customWeeklyClasses[wKey] = {};
+    this.customWeeklyClasses[wKey][entryIndex] = newClassName;
+    try {
+      localStorage.setItem('makmal_custom_weekly_classes', JSON.stringify(this.customWeeklyClasses));
+    } catch (e) {}
+  }
+
+  resetCustomWeeklyClasses() {
+    this.customWeeklyClasses = {};
+    try {
+      localStorage.removeItem('makmal_custom_weekly_classes');
+    } catch (e) {}
   }
 
   // Mengosongkan jadual rasmi janaan automatik untuk minggu tertentu

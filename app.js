@@ -417,6 +417,33 @@ class App {
       });
     }
 
+    const tabGenStartSunday = document.getElementById('tabGenStartSunday');
+    if (tabGenStartSunday) {
+      tabGenStartSunday.addEventListener('change', () => this.modalView.updateSchedulePreview());
+      tabGenStartSunday.addEventListener('input', () => this.modalView.updateSchedulePreview());
+    }
+
+    const tabGenWeeksCount = document.getElementById('tabGenWeeksCount');
+    if (tabGenWeeksCount) {
+      tabGenWeeksCount.addEventListener('change', () => this.modalView.updateSchedulePreview());
+    }
+
+    const tabGenEnableRotation = document.getElementById('tabGenEnableRotation');
+    if (tabGenEnableRotation) {
+      tabGenEnableRotation.addEventListener('change', () => this.modalView.updateSchedulePreview());
+    }
+
+    const tabPreviewRotationControls = document.getElementById('tabPreviewRotationControls');
+    if (tabPreviewRotationControls) {
+      tabPreviewRotationControls.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-preview-week');
+        if (btn) {
+          const weekOffset = parseInt(btn.dataset.week, 10) || 0;
+          this.modalView.updateSchedulePreview(weekOffset);
+        }
+      });
+    }
+
     // Slip Modal
     const btnCloseSlipModal = document.getElementById('btnCloseSlipModal');
     if (btnCloseSlipModal) btnCloseSlipModal.addEventListener('click', () => this.modalView.closeSlip());

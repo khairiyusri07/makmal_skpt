@@ -187,9 +187,10 @@ def create_booking():
     cursor = conn.cursor()
 
     if not is_admin:
-        # 1. Semakan tempahan sekurang-kurangnya sehari sebelum (HANYA pengguna biasa)
+        # 1. Semakan tempahan bagi pengguna biasa: MESTI 1 hari sebelum sahaja (esok)
         tz_my = datetime.timezone(datetime.timedelta(hours=8))
         today_my = datetime.datetime.now(tz_my).date()
+        tomorrow_my = today_my + datetime.timedelta(days=1)
 
         try:
             booking_date = datetime.date.fromisoformat(date)
@@ -202,6 +203,13 @@ def create_booking():
             return jsonify({
                 "status": "error",
                 "message": "Tempahan slot makmal hanya dibenarkan sekurang-kurangnya sehari sebelum tarikh penggunaan."
+            }), 400
+
+        if booking_date > tomorrow_my:
+            conn.close()
+            return jsonify({
+                "status": "error",
+                "message": "Tempahan disekat! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja). Tarikh melebihi sehari sebelum dikhaskan untuk Penyelaras ICT."
             }), 400
 
         user_id = (data.get('userId') or '').strip()
