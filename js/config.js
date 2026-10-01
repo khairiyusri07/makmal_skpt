@@ -62,7 +62,7 @@ function autoClearUserCache() {
   // 5. Auto muat balik data dalam masa 0.1 saat (100 milisaat)
   setTimeout(() => {
     reloadFreshData();
-  }, 100);
+  }, 1);
 }
 
 // Fungsi muat balik data segar daripada pangkalan data / pelayan
