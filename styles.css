@@ -1415,3 +1415,214 @@ html, body {
   width: fit-content;
 }
 
+/* ==========================================================================
+   SEJARAH TEMPAHAN (USER BOOKING HISTORY) DESIGN SYSTEM
+   ========================================================================== */
+.sidebar-badge {
+  margin-left: auto;
+  background: var(--gcal-blue);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(26, 115, 232, 0.3);
+}
+
+.history-content-container {
+  max-width: 1040px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 40px;
+}
+
+.history-header-card {
+  background: var(--gcal-bg);
+  border: 1px solid var(--gcal-border);
+  border-radius: var(--gcal-radius);
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--gcal-shadow-sm);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.history-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.history-header-title h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--gcal-text-dark);
+}
+
+.history-user-subtitle {
+  font-size: 0.85rem;
+  color: var(--gcal-text-subtle);
+}
+
+/* KPI Statistics Grid */
+.history-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.history-stat-card {
+  background: var(--gcal-bg);
+  border: 1px solid var(--gcal-border);
+  border-radius: var(--gcal-radius);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--gcal-shadow-sm);
+  user-select: none;
+}
+
+.history-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--gcal-shadow-md);
+  border-color: var(--gcal-blue);
+}
+
+.history-stat-card.active {
+  border-color: var(--gcal-blue);
+  box-shadow: 0 0 0 2px var(--gcal-blue-light);
+  background: #fbfdff;
+}
+
+.stat-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-icon-wrap svg {
+  width: 22px;
+  height: 22px;
+}
+
+.stat-icon-wrap.blue {
+  background: var(--gcal-blue-light);
+  color: var(--gcal-blue);
+}
+
+.stat-icon-wrap.green {
+  background: var(--gcal-green-light);
+  color: var(--gcal-green);
+}
+
+.stat-icon-wrap.amber {
+  background: var(--gcal-amber-light);
+  color: var(--gcal-amber);
+}
+
+.stat-icon-wrap.red {
+  background: var(--gcal-red-light);
+  color: var(--gcal-red);
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--gcal-text-dark);
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--gcal-text-subtle);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* History Controls & Table */
+.history-table-card {
+  padding: 24px;
+}
+
+.history-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.history-empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--gcal-blue-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.empty-icon-wrap svg {
+  color: var(--gcal-blue);
+}
+
+.btn-quick-login-account:hover {
+  background: var(--gcal-hover) !important;
+  border-color: var(--gcal-blue) !important;
+}
+
+@media (max-width: 900px) {
+  .history-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .history-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .history-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .history-controls > div {
+    max-width: 100% !important;
+  }
+}
+

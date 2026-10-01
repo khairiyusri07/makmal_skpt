@@ -38,8 +38,64 @@ class BookingStore {
       } catch (e) {
         this.bookings = [];
       }
-    } else {
-      this.bookings = [];
+    if (!this.bookings || this.bookings.length === 0) {
+      const today = new Date();
+      const sunday = DateUtils.getSunday(today);
+      const monday = new Date(sunday); monday.setDate(monday.getDate() + 1);
+      const tuesday = new Date(sunday); tuesday.setDate(tuesday.getDate() + 2);
+      const wednesday = new Date(sunday); wednesday.setDate(wednesday.getDate() + 3);
+
+      this.bookings = [
+        new Booking({
+          id: "TB-1001",
+          userId: "USR-83920192",
+          userEmail: "g-83920192@moe-dl.edu.my",
+          labId: "LAB-1",
+          date: DateUtils.formatDateIso(monday),
+          slot: "08:00 - 08:30",
+          applicant: "Cikgu Ahmad Razali",
+          role: "Guru / Tenaga Pengajar",
+          subject: "RBT Tahun 5 - Coding Scratch",
+          pcCount: 35,
+          purpose: "Pelajaran & Amali",
+          notes: "Perlu projektor dan pembesar suara",
+          status: "Diluluskan",
+          createdAt: new Date().toISOString()
+        }),
+        new Booking({
+          id: "TB-1002",
+          userId: "USR-10293847",
+          userEmail: "g-10293847@moe-dl.edu.my",
+          labId: "LAB-1",
+          date: DateUtils.formatDateIso(tuesday),
+          slot: "10:00 - 10:30",
+          applicant: "Cikgu Siti Nurhaliza",
+          role: "Guru / Tenaga Pengajar",
+          subject: "Matematik - Kuiz Digital Kahoot",
+          pcCount: 35,
+          purpose: "Pelajaran & Amali",
+          notes: "Latihan kuiz interaktif",
+          status: "Diluluskan",
+          createdAt: new Date().toISOString()
+        }),
+        new Booking({
+          id: "TB-1003",
+          userId: "USR-83920192",
+          userEmail: "g-83920192@moe-dl.edu.my",
+          labId: "LAB-1",
+          date: DateUtils.formatDateIso(wednesday),
+          slot: "11:00 - 11:30",
+          applicant: "Cikgu Ahmad Razali",
+          role: "Guru / Tenaga Pengajar",
+          subject: "Sains - Latihan Interaktif DELIMa",
+          pcCount: 35,
+          purpose: "Pelajaran & Amali",
+          notes: "Sains Tahun 5",
+          status: "Menunggu Kelulusan",
+          createdAt: new Date().toISOString()
+        })
+      ];
+      this.save();
     }
     this.fetchFromPythonBackend();
     this.fetchFromSheet();
@@ -143,6 +199,7 @@ class BookingStore {
               const rDate = row.date || row.Date || row.Tarikh || row.tarikh || row["Tarikh"];
               const rSlot = row.slot || row.Slot || row["Slot Masa"] || row.slotMasa || row.SlotMasa || row["Slot"];
               const rApplicant = row.applicant || row.Applicant || row.Pemohon || row["Nama Pemohon"] || row.namaPemohon;
+              const rUserEmail = row.userEmail || row.UserEmail || row.email || row.Email || "";
               const rRole = row.role || row.Role || row.Peranan || row.peranan;
               const rSubject = row.subject || row.Subject || row.Subjek || row["Kelas / Subjek"] || row["Kelas/Subjek"] || row.kelasSubjek || row.subjek || row.Kelas;
               const rStatus = row.status || row.Status;
@@ -153,6 +210,7 @@ class BookingStore {
               return new Booking({
                 id: String(rId),
                 userId: String(rUserId || ""),
+                userEmail: String(rUserEmail || ""),
                 labId: 'LAB-1',
                 date: DateUtils.normalizeDate(rDate),
                 slot: DateUtils.normalizeSlot(rSlot),
@@ -205,8 +263,19 @@ class BookingStore {
   }
 
   async addBooking(bookingData) {
-    if (!bookingData.userId && this.auth && this.auth.currentUser) {
-      bookingData.userId = this.auth.currentUser.userId || (this.auth.generateUserId ? this.auth.generateUserId(this.auth.currentUser.email) : '');
+    if (this.auth && this.auth.currentUser) {
+      if (!bookingData.userId) {
+        bookingData.userId = this.auth.currentUser.userId || (this.auth.generateUserId ? this.auth.generateUserId(this.auth.currentUser.email) : '');
+      }
+      if (!bookingData.userEmail) {
+        bookingData.userEmail = this.auth.currentUser.email || '';
+      }
+      if (!bookingData.applicant) {
+        bookingData.applicant = this.auth.currentUser.name;
+      }
+      if (!bookingData.role) {
+        bookingData.role = this.auth.currentUser.role || 'Guru / Tenaga Pengajar';
+      }
     }
     bookingData.status = "Menunggu Kelulusan";
     bookingData.date = DateUtils.normalizeDate(bookingData.date);
@@ -225,6 +294,57 @@ class BookingStore {
     } catch (e) { }
 
     this.syncToAddSheet(booking);
+    setTimeout(() => {
+      this.fetchFromPythonBackend();
+      this.fetchFromSheet();
+    }, 1500);
+    return booking;
+  }
+
+  getUserBookings(user) {
+    if (!user) return [];
+    const userEmail = (user.email || '').trim().toLowerCase();
+    const userId = (user.userId || '').trim().toLowerCase();
+    const userName = (user.name || '').trim().toLowerCase();
+
+    return this.bookings.filter(b => {
+      // 1. Match by userEmail
+      if (userEmail && b.userEmail && b.userEmail.trim().toLowerCase() === userEmail) {
+        return true;
+      }
+      // 2. Match by userId
+      if (userId && b.userId && b.userId.trim().toLowerCase() === userId) {
+        return true;
+      }
+      // 3. Match by applicant name
+      if (userName && b.applicant && b.applicant.trim().toLowerCase() === userName) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  async cancelUserBooking(id, user) {
+    const booking = this.bookings.find(b => b.id === id);
+    if (!booking) throw new Error("Tempahan tidak dijumpai.");
+
+    // Check ownership unless admin/coordinator
+    const isOwner = this.getUserBookings(user).some(b => b.id === id);
+    if (!isOwner && (!this.auth || !this.auth.isLabCoordinator())) {
+      throw new Error("Anda hanya mempunyai kebenaran untuk membatalkan tempahan anda sendiri.");
+    }
+
+    booking.status = "Dibatalkan";
+    this.save();
+
+    // Sync to Python Flask backend
+    try {
+      await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
+        method: 'DELETE'
+      });
+    } catch (e) { }
+
+    this.syncToUpdateStatusSheet(id, "Dibatalkan", booking);
     setTimeout(() => {
       this.fetchFromPythonBackend();
       this.fetchFromSheet();

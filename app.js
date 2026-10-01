@@ -12,6 +12,7 @@ class App {
     this.tableView = new TableView(this.store, this);
     this.modalView = new ModalView(this.store, this);
     this.profileView = new ProfileView(this.authStore, this);
+    this.historyView = new HistoryView(this.store, this.authStore, this);
     this.activeTab = 'schedule';
   }
 
@@ -23,6 +24,23 @@ class App {
   render() {
     this.headerView.render();
     this.calendarView.render();
+
+    // Kawalan paparan Tab Sejarah Tempahan (Hanya Boleh Dilihat Selepas Log Masuk)
+    const isLoggedIn = this.authStore.isLoggedIn();
+    const btnHistory = document.getElementById('tabBtnHistory');
+    if (btnHistory) {
+      btnHistory.style.display = isLoggedIn ? 'flex' : 'none';
+    }
+
+    // Jika pengguna sedang di tab history tetapi belum/tidak lagi log masuk, alihkan semula ke schedule
+    if (!isLoggedIn && this.activeTab === 'history') {
+      this.switchTab('schedule');
+      return;
+    }
+
+    if (isLoggedIn) {
+      this.historyView.render();
+    }
 
     // Kawalan paparan Tab Akses Admin
     const btnAdmin = document.getElementById('tabBtnAdmin');
@@ -40,21 +58,30 @@ class App {
     if (this.activeTab === 'profile') {
       this.profileView.render();
     }
+    if (this.activeTab === 'history') {
+      this.historyView.render();
+    }
     if (window.lucide) lucide.createIcons();
   }
 
   switchTab(tabName) {
     this.closeMobileSidebar();
     const schedPanel = document.getElementById('scheduleTabPanel');
+    const historyPanel = document.getElementById('historyTabPanel');
     const adminPanel = document.getElementById('adminTabPanel');
     const profilePanel = document.getElementById('profileTabPanel');
     const btnSched = document.getElementById('tabBtnSchedule');
+    const btnHistory = document.getElementById('tabBtnHistory');
     const btnAdmin = document.getElementById('tabBtnAdmin');
     const btnProfile = document.getElementById('tabBtnProfile');
 
     if (schedPanel) {
       schedPanel.classList.remove('active');
       schedPanel.style.display = 'none';
+    }
+    if (historyPanel) {
+      historyPanel.classList.remove('active');
+      historyPanel.style.display = 'none';
     }
     if (adminPanel) {
       adminPanel.classList.remove('active');
@@ -66,10 +93,25 @@ class App {
     }
 
     if (btnSched) btnSched.classList.remove('active');
+    if (btnHistory) btnHistory.classList.remove('active');
     if (btnAdmin) btnAdmin.classList.remove('active');
     if (btnProfile) btnProfile.classList.remove('active');
 
-    if (tabName === 'admin') {
+    if (tabName === 'history') {
+      // Tab hanya boleh dilihat selepas log masuk
+      if (!this.authStore.isLoggedIn()) {
+        this.modalView.openLogin();
+        this.showToast("Sila log masuk untuk melihat sejarah tempahan anda.", "error");
+        return;
+      }
+      this.activeTab = 'history';
+      if (historyPanel) {
+        historyPanel.classList.add('active');
+        historyPanel.style.display = 'flex';
+      }
+      if (btnHistory) btnHistory.classList.add('active');
+      this.historyView.render();
+    } else if (tabName === 'admin') {
       if (!this.authStore.isAdminVerified) {
         this.modalView.openAdminAuth();
         return;
@@ -114,6 +156,9 @@ class App {
     // Navigation Tabs
     const tabSched = document.getElementById('tabBtnSchedule');
     if (tabSched) tabSched.addEventListener('click', () => this.switchTab('schedule'));
+
+    const tabHistory = document.getElementById('tabBtnHistory');
+    if (tabHistory) tabHistory.addEventListener('click', () => this.switchTab('history'));
 
     const tabAdmin = document.getElementById('tabBtnAdmin');
     if (tabAdmin) tabAdmin.addEventListener('click', () => this.switchTab('admin'));
@@ -292,9 +337,27 @@ class App {
 
   logout() {
     this.authStore.logout();
+    const btnHistory = document.getElementById('tabBtnHistory');
+    if (btnHistory) btnHistory.style.display = 'none';
     this.switchTab('schedule');
     this.render();
     this.showToast("Anda telah log keluar daripada Akaun Google DELIMa.", "success");
+  }
+
+  async cancelMyBooking(id) {
+    if (!this.authStore.isLoggedIn()) {
+      this.openLogin();
+      return;
+    }
+    if (confirm(`Adakah anda pasti mahu membatalkan tempahan ${id} anda?`)) {
+      try {
+        await this.store.cancelUserBooking(id, this.authStore.currentUser);
+        this.render();
+        this.showToast(`Tempahan ${id} anda telah berjaya dibatalkan.`, "success");
+      } catch (err) {
+        this.showToast(err.message, "error");
+      }
+    }
   }
 
   openBookingModal(dateStr, slotStr) {

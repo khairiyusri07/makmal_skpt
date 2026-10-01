@@ -6,6 +6,7 @@ class Booking {
   constructor(data) {
     this.id = data.id || `LAB-2026-${Math.floor(100 + Math.random() * 900)}`;
     this.userId = data.userId || data.applicantId || "";
+    this.userEmail = data.userEmail || data.email || "";
     this.labId = data.labId || "LAB-1";
     this.date = data.date;
     this.slot = data.slot;
@@ -17,5 +18,6 @@ class Booking {
     this.equipments = data.equipments || [];
     this.notes = data.notes || "";
     this.status = data.status || "Menunggu Kelulusan";
+    this.createdAt = data.createdAt || new Date().toISOString();
   }
 }

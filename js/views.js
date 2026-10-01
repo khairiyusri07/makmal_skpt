@@ -350,6 +350,42 @@ class ModalView {
   openLogin() {
     this.dom.loginModal.classList.add('active');
     this.initGoogleSIWG();
+    this.bindQuickLoginEvents();
+  }
+
+  bindQuickLoginEvents() {
+    const btnAhmad = document.getElementById('btnQuickLoginAhmad');
+    if (btnAhmad && !btnAhmad._bound) {
+      btnAhmad._bound = true;
+      btnAhmad.addEventListener('click', () => {
+        this.selectGoogleAccount('Cikgu Ahmad Razali', 'g-83920192@moe-dl.edu.my');
+      });
+    }
+
+    const btnSiti = document.getElementById('btnQuickLoginSiti');
+    if (btnSiti && !btnSiti._bound) {
+      btnSiti._bound = true;
+      btnSiti.addEventListener('click', () => {
+        this.selectGoogleAccount('Cikgu Siti Nurhaliza', 'g-10293847@moe-dl.edu.my');
+      });
+    }
+
+    const form = document.getElementById('customDelimaForm');
+    if (form && !form._bound) {
+      form._bound = true;
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = document.getElementById('customDelimaEmailInput');
+        const email = input ? input.value.trim().toLowerCase() : '';
+        if (!email.endsWith('@moe-dl.edu.my')) {
+          this.app.showToast("ID emel mesti berakhir dengan @moe-dl.edu.my (Contoh: g-12345678@moe-dl.edu.my)", "error");
+          return;
+        }
+        const username = email.split('@')[0];
+        const name = `Cikgu (${username})`;
+        this.selectGoogleAccount(name, email);
+      });
+    }
   }
 
   closeLogin() {
@@ -753,6 +789,264 @@ class ProfileView {
     } catch (err) {
       this.app.showToast(err.message, "error");
     }
+  }
+}
+
+// --------------------------------------------------------------------------
+// 6. HISTORY VIEW (User Booking History Panel - Only Accessible After Login)
+// --------------------------------------------------------------------------
+class HistoryView {
+  constructor(store, authStore, app) {
+    this.store = store;
+    this.auth = authStore;
+    this.app = app;
+    this.searchQuery = "";
+    this.statusFilter = "ALL";
+    this.dom = {
+      panel: document.getElementById('historyTabPanel'),
+      tableBody: document.getElementById('historyTableBody'),
+      table: document.getElementById('historyTable'),
+      emptyState: document.getElementById('historyEmptyState'),
+      emptyStateTitle: document.getElementById('emptyStateTitle'),
+      emptyStateMsg: document.getElementById('emptyStateMsg'),
+      userSubtitle: document.getElementById('historyUserSubtitle'),
+      statTotal: document.getElementById('histStatTotal'),
+      statApproved: document.getElementById('histStatApproved'),
+      statPending: document.getElementById('histStatPending'),
+      statCancelled: document.getElementById('histStatCancelled'),
+      searchInput: document.getElementById('historySearchInput'),
+      statusFilter: document.getElementById('historyStatusFilter'),
+      btnNewBooking: document.getElementById('btnNewBookingFromHistory'),
+      btnEmptyBooking: document.getElementById('btnEmptyBooking'),
+      navBadge: document.getElementById('historyNavBadge'),
+      statCards: document.querySelectorAll('.history-stat-card')
+    };
+
+    this.initEvents();
+  }
+
+  initEvents() {
+    if (this.dom.searchInput) {
+      this.dom.searchInput.addEventListener('input', (e) => {
+        this.searchQuery = (e.target.value || '').trim().toLowerCase();
+        this.renderTableOnly();
+      });
+    }
+
+    if (this.dom.statusFilter) {
+      this.dom.statusFilter.addEventListener('change', (e) => {
+        this.setStatusFilter(e.target.value);
+      });
+    }
+
+    if (this.dom.btnNewBooking) {
+      this.dom.btnNewBooking.addEventListener('click', () => {
+        this.app.modalView.openBooking();
+      });
+    }
+
+    if (this.dom.btnEmptyBooking) {
+      this.dom.btnEmptyBooking.addEventListener('click', () => {
+        this.app.modalView.openBooking();
+      });
+    }
+
+    if (this.dom.statCards) {
+      this.dom.statCards.forEach(card => {
+        card.addEventListener('click', () => {
+          const filter = card.getAttribute('data-filter') || 'ALL';
+          this.setStatusFilter(filter);
+        });
+      });
+    }
+  }
+
+  setStatusFilter(filterValue) {
+    this.statusFilter = filterValue;
+    if (this.dom.statusFilter) this.dom.statusFilter.value = filterValue;
+
+    if (this.dom.statCards) {
+      this.dom.statCards.forEach(card => {
+        if (card.getAttribute('data-filter') === filterValue) {
+          card.classList.add('active');
+        } else {
+          card.classList.remove('active');
+        }
+      });
+    }
+
+    this.renderTableOnly();
+  }
+
+  getUserBookings() {
+    if (!this.auth.isLoggedIn()) return [];
+    return this.store.getUserBookings(this.auth.currentUser);
+  }
+
+  render() {
+    if (!this.dom.panel) return;
+
+    if (!this.auth.isLoggedIn()) {
+      if (this.dom.navBadge) this.dom.navBadge.style.display = 'none';
+      return;
+    }
+
+    const user = this.auth.currentUser;
+    const userBookings = this.getUserBookings();
+
+    // 1. Update Subtitle
+    if (this.dom.userSubtitle) {
+      this.dom.userSubtitle.innerHTML = `
+        Rekod tempahan untuk <strong>${user.name}</strong> (<span style="color: var(--gcal-blue); font-weight: 600;">${user.email}</span>)
+      `;
+    }
+
+    // 2. Compute KPI Stats
+    const totalCount = userBookings.length;
+    const approvedCount = userBookings.filter(b => b.status === "Diluluskan").length;
+    const pendingCount = userBookings.filter(b => b.status === "Menunggu Kelulusan").length;
+    const cancelledCount = userBookings.filter(b => b.status === "Dibatalkan").length;
+
+    if (this.dom.statTotal) this.dom.statTotal.textContent = totalCount;
+    if (this.dom.statApproved) this.dom.statApproved.textContent = approvedCount;
+    if (this.dom.statPending) this.dom.statPending.textContent = pendingCount;
+    if (this.dom.statCancelled) this.dom.statCancelled.textContent = cancelledCount;
+
+    // Update Sidebar Navigation Badge
+    if (this.dom.navBadge) {
+      const activeCount = approvedCount + pendingCount;
+      if (activeCount > 0) {
+        this.dom.navBadge.textContent = activeCount;
+        this.dom.navBadge.style.display = 'inline-block';
+      } else {
+        this.dom.navBadge.style.display = 'none';
+      }
+    }
+
+    // 3. Render Table
+    this.renderTableOnly();
+  }
+
+  renderTableOnly() {
+    if (!this.dom.tableBody) return;
+
+    const userBookings = this.getUserBookings();
+
+    // Filter by query and status
+    let filtered = [...userBookings];
+
+    if (this.statusFilter !== "ALL") {
+      filtered = filtered.filter(b => b.status === this.statusFilter);
+    }
+
+    if (this.searchQuery) {
+      filtered = filtered.filter(b =>
+        (b.id && b.id.toLowerCase().includes(this.searchQuery)) ||
+        (b.subject && b.subject.toLowerCase().includes(this.searchQuery)) ||
+        (b.date && b.date.toLowerCase().includes(this.searchQuery)) ||
+        (b.slot && b.slot.toLowerCase().includes(this.searchQuery)) ||
+        (b.notes && b.notes.toLowerCase().includes(this.searchQuery))
+      );
+    }
+
+    // If empty
+    if (filtered.length === 0) {
+      if (this.dom.table) this.dom.table.style.display = 'none';
+      if (this.dom.emptyState) {
+        this.dom.emptyState.style.display = 'flex';
+        if (userBookings.length === 0) {
+          if (this.dom.emptyStateTitle) this.dom.emptyStateTitle.textContent = "Anda Belum Mempunyai Tempahan";
+          if (this.dom.emptyStateMsg) this.dom.emptyStateMsg.textContent = "Sila klik butang di bawah untuk menempah slot waktu penggunaan Makmal Komputer.";
+          if (this.dom.btnEmptyBooking) this.dom.btnEmptyBooking.style.display = 'inline-flex';
+        } else {
+          if (this.dom.emptyStateTitle) this.dom.emptyStateTitle.textContent = "Tiada Tempahan Dijumpai";
+          if (this.dom.emptyStateMsg) this.dom.emptyStateMsg.textContent = "Tiada rekod tempahan yang sepadan dengan carian atau penapis status yang dipilih.";
+          if (this.dom.btnEmptyBooking) this.dom.btnEmptyBooking.style.display = 'none';
+        }
+      }
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+
+    // Has items
+    if (this.dom.table) this.dom.table.style.display = 'table';
+    if (this.dom.emptyState) this.dom.emptyState.style.display = 'none';
+
+    this.dom.tableBody.innerHTML = filtered.map(b => {
+      let statusBadge = '';
+      let actionButtons = '';
+
+      if (b.status === "Diluluskan") {
+        statusBadge = `
+          <span style="background: var(--gcal-green-light); color: var(--gcal-green); padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;">
+            <i data-lucide="check-circle-2" style="width: 12px;"></i> Diluluskan
+          </span>
+        `;
+        actionButtons = `
+          <button class="btn-gcal-blue" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="window.app.openSlip('${b.id}')" title="Cetak / Lihat Slip Rasmi">
+            <i data-lucide="printer" style="width: 13px;"></i> Slip
+          </button>
+          <button class="btn-gcal-red" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="window.app.cancelMyBooking('${b.id}')" title="Batal Tempahan Ini">
+            <i data-lucide="x" style="width: 13px;"></i> Batal
+          </button>
+        `;
+      } else if (b.status === "Menunggu Kelulusan") {
+        statusBadge = `
+          <span style="background: var(--gcal-amber-light); color: var(--gcal-amber); padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;">
+            <i data-lucide="clock" style="width: 12px;"></i> Menunggu
+          </span>
+        `;
+        actionButtons = `
+          <button class="btn-gcal-blue" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="window.app.openSlip('${b.id}')" title="Cetak / Lihat Slip Rasmi">
+            <i data-lucide="printer" style="width: 13px;"></i> Slip
+          </button>
+          <button class="btn-gcal-red" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="window.app.cancelMyBooking('${b.id}')" title="Batal Tempahan Ini">
+            <i data-lucide="x" style="width: 13px;"></i> Batal
+          </button>
+        `;
+      } else {
+        statusBadge = `
+          <span style="background: var(--gcal-red-light); color: var(--gcal-red); padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;">
+            <i data-lucide="x-circle" style="width: 12px;"></i> Dibatalkan
+          </span>
+        `;
+        actionButtons = `
+          <button class="btn-gcal-blue" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;" onclick="window.app.openSlip('${b.id}')" title="Cetak / Lihat Slip Rasmi">
+            <i data-lucide="file-text" style="width: 13px;"></i> Slip
+          </button>
+        `;
+      }
+
+      return `
+        <tr>
+          <td>
+            <strong style="color: var(--gcal-blue); font-size: 0.88rem;">${b.id}</strong>
+            <br><small style="color: var(--gcal-text-subtle);">${b.createdAt ? new Date(b.createdAt).toLocaleDateString('ms-MY') : ''}</small>
+          </td>
+          <td>
+            <strong>${b.date}</strong>
+            <br><span style="color: var(--gcal-text-subtle); font-size: 0.78rem; font-weight: 600;">${b.slot}</span>
+          </td>
+          <td>
+            <strong>${b.subject}</strong>
+            <br><small style="color: var(--gcal-text-subtle);">Makmal Komputer (${b.pcCount || 35} PC)</small>
+          </td>
+          <td>
+            <span style="color: var(--gcal-text-main); font-size: 0.82rem;">${b.notes ? b.notes : '<em style="color: var(--gcal-text-subtle);">- Tiada catatan -</em>'}</span>
+          </td>
+          <td>
+            ${statusBadge}
+          </td>
+          <td style="text-align: right; white-space: nowrap;">
+            <div style="display: inline-flex; gap: 6px; justify-content: flex-end;">
+              ${actionButtons}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
   }
 }
 

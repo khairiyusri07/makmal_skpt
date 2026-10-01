@@ -53,9 +53,13 @@ def init_db():
         )
     ''')
     
-    # Migration to add userId column if missing in existing DB
+    # Migration to add userId & userEmail column if missing in existing DB
     try:
         cursor.execute("ALTER TABLE bookings ADD COLUMN userId TEXT")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE bookings ADD COLUMN userEmail TEXT")
     except Exception:
         pass
     try:
@@ -186,6 +190,8 @@ def create_booking():
         }), 409
 
     booking_id = data.get('id') or f"TB-{int(datetime.datetime.now().timestamp() * 1000) % 100000}"
+    user_id = data.get('userId') or ''
+    user_email = data.get('userEmail') or ''
     lab_id = data.get('labId', 'LAB-1')
     role = data.get('role', 'Guru / Tenaga Pengajar')
     pc_count = data.get('pcCount', 35)
@@ -196,15 +202,17 @@ def create_booking():
     created_at = data.get('createdAt') or datetime.datetime.now().isoformat()
 
     cursor.execute("""
-        INSERT INTO bookings (id, labId, date, slot, applicant, role, subject, pcCount, purpose, equipments, notes, status, createdAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (booking_id, lab_id, date, slot, applicant, role, subject, pc_count, purpose, equipments, notes, status, created_at))
+        INSERT INTO bookings (id, userId, userEmail, labId, date, slot, applicant, role, subject, pcCount, purpose, equipments, notes, status, createdAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (booking_id, user_id, user_email, lab_id, date, slot, applicant, role, subject, pc_count, purpose, equipments, notes, status, created_at))
 
     conn.commit()
     conn.close()
 
     new_booking = {
         "id": booking_id,
+        "userId": user_id,
+        "userEmail": user_email,
         "labId": lab_id,
         "date": date,
         "slot": slot,

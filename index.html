@@ -97,6 +97,12 @@
             <i data-lucide="calendar" style="width: 18px;"></i>
             <span>Jadual Makmal</span>
           </div>
+          <!-- Tab Sejarah Tempahan: Hanya Dipaparkan Selepas Pengguna Log Masuk -->
+          <div class="sidebar-nav-item" id="tabBtnHistory" style="display: none;">
+            <i data-lucide="history" style="width: 18px;"></i>
+            <span>Sejarah Tempahan</span>
+            <span id="historyNavBadge" class="sidebar-badge" style="display: none;">0</span>
+          </div>
           <div class="sidebar-nav-item" id="tabBtnProfile">
             <i data-lucide="user-check" style="width: 18px;"></i>
             <span>Profil Saya</span>
@@ -122,6 +128,133 @@
             <!-- Calendar Time Grid Body (Scrollable) -->
             <div class="gcal-grid-scroll-body" id="gcalGridBody">
               <!-- Rendered via JavaScript -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB PANEL: Sejarah Tempahan Saya (Hanya Selepas Log Masuk) -->
+        <div id="historyTabPanel" class="tab-panel">
+          <div class="admin-tab-container">
+            <div class="history-content-container">
+
+              <!-- Header Card -->
+              <div class="history-header-card">
+                <div class="history-header-info">
+                  <div class="history-header-title">
+                    <i data-lucide="history" style="color: var(--gcal-blue); width: 26px; height: 26px;"></i>
+                    <h2>Sejarah Tempahan Saya</h2>
+                  </div>
+                  <p id="historyUserSubtitle" class="history-user-subtitle">
+                    Memaparkan semua rekod tempahan makmal komputer anda.
+                  </p>
+                </div>
+                <button id="btnNewBookingFromHistory" class="btn-gcal-blue"
+                  style="display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 20px; border-radius: 21px; font-weight: 700; cursor: pointer;">
+                  <i data-lucide="plus" style="width: 18px;"></i>
+                  <span>Tempah Slot Baru</span>
+                </button>
+              </div>
+
+              <!-- KPI Statistics Grid -->
+              <div class="history-stats-grid">
+                <div class="history-stat-card active" id="statCardAll" data-filter="ALL">
+                  <div class="stat-icon-wrap blue">
+                    <i data-lucide="calendar"></i>
+                  </div>
+                  <div class="stat-content">
+                    <div class="stat-number" id="histStatTotal">0</div>
+                    <div class="stat-label">Jumlah Tempahan</div>
+                  </div>
+                </div>
+
+                <div class="history-stat-card" id="statCardApproved" data-filter="Diluluskan">
+                  <div class="stat-icon-wrap green">
+                    <i data-lucide="check-circle-2"></i>
+                  </div>
+                  <div class="stat-content">
+                    <div class="stat-number" id="histStatApproved">0</div>
+                    <div class="stat-label">Diluluskan</div>
+                  </div>
+                </div>
+
+                <div class="history-stat-card" id="statCardPending" data-filter="Menunggu Kelulusan">
+                  <div class="stat-icon-wrap amber">
+                    <i data-lucide="clock"></i>
+                  </div>
+                  <div class="stat-content">
+                    <div class="stat-number" id="histStatPending">0</div>
+                    <div class="stat-label">Menunggu Kelulusan</div>
+                  </div>
+                </div>
+
+                <div class="history-stat-card" id="statCardCancelled" data-filter="Dibatalkan">
+                  <div class="stat-icon-wrap red">
+                    <i data-lucide="x-circle"></i>
+                  </div>
+                  <div class="stat-content">
+                    <div class="stat-number" id="histStatCancelled">0</div>
+                    <div class="stat-label">Dibatalkan</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Controls & Table Card -->
+              <div class="admin-card history-table-card">
+                <div class="admin-table-controls history-controls">
+                  <div style="position: relative; flex: 1; max-width: 380px;">
+                    <i data-lucide="search"
+                      style="position: absolute; left: 10px; top: 10px; width: 18px; color: var(--gcal-text-subtle);"></i>
+                    <input type="text" id="historySearchInput" class="search-input-gcal" style="width: 100%;"
+                      placeholder="Cari subjek, kelas, tarikh, kod tempahan...">
+                  </div>
+
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <label for="historyStatusFilter"
+                      style="font-size: 0.82rem; font-weight: 600; color: var(--gcal-text-subtle);">Status:</label>
+                    <select id="historyStatusFilter" class="form-control-custom" style="width: 170px;">
+                      <option value="ALL">Semua Status</option>
+                      <option value="Diluluskan">Diluluskan</option>
+                      <option value="Menunggu Kelulusan">Menunggu Kelulusan</option>
+                      <option value="Dibatalkan">Dibatalkan</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                  <table class="data-table-gcal" id="historyTable">
+                    <thead>
+                      <tr>
+                        <th>Kod Tempahan</th>
+                        <th>Tarikh & Slot Masa</th>
+                        <th>Kelas / Subjek</th>
+                        <th>Catatan</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Tindakan</th>
+                      </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                      <!-- Rendered dynamically via HistoryView -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Empty State (when user has no bookings or no results match filter) -->
+                <div id="historyEmptyState" class="history-empty-state" style="display: none;">
+                  <div class="empty-icon-wrap">
+                    <i data-lucide="calendar-x" style="width: 44px; height: 44px; color: var(--gcal-blue);"></i>
+                  </div>
+                  <h4 id="emptyStateTitle" style="font-size: 1.15rem; font-weight: 700; color: var(--gcal-text-dark); margin-top: 12px;">Tiada Rekod Tempahan</h4>
+                  <p id="emptyStateMsg" style="font-size: 0.88rem; color: var(--gcal-text-subtle); margin-top: 6px; max-width: 420px; margin-left: auto; margin-right: auto;">
+                    Anda belum membuat sebarang tempahan makmal komputer.
+                  </p>
+                  <button id="btnEmptyBooking" class="btn-gcal-blue"
+                    style="margin-top: 16px; border-radius: 20px; height: 40px; padding: 0 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;">
+                    <i data-lucide="plus" style="width: 16px;"></i> Tempah Slot Makmal Sekarang
+                  </button>
+                </div>
+
+              </div>
+
             </div>
           </div>
         </div>
@@ -409,33 +542,73 @@
           <div id="googleSiwgButtonContainer" style="display: flex; justify-content: center; margin-bottom: 12px;">
           </div>
 
-
-        </div>
-
-
-        <!-- MODAL 4: PENGESAHAN PIN ADMIN -->
-        <div class="modal-overlay" id="adminAuthModal">
-          <div class="modal-container" style="max-width: 400px;">
-            <div class="modal-header">
-              <div class="modal-title">
-                <h3>Pengesahan Akses Admin</h3>
-                <p>Sila masukkan PIN Pentadbir.</p>
-              </div>
-              <button class="close-modal-btn" id="btnCloseAdminAuthModal">&times;</button>
-            </div>
-
-            <div class="modal-body">
-              <form id="adminAuthForm">
-                <div class="form-group">
-                  <label for="adminPinInput">PIN Admin (Default: 1234)</label>
-                  <input type="password" id="adminPinInput" class="form-control-custom" placeholder="1234" required
-                    autofocus style="text-align: center; font-size: 1.2rem; letter-spacing: 0.2em;">
-                </div>
-                <button type="submit" class="btn-gcal-blue" style="width: 100%;">Sahkan PIN Admin</button>
-              </form>
-            </div>
+          <div style="display: flex; align-items: center; margin: 16px 0; gap: 10px;">
+            <div style="flex: 1; height: 1px; background: var(--gcal-border);"></div>
+            <span style="font-size: 0.75rem; color: var(--gcal-text-subtle); font-weight: 600;">ATAU PILIH AKAUN GURU (DELIMa)</span>
+            <div style="flex: 1; height: 1px; background: var(--gcal-border);"></div>
           </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button type="button" id="btnQuickLoginAhmad" class="btn-quick-login-account"
+              style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--gcal-border); border-radius: 8px; background: var(--gcal-surface); cursor: pointer; text-align: left; transition: all 0.15s ease;">
+              <div style="width: 34px; height: 34px; border-radius: 50%; background: #1a73e8; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">AR</div>
+              <div style="flex: 1;">
+                <div style="font-size: 0.84rem; font-weight: 700; color: var(--gcal-text-dark);">Cikgu Ahmad Razali</div>
+                <div style="font-size: 0.74rem; color: var(--gcal-text-subtle);">g-83920192@moe-dl.edu.my</div>
+              </div>
+              <i data-lucide="chevron-right" style="width: 16px; color: var(--gcal-text-subtle);"></i>
+            </button>
+
+            <button type="button" id="btnQuickLoginSiti" class="btn-quick-login-account"
+              style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--gcal-border); border-radius: 8px; background: var(--gcal-surface); cursor: pointer; text-align: left; transition: all 0.15s ease;">
+              <div style="width: 34px; height: 34px; border-radius: 50%; background: #1e8e3e; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;">SN</div>
+              <div style="flex: 1;">
+                <div style="font-size: 0.84rem; font-weight: 700; color: var(--gcal-text-dark);">Cikgu Siti Nurhaliza</div>
+                <div style="font-size: 0.74rem; color: var(--gcal-text-subtle);">g-10293847@moe-dl.edu.my</div>
+              </div>
+              <i data-lucide="chevron-right" style="width: 16px; color: var(--gcal-text-subtle);"></i>
+            </button>
+          </div>
+
+          <form id="customDelimaForm" style="margin-top: 14px;">
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label for="customDelimaEmailInput" style="font-size: 0.8rem; font-weight: 700;">Atau masukkan ID DELIMa anda:</label>
+              <input type="email" id="customDelimaEmailInput" class="form-control-custom"
+                placeholder="Contoh: g-12345678@moe-dl.edu.my" required style="font-size: 0.85rem;">
+            </div>
+            <button type="submit" class="btn-gcal-blue" style="width: 100%; border-radius: 6px; height: 38px; font-weight: 600;">
+              Masuk Dengan ID DELIMa Ini
+            </button>
+          </form>
+
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: PENGESAHAN PIN ADMIN -->
+  <div class="modal-overlay" id="adminAuthModal">
+    <div class="modal-container" style="max-width: 400px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <h3>Pengesahan Akses Admin</h3>
+          <p>Sila masukkan PIN Pentadbir.</p>
+        </div>
+        <button class="close-modal-btn" id="btnCloseAdminAuthModal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <form id="adminAuthForm">
+          <div class="form-group">
+            <label for="adminPinInput">PIN Admin (Default: 1234)</label>
+            <input type="password" id="adminPinInput" class="form-control-custom" placeholder="1234" required
+              autofocus style="text-align: center; font-size: 1.2rem; letter-spacing: 0.2em;">
+          </div>
+          <button type="submit" class="btn-gcal-blue" style="width: 100%;">Sahkan PIN Admin</button>
+        </form>
+      </div>
+    </div>
+  </div>
 
         <!-- Mobile Floating Action Button (FAB) -->
         <button id="mobileFabBtn" class="mobile-fab-btn">
