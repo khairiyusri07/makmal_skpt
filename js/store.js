@@ -281,6 +281,29 @@ class BookingStore {
     bookingData.status = "Menunggu Kelulusan";
     bookingData.date = DateUtils.normalizeDate(bookingData.date);
     bookingData.slot = DateUtils.normalizeSlot(bookingData.slot);
+
+    // Syarat 1: Sekurang-kurangnya sehari sebelum tarikh penggunaan
+    if (!DateUtils.isAtLeastOneDayInAdvance(bookingData.date)) {
+      throw new Error("Tempahan slot makmal hanya dibenarkan sekurang-kurangnya 1 hari sebelum tarikh penggunaan (mulai esok).");
+    }
+
+    // Syarat 2: Maksimum 2 slot pada hari yang ditempah bagi setiap pengguna
+    const checkUser = (this.auth && this.auth.currentUser) ? this.auth.currentUser : {
+      userId: bookingData.userId,
+      email: bookingData.userEmail,
+      name: bookingData.applicant
+    };
+    const userSlotCount = this.getUserBookingCountForDate(checkUser, bookingData.date);
+    if (userSlotCount >= 2) {
+      throw new Error(`Had maksimum tempahan tercapai! Anda telah menempah 2 slot pada tarikh ${bookingData.date}. Setiap pengguna hanya dibenarkan menempah maksimum 2 slot sehari.`);
+    }
+
+    // Semakan pertindihan slot
+    const conflict = this.findConflict(bookingData.date, bookingData.slot);
+    if (conflict) {
+      throw new Error(`Slot masa ${bookingData.slot} pada tarikh ${bookingData.date} telah ditempah oleh ${conflict.applicant}.`);
+    }
+
     const booking = new Booking(bookingData);
     this.bookings.unshift(booking);
     this.save();
@@ -323,6 +346,19 @@ class BookingStore {
       }
       return false;
     });
+  }
+
+  getUserBookingsForDate(user, date) {
+    if (!user || !date) return [];
+    const normDate = DateUtils.normalizeDate(date);
+    return this.getUserBookings(user).filter(b => {
+      if (b.status === "Dibatalkan") return false;
+      return DateUtils.normalizeDate(b.date) === normDate;
+    });
+  }
+
+  getUserBookingCountForDate(user, date) {
+    return this.getUserBookingsForDate(user, date).length;
   }
 
   async cancelUserBooking(id, user) {

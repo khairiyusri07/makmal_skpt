@@ -254,10 +254,15 @@ class App {
     if (bookingForm) bookingForm.addEventListener('submit', (e) => this.modalView.handleBookingSubmit(e));
 
     const formDate = document.getElementById('formDate');
-    if (formDate) formDate.addEventListener('change', () => this.modalView.checkConflict());
+    if (formDate) {
+      formDate.addEventListener('change', () => this.modalView.checkConflict());
+      formDate.addEventListener('input', () => this.modalView.checkConflict());
+    }
 
     const formSlot = document.getElementById('formSlot');
-    if (formSlot) formSlot.addEventListener('change', () => this.modalView.checkConflict());
+    if (formSlot) {
+      formSlot.addEventListener('change', () => this.modalView.checkConflict());
+    }
 
     // Login & Google SSO & Registration Events
     const authTabLogin = document.getElementById('authTabLogin');

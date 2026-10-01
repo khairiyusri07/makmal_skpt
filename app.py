@@ -172,10 +172,48 @@ def create_booking():
     if not date or not slot:
         return jsonify({"status": "error", "message": "Tarikh dan Slot Masa diperlukan."}), 400
 
+    # 1. Semakan tempahan sekurang-kurangnya sehari sebelum (Zon masa Malaysia UTC+8)
+    tz_my = datetime.timezone(datetime.timedelta(hours=8))
+    today_my = datetime.datetime.now(tz_my).date()
+
+    try:
+        booking_date = datetime.date.fromisoformat(date)
+    except Exception:
+        return jsonify({"status": "error", "message": "Format tarikh tidak sah."}), 400
+
+    if booking_date <= today_my:
+        return jsonify({
+            "status": "error",
+            "message": "Tempahan slot makmal hanya dibenarkan sekurang-kurangnya sehari sebelum tarikh penggunaan."
+        }), 400
+
+    user_id = (data.get('userId') or '').strip()
+    user_email = (data.get('userEmail') or '').strip()
+
     conn = get_db()
     cursor = conn.cursor()
 
-    # Check for conflict
+    # 2. Semakan had maksimum 2 slot pada hari yang ditempah bagi setiap pengguna
+    cursor.execute("""
+        SELECT COUNT(*) FROM bookings 
+        WHERE date = ? 
+          AND status != 'Dibatalkan'
+          AND (
+              (? != '' AND userId = ?)
+              OR (? != '' AND userEmail = ?)
+              OR (? != '' AND applicant = ?)
+          )
+    """, (date, user_id, user_id, user_email, user_email, applicant, applicant))
+    user_booking_count = cursor.fetchone()[0]
+
+    if user_booking_count >= 2:
+        conn.close()
+        return jsonify({
+            "status": "error",
+            "message": f"Had tempahan tercapai! Pengguna telah menempah {user_booking_count} slot pada tarikh {date}. Maksimum 2 slot sehari sahaja dibenarkan bagi setiap pengguna."
+        }), 400
+
+    # 3. Check for conflict
     cursor.execute("""
         SELECT * FROM bookings 
         WHERE date = ? AND slot = ? AND status != 'Dibatalkan'

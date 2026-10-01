@@ -79,6 +79,23 @@ class DateUtils {
     return DateUtils.formatDateIso(d);
   }
 
+  static getTodayIso() {
+    return DateUtils.formatDateIso(new Date());
+  }
+
+  static getTomorrowIso() {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return DateUtils.formatDateIso(d);
+  }
+
+  static isAtLeastOneDayInAdvance(dateInput) {
+    const norm = DateUtils.normalizeDate(dateInput);
+    if (!norm) return false;
+    const tomorrowIso = DateUtils.getTomorrowIso();
+    return norm >= tomorrowIso;
+  }
+
   static normalizeDate(dateInput) {
     if (!dateInput) return '';
     let str = String(dateInput).trim();

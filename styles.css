@@ -649,6 +649,21 @@ html, body {
   box-shadow: var(--gcal-shadow-sm);
 }
 
+.gcal-slot-cell.empty-slot.past-slot {
+  cursor: not-allowed;
+  background-color: rgba(241, 245, 249, 0.65);
+}
+
+.gcal-slot-cell.empty-slot.past-slot:hover {
+  background: #f1f5f9;
+}
+
+.gcal-slot-cell.empty-slot.past-slot:hover::after {
+  content: 'Tutup';
+  background: #94a3b8;
+  color: #ffffff;
+}
+
 /* Event Block Card */
 .gcal-event-block {
   height: 100%;

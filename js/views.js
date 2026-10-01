@@ -130,11 +130,21 @@ class CalendarView {
             </div>
           `;
         } else {
-          html += `
-            <div class="gcal-slot-cell empty-slot" 
-                 onclick="window.app.openBookingModal('${day.dateStr}', '${slot}')">
-            </div>
-          `;
+          const isPastOrToday = !DateUtils.isAtLeastOneDayInAdvance(day.dateStr);
+          if (isPastOrToday) {
+            html += `
+              <div class="gcal-slot-cell empty-slot past-slot" 
+                   title="Tempahan ditutup (perlu sekurang-kurangnya 1 hari sebelum)"
+                   onclick="window.app.openBookingModal('${day.dateStr}', '${slot}')">
+              </div>
+            `;
+          } else {
+            html += `
+              <div class="gcal-slot-cell empty-slot" 
+                   onclick="window.app.openBookingModal('${day.dateStr}', '${slot}')">
+              </div>
+            `;
+          }
         }
       });
 
@@ -302,6 +312,7 @@ class ModalView {
       bookingForm: document.getElementById('bookingForm'),
       conflictAlert: document.getElementById('conflictAlert'),
       conflictAlertMsg: document.getElementById('conflictAlertMsg'),
+      btnSubmitBooking: document.getElementById('btnSubmitBooking'),
 
       formLab: document.getElementById('formLab'),
       formDate: document.getElementById('formDate'),
@@ -629,8 +640,25 @@ class ModalView {
       return;
     }
 
+    const tomorrowIso = DateUtils.getTomorrowIso();
+    if (this.dom.formDate) {
+      this.dom.formDate.min = tomorrowIso;
+    }
+
+    if (dateStr) {
+      if (!DateUtils.isAtLeastOneDayInAdvance(dateStr)) {
+        this.app.showToast("Tempahan slot makmal hanya dibenarkan sekurang-kurangnya 1 hari sebelum tarikh penggunaan (mulai esok).", "warning");
+        return;
+      }
+      const existingUserCount = this.store.getUserBookingCountForDate(this.store.auth.currentUser, dateStr);
+      if (existingUserCount >= 2) {
+        this.app.showToast(`Had tempahan tercapai! Anda telah menempah 2 slot pada tarikh ${dateStr}. Maksimum 2 slot sehari sahaja dibenarkan bagi setiap pengguna.`, "warning");
+        return;
+      }
+    }
+
     this.dom.formLab.value = "LAB-1";
-    this.dom.formDate.value = dateStr || DateUtils.formatDateIso(new Date());
+    this.dom.formDate.value = dateStr || tomorrowIso;
     this.dom.formSlot.value = slotStr || TIME_SLOTS[0];
     this.dom.formApplicant.value = this.store.auth.currentUser.name;
 
@@ -641,22 +669,57 @@ class ModalView {
   closeBooking() {
     this.dom.bookingModal.classList.remove('active');
     this.dom.bookingForm.reset();
+    if (this.dom.btnSubmitBooking) {
+      this.dom.btnSubmitBooking.disabled = false;
+    }
+    if (this.dom.conflictAlert) {
+      this.dom.conflictAlert.style.display = 'none';
+    }
   }
 
   checkConflict() {
     const date = this.dom.formDate.value;
     const slot = this.dom.formSlot.value;
-    const conflict = this.store.findConflict(date, slot);
 
+    // 1. Semakan tempahan sekurang-kurangnya sehari sebelum
+    if (date && !DateUtils.isAtLeastOneDayInAdvance(date)) {
+      this.dom.conflictAlertMsg.textContent = "Amaran: Tempahan slot makmal mesti dibuat sekurang-kurangnya 1 hari sebelum tarikh penggunaan (mulai esok).";
+      this.dom.conflictAlert.style.display = 'flex';
+      if (this.dom.btnSubmitBooking) this.dom.btnSubmitBooking.disabled = true;
+      return;
+    }
+
+    // 2. Semakan had maksimum 2 slot sehari bagi setiap pengguna
+    const currentUser = (this.store.auth && this.store.auth.currentUser) ? this.store.auth.currentUser : {
+      userId: '',
+      email: '',
+      name: (this.dom.formApplicant ? this.dom.formApplicant.value : '')
+    };
+    if (date && currentUser) {
+      const userDaySlots = this.store.getUserBookingCountForDate(currentUser, date);
+      if (userDaySlots >= 2) {
+        this.dom.conflictAlertMsg.textContent = `Amaran: Had tempahan tercapai! Anda telah menempah ${userDaySlots} slot pada tarikh ${date}. Setiap pengguna hanya dibenarkan menempah maksimum 2 slot sehari.`;
+        this.dom.conflictAlert.style.display = 'flex';
+        if (this.dom.btnSubmitBooking) this.dom.btnSubmitBooking.disabled = true;
+        return;
+      }
+    }
+
+    // 3. Semakan pertindihan slot dengan tempahan sedia ada
+    const conflict = this.store.findConflict(date, slot);
     if (conflict) {
       this.dom.conflictAlertMsg.textContent = `Amaran: Slot masa ini telah ditempah oleh ${conflict.applicant} (${conflict.subject})!`;
       this.dom.conflictAlert.style.display = 'flex';
-    } else {
-      this.dom.conflictAlert.style.display = 'none';
+      if (this.dom.btnSubmitBooking) this.dom.btnSubmitBooking.disabled = true;
+      return;
     }
+
+    // Jika semua syarat dipenuhi
+    this.dom.conflictAlert.style.display = 'none';
+    if (this.dom.btnSubmitBooking) this.dom.btnSubmitBooking.disabled = false;
   }
 
-  handleBookingSubmit(e) {
+  async handleBookingSubmit(e) {
     e.preventDefault();
 
     if (!this.store.auth.isLoggedIn()) {
@@ -667,27 +730,45 @@ class ModalView {
     const date = this.dom.formDate.value;
     const slot = this.dom.formSlot.value;
 
+    // 1. Semakan sekurang-kurangnya sehari sebelum
+    if (!DateUtils.isAtLeastOneDayInAdvance(date)) {
+      this.app.showToast("Gagal! Tempahan slot makmal mesti dibuat sekurang-kurangnya 1 hari sebelum tarikh penggunaan.", "error");
+      return;
+    }
+
+    // 2. Semakan had maksimum 2 slot sehari
+    const existingCount = this.store.getUserBookingCountForDate(this.store.auth.currentUser, date);
+    if (existingCount >= 2) {
+      this.app.showToast(`Gagal! Anda telah menempah 2 slot pada tarikh ${date}. Maksimum 2 slot sehari sahaja dibenarkan bagi setiap pengguna.`, "error");
+      return;
+    }
+
+    // 3. Semakan pertindihan slot
     const conflict = this.store.findConflict(date, slot);
     if (conflict) {
       this.app.showToast(`Gagal! Slot masa ini telah ditempah oleh ${conflict.applicant}. Sila pilih slot lain.`, "error");
       return;
     }
 
-    const newBooking = this.store.addBooking({
-      labId: "LAB-1",
-      date: date,
-      slot: slot,
-      applicant: this.dom.formApplicant.value.trim() || this.store.auth.currentUser.name,
-      subject: this.dom.formSubject.value.trim(),
-      pcCount: 35,
-      purpose: "",
-      notes: this.dom.formNotes.value.trim()
-    });
+    try {
+      const newBooking = await this.store.addBooking({
+        labId: "LAB-1",
+        date: date,
+        slot: slot,
+        applicant: this.dom.formApplicant.value.trim() || this.store.auth.currentUser.name,
+        subject: this.dom.formSubject.value.trim(),
+        pcCount: 35,
+        purpose: "",
+        notes: this.dom.formNotes.value.trim()
+      });
 
-    this.closeBooking();
-    this.app.render();
-    this.app.showToast(`Permohonan Dihantar! Kod Tempahan: ${newBooking.id} (Menunggu Kelulusan Admin)`, "success");
-    this.openSlip(newBooking.id);
+      this.closeBooking();
+      this.app.render();
+      this.app.showToast(`Permohonan Dihantar! Kod Tempahan: ${newBooking.id} (Menunggu Kelulusan Admin)`, "success");
+      this.openSlip(newBooking.id);
+    } catch (err) {
+      this.app.showToast(`Ralat: ${err.message}`, "error");
+    }
   }
 
   openSlip(bookingId) {
