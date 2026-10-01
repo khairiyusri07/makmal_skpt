@@ -139,12 +139,12 @@ class DateUtils {
 }
 
 const ALL_CLASSES = {
-  "1 UTARID": { className: "1 UTARID", level: "Tahap 1" },
-  "2 ZUHRAH": { className: "2 ZUHRAH", level: "Tahap 1" },
-  "3 MARIKH": { className: "3 MARIKH", level: "Tahap 1" },
-  "4 MUSYTARI": { className: "4 MUSYTARI", level: "Tahap 2" },
-  "5 ZUHAL": { className: "5 ZUHAL", level: "Tahap 2" },
-  "6 NEPTUN": { className: "6 NEPTUN", level: "Tahap 2" }
+  "1 UTARID": { className: "1 UTARID", level: "Tahap 1", subject: "1 UTARID" },
+  "2 ZUHRAH": { className: "2 ZUHRAH", level: "Tahap 1", subject: "2 ZUHRAH" },
+  "3 MARIKH": { className: "3 MARIKH", level: "Tahap 1", subject: "3 MARIKH" },
+  "4 MUSYTARI": { className: "4 MUSYTARI", level: "Tahap 2", subject: "4 MUSYTARI" },
+  "5 ZUHAL": { className: "5 ZUHAL", level: "Tahap 2", subject: "5 ZUHAL" },
+  "6 NEPTUN": { className: "6 NEPTUN", level: "Tahap 2", subject: "6 NEPTUN" }
 };
 
 /**
