@@ -1037,8 +1037,37 @@ html, body {
 
 /* Print */
 @media print {
-  .gcal-topbar, .gcal-sidebar, .gcal-right-bar, .modal-header, .modal-footer {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .gcal-topbar, .gcal-sidebar, .gcal-right-bar, .modal-header, .modal-footer, .gcal-main-content, .mobile-fab-btn, .bottom-nav-mobile {
     display: none !important;
+  }
+  .modal-overlay {
+    position: static !important;
+    background: transparent !important;
+    display: none !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+  .modal-overlay.active {
+    display: block !important;
+  }
+  .modal-container {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+  .modal-body {
+    padding: 0 !important;
+  }
+  .slip-card {
+    border: 2px solid #202124 !important;
+    padding: 24px !important;
+    page-break-inside: avoid;
   }
 }
 

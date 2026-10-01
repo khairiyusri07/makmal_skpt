@@ -424,6 +424,13 @@ class App {
     const btnCloseSlipBtn = document.getElementById('btnCloseSlipBtn');
     if (btnCloseSlipBtn) btnCloseSlipBtn.addEventListener('click', () => this.modalView.closeSlip());
 
+    const slipModal = document.getElementById('slipModal');
+    if (slipModal) {
+      slipModal.addEventListener('click', (e) => {
+        if (e.target === slipModal) this.modalView.closeSlip();
+      });
+    }
+
     const btnPrintSlip = document.getElementById('btnPrintSlip');
     if (btnPrintSlip) btnPrintSlip.addEventListener('click', () => window.print());
 

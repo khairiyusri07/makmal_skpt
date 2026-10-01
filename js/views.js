@@ -290,7 +290,7 @@ class TableView {
             const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
             dayName = DAY_NAMES_MY[d.getDay()] || '';
           }
-        } catch (e) {}
+        } catch (e) { }
       }
       const dateDisplay = dayName ? `${dayName}, ${b.date}` : b.date;
 
@@ -485,7 +485,9 @@ class ModalView {
       slipRole: document.getElementById('slipRole'),
       slipSubject: document.getElementById('slipSubject'),
       slipPCCount: document.getElementById('slipPCCount'),
-      slipPurpose: document.getElementById('slipPurpose')
+      slipPurpose: document.getElementById('slipPurpose'),
+      slipNotes: document.getElementById('slipNotes'),
+      slipStatus: document.getElementById('slipStatus')
     };
   }
 
@@ -1197,11 +1199,11 @@ class ModalView {
       const dayDateStr = DateUtils.formatDateIso(targetDate);
       const isTahap1 = entry.level === 'Tahap 1';
       const badgeColor = isTahap1 ? 'background: #e0f2fe; color: #0369a1;' : 'background: #fef3c7; color: #b45309;';
-      const classPillStyle = isRotation 
-        ? 'background: #f0fdf4; border: 1px solid #86efac; color: #166534;' 
+      const classPillStyle = isRotation
+        ? 'background: #f0fdf4; border: 1px solid #86efac; color: #166534;'
         : 'background: #f8fafc; border: 1px solid #e2e8f0; color: #0f172a;';
 
-      const teacherFreeBadge = entry.teacherFreeTime 
+      const teacherFreeBadge = entry.teacherFreeTime
         ? `<div style="display: inline-flex; align-items: center; gap: 5px; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 4px 8px; border-radius: 6px;">
             <span style="color: #059669; font-weight: 800; font-size: 0.8rem;">✓</span>
             <div>
@@ -1300,24 +1302,72 @@ class ModalView {
   }
 
   openSlip(bookingId) {
-    const booking = this.store.bookings.find(b => b.id === bookingId);
-    if (!booking) return;
+    if (!bookingId) return;
+    const booking = this.store.bookings.find(b => String(b.id) === String(bookingId));
+    if (!booking) {
+      console.warn("Maklumat tempahan tidak dijumpai bagi ID:", bookingId);
+      if (this.app && typeof this.app.showToast === 'function') {
+        this.app.showToast("Maklumat slip tempahan tidak dijumpai.", "error");
+      }
+      return;
+    }
 
-    this.dom.slipCode.textContent = booking.id;
-    this.dom.slipDate.textContent = booking.date;
-    this.dom.slipLab.textContent = "Makmal Komputer Utama (35 PC • Tingkat 1)";
-    this.dom.slipSlot.textContent = booking.slot;
-    this.dom.slipApplicant.textContent = booking.applicant;
-    this.dom.slipRole.textContent = booking.role;
-    this.dom.slipSubject.textContent = booking.subject;
-    this.dom.slipPCCount.textContent = `${booking.pcCount} Komputer / PC`;
-    this.dom.slipPurpose.textContent = booking.purpose;
+    const setField = (id, val) => {
+      const el = this.dom[id] || document.getElementById(id);
+      if (el) el.textContent = val !== undefined && val !== null ? val : '-';
+    };
 
-    this.dom.slipModal.classList.add('active');
+    setField('slipCode', booking.id);
+
+    let dateDisplay = booking.date || '-';
+    try {
+      if (booking.date) {
+        const parts = booking.date.split('-');
+        if (parts.length === 3) {
+          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          const dayName = typeof DAY_NAMES_MY !== 'undefined' ? DAY_NAMES_MY[d.getDay()] : '';
+          if (dayName) dateDisplay = `${dayName}, ${booking.date}`;
+        }
+      }
+    } catch (e) { }
+    setField('slipDate', dateDisplay);
+
+    setField('slipLab', booking.labName || "Makmal Komputer SKPT");
+    setField('slipSlot', booking.slot || '-');
+    setField('slipApplicant', booking.applicant || '-');
+    setField('slipRole', booking.role || 'Guru / Tenaga Pengajar');
+    setField('slipSubject', booking.subject || '-');
+    setField('slipPCCount', `${booking.pcCount || 21} Komputer / PC`);
+    setField('slipPurpose', booking.purpose || 'Pelajaran & Amali');
+    setField('slipNotes', booking.notes || '-');
+
+    const statusEl = this.dom.slipStatus || document.getElementById('slipStatus');
+    if (statusEl) {
+      const status = booking.status || 'Diluluskan';
+      statusEl.textContent = status.toUpperCase();
+      if (status === 'Diluluskan') {
+        statusEl.style.color = '#1e8e3e';
+      } else if (status === 'Menunggu Kelulusan') {
+        statusEl.style.color = '#e37400';
+      } else {
+        statusEl.style.color = '#d93025';
+      }
+    }
+
+    const modalEl = this.dom.slipModal || document.getElementById('slipModal');
+    if (modalEl) {
+      modalEl.classList.add('active');
+    }
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+      lucide.createIcons();
+    }
   }
 
   closeSlip() {
-    this.dom.slipModal.classList.remove('active');
+    const modalEl = this.dom.slipModal || document.getElementById('slipModal');
+    if (modalEl) {
+      modalEl.classList.remove('active');
+    }
   }
   openEditUser(userKey) {
     const editModal = document.getElementById('editUserModal');
