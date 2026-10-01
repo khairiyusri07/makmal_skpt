@@ -280,6 +280,8 @@ class TableView {
             Slip
           </button>
         `;
+      }
+
       let dayName = '';
       if (b.date) {
         try {
