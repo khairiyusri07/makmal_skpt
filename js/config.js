@@ -138,22 +138,13 @@ class DateUtils {
   }
 }
 
-// Templat Sesi Masa Makmal Mengikut Tahap (Mematuhi Waktu Persekolahan, Perhimpunan & Rehat)
-const TAHAP_1_SESSIONS = [
-  {
-    dayIndex: 1, // Isnin
-    dayName: "Isnin",
-    slots: ["08:00 - 08:30", "08:30 - 09:00", "09:00 - 09:30", "09:30 - 10:00"],
-    timeDesc: "08:00 AM - 10:00 AM",
-    timeNote: "Pagi sebelum Rehat Tahap 1 (10:00-10:30)"
-  },
 const ALL_CLASSES = {
-  "1 UTARID": { className: "1 UTARID", level: "Tahap 1", subject: "Literasi Digital & Asas Komputer - 1 UTARID" },
-  "2 ZUHRAH": { className: "2 ZUHRAH", level: "Tahap 1", subject: "Literasi Digital & Amali - 2 ZUHRAH" },
-  "3 MARIKH": { className: "3 MARIKH", level: "Tahap 1", subject: "Literasi Digital & Pembelajaran Interaktif - 3 MARIKH" },
-  "4 MUSYTARI": { className: "4 MUSYTARI", level: "Tahap 2", subject: "RBT & TMK - 4 MUSYTARI" },
-  "5 ZUHAL": { className: "5 ZUHAL", level: "Tahap 2", subject: "RBT (Pengaturcaraan Scratch) - 5 ZUHAL" },
-  "6 NEPTUN": { className: "6 NEPTUN", level: "Tahap 2", subject: "RBT (Robotik & Algoritma) - 6 NEPTUN" }
+  "1 UTARID": { className: "1 UTARID", level: "Tahap 1" },
+  "2 ZUHRAH": { className: "2 ZUHRAH", level: "Tahap 1" },
+  "3 MARIKH": { className: "3 MARIKH", level: "Tahap 1" },
+  "4 MUSYTARI": { className: "4 MUSYTARI", level: "Tahap 2" },
+  "5 ZUHAL": { className: "5 ZUHAL", level: "Tahap 2" },
+  "6 NEPTUN": { className: "6 NEPTUN", level: "Tahap 2" }
 };
 
 /**
