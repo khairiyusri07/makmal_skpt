@@ -10,7 +10,6 @@ class BookingStore {
     this.searchQuery = "";
     this.statusFilter = "ALL";
     this.dayFilter = "ALL";
-    this.userFilter = "ALL";
     this.customWeeklyClasses = this.loadCustomWeeklyClasses();
     this.load();
     this.startAutoPolling(500);
@@ -49,57 +48,6 @@ class BookingStore {
       const tuesday = new Date(sunday); tuesday.setDate(tuesday.getDate() + 2);
       const wednesday = new Date(sunday); wednesday.setDate(wednesday.getDate() + 3);
 
-      this.bookings = [
-        new Booking({
-          id: "TB-1001",
-          userId: "USR-83920192",
-          userEmail: "g-83920192@moe-dl.edu.my",
-          labId: "LAB-1",
-          date: DateUtils.formatDateIso(monday),
-          slot: "08:00 - 08:30",
-          applicant: "Cikgu Ahmad Razali",
-          role: "Guru / Tenaga Pengajar",
-          subject: "RBT Tahun 5 - Coding Scratch",
-          pcCount: 35,
-          purpose: "Pelajaran & Amali",
-          notes: "Perlu projektor dan pembesar suara",
-          status: "Diluluskan",
-          createdAt: new Date().toISOString()
-        }),
-        new Booking({
-          id: "TB-1002",
-          userId: "USR-10293847",
-          userEmail: "g-10293847@moe-dl.edu.my",
-          labId: "LAB-1",
-          date: DateUtils.formatDateIso(tuesday),
-          slot: "10:00 - 10:30",
-          applicant: "Cikgu Siti Nurhaliza",
-          role: "Guru / Tenaga Pengajar",
-          subject: "Matematik - Kuiz Digital Kahoot",
-          pcCount: 35,
-          purpose: "Pelajaran & Amali",
-          notes: "Latihan kuiz interaktif",
-          status: "Diluluskan",
-          createdAt: new Date().toISOString()
-        }),
-        new Booking({
-          id: "TB-1003",
-          userId: "USR-83920192",
-          userEmail: "g-83920192@moe-dl.edu.my",
-          labId: "LAB-1",
-          date: DateUtils.formatDateIso(wednesday),
-          slot: "11:00 - 11:30",
-          applicant: "Cikgu Ahmad Razali",
-          role: "Guru / Tenaga Pengajar",
-          subject: "Sains - Latihan Interaktif DELIMa",
-          pcCount: 35,
-          purpose: "Pelajaran & Amali",
-          notes: "Sains Tahun 5",
-          status: "Menunggu Kelulusan",
-          createdAt: new Date().toISOString()
-        })
-      ];
-      this.save();
     }
     this.fetchFromPythonBackend();
     this.fetchFromSheet();
@@ -138,18 +86,8 @@ class BookingStore {
                   updated = true;
                 }
               } else {
-                // Jika ID berbeza tetapi tarikh dan slot sama, kemaskini rekod sedia ada
-                const slotIdx = this.bookings.findIndex(b =>
-                  DateUtils.normalizeDate(b.date) === DateUtils.normalizeDate(ab.date) &&
-                  DateUtils.normalizeSlot(b.slot) === DateUtils.normalizeSlot(ab.slot)
-                );
-                if (slotIdx !== -1) {
-                  this.bookings[slotIdx] = ab;
-                  updated = true;
-                } else {
-                  this.bookings.push(ab);
-                  updated = true;
-                }
+                this.bookings.push(ab);
+                updated = true;
               }
             });
 
@@ -182,17 +120,8 @@ class BookingStore {
                     updated = true;
                   }
                 } else {
-                  const slotIdx = this.bookings.findIndex(b =>
-                    DateUtils.normalizeDate(b.date) === DateUtils.normalizeDate(ab.date) &&
-                    DateUtils.normalizeSlot(b.slot) === DateUtils.normalizeSlot(ab.slot)
-                  );
-                  if (slotIdx !== -1) {
-                    this.bookings[slotIdx] = ab;
-                    updated = true;
-                  } else {
-                    this.bookings.push(ab);
-                    updated = true;
-                  }
+                  this.bookings.push(ab);
+                  updated = true;
                 }
               });
               if (updated || this.bookings.length === 0) {
@@ -262,18 +191,8 @@ class BookingStore {
                   updated = true;
                 }
               } else {
-                // Jika ID berbeza tetapi tarikh dan slot sama, kemaskini rekod sedia ada (jangan buat baru)
-                const slotIdx = this.bookings.findIndex(b =>
-                  DateUtils.normalizeDate(b.date) === DateUtils.normalizeDate(sb.date) &&
-                  DateUtils.normalizeSlot(b.slot) === DateUtils.normalizeSlot(sb.slot)
-                );
-                if (slotIdx !== -1) {
-                  this.bookings[slotIdx] = sb;
-                  updated = true;
-                } else {
-                  this.bookings.push(sb);
-                  updated = true;
-                }
+                this.bookings.push(sb);
+                updated = true;
               }
             });
 
@@ -322,7 +241,7 @@ class BookingStore {
         throw new Error("Tempahan slot makmal hanya dibenarkan sekurang-kurangnya 1 hari sebelum tarikh penggunaan.");
       }
       if (bookingData.date > tomorrowIso) {
-        throw new Error("Tempahan disekat! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja). Tarikh melebihi sehari sebelum dikhaskan untuk Penyelaras ICT.");
+        throw new Error("Tempahan disekat! Guru biasa hanya dibenarkan menempah 1 hari sebelum (tarikh esok sahaja)");
       }
     }
 
@@ -467,7 +386,7 @@ class BookingStore {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...b, isAdmin: true, overwrite: overwriteExisting })
           });
-        } catch (e) {}
+        } catch (e) { }
       }
     })();
 
@@ -497,14 +416,14 @@ class BookingStore {
     this.customWeeklyClasses[wKey][entryIndex] = newClassName;
     try {
       localStorage.setItem('makmal_custom_weekly_classes', JSON.stringify(this.customWeeklyClasses));
-    } catch (e) {}
+    } catch (e) { }
   }
 
   resetCustomWeeklyClasses() {
     this.customWeeklyClasses = {};
     try {
       localStorage.removeItem('makmal_custom_weekly_classes');
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Mengosongkan jadual rasmi janaan automatik untuk minggu tertentu
@@ -522,9 +441,9 @@ class BookingStore {
       if (bDate >= normSunday && bDate <= endDateIso && (b.id && b.id.startsWith('JDL-'))) {
         removedCount++;
         try {
-          fetch(`${PYTHON_API_URL}/bookings/${b.id}`, { method: 'DELETE' }).catch(() => {});
+          fetch(`${PYTHON_API_URL}/bookings/${b.id}`, { method: 'DELETE' }).catch(() => { });
           this.syncToUpdateStatusSheet(b.id, "Dibatalkan", b);
-        } catch (e) {}
+        } catch (e) { }
         return false;
       }
       return true;
@@ -584,24 +503,13 @@ class BookingStore {
     booking.status = "Dibatalkan";
     this.save();
 
-    // 1. Kemaskini status rekod sedia ada di Python backend (UPDATE, bukan cipta baru)
+    // Sync to Python Flask backend
     try {
       await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: "Dibatalkan", date: booking.date, slot: booking.slot })
+        method: 'DELETE'
       });
-    } catch (e) {
-      try {
-        await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ date: booking.date, slot: booking.slot })
-        });
-      } catch (e2) { }
-    }
+    } catch (e) { }
 
-    // 2. Kemaskini status rekod sedia ada di Google Sheet
     this.syncToUpdateStatusSheet(id, "Dibatalkan", booking);
     setTimeout(() => {
       this.fetchFromPythonBackend();
@@ -621,7 +529,7 @@ class BookingStore {
         await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: "Diluluskan", date: booking.date, slot: booking.slot })
+          body: JSON.stringify({ status: "Diluluskan" })
         });
       } catch (e) { }
 
@@ -639,22 +547,12 @@ class BookingStore {
       booking.status = "Dibatalkan";
       this.save();
 
-      // Kemaskini status rekod sedia ada di Python backend (UPDATE)
+      // Sync to Python Flask backend
       try {
         await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: "Dibatalkan", date: booking.date, slot: booking.slot })
+          method: 'DELETE'
         });
-      } catch (e) {
-        try {
-          await fetch(`${PYTHON_API_URL}/bookings/${id}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: booking.date, slot: booking.slot })
-          });
-        } catch (e2) { }
-      }
+      } catch (e) { }
 
       this.syncToUpdateStatusSheet(id, "Dibatalkan", booking);
       setTimeout(() => {
@@ -678,7 +576,7 @@ class BookingStore {
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'BATCH_ADD', bookings: bookings })
-      }).catch(() => {});
+      }).catch(() => { });
     } catch (e) { }
 
     // 2. Hantar setiap slot secara berturutan dengan sela masa 220ms
@@ -722,14 +620,7 @@ class BookingStore {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'UPDATE_STATUS',
-          id: id,
-          status: status,
-          date: bookingObj ? bookingObj.date : undefined,
-          slot: bookingObj ? bookingObj.slot : undefined,
-          booking: bookingObj
-        })
+        body: JSON.stringify({ action: 'UPDATE_STATUS', id: id, status: status, booking: bookingObj })
       }).catch(err => console.error('Google Sheet Status Update Error:', err));
     } catch (e) { }
   }
@@ -774,15 +665,6 @@ class BookingStore {
         } catch (e) {
           return false;
         }
-      });
-    }
-    if (this.userFilter && this.userFilter !== "ALL") {
-      const target = this.userFilter.toLowerCase().trim();
-      list = list.filter(b => {
-        const uEmail = (b.userEmail || '').toLowerCase().trim();
-        const uId = (b.userId || '').toLowerCase().trim();
-        const uApp = (b.applicant || '').toLowerCase().trim();
-        return uEmail === target || uId === target || uApp === target;
       });
     }
     return list;
