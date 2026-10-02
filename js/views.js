@@ -1990,6 +1990,8 @@ class ProfileView {
       inputName: document.getElementById('profileName'),
       inputEmail: document.getElementById('profileEmail'),
       selectRole: document.getElementById('profileRole'),
+      roleBadge: document.getElementById('profileRoleBadge'),
+      roleNotice: document.getElementById('profileRoleNotice'),
       inputPhone: document.getElementById('profilePhone'),
       inputSubject: document.getElementById('profileSubject'),
       avatarCircle: document.getElementById('profileAvatarCircle'),
@@ -2029,9 +2031,61 @@ class ProfileView {
 
     if (this.dom.inputName) this.dom.inputName.value = user.name || '';
     if (this.dom.inputEmail) this.dom.inputEmail.value = user.email || '';
-    if (this.dom.selectRole) this.dom.selectRole.value = user.role || 'Guru';
+    
+    // Kawalan Keselamatan: Hanya Penyelaras ICT sahaja yang dibenarkan ubah jawatan
+    const isCoordinator = this.auth.isLabCoordinator();
+    const roleBadge = this.dom.roleBadge || document.getElementById('profileRoleBadge');
+    const roleNotice = this.dom.roleNotice || document.getElementById('profileRoleNotice');
+
+    if (this.dom.selectRole) {
+      this.dom.selectRole.value = user.role || 'Guru';
+      if (isCoordinator) {
+        this.dom.selectRole.disabled = false;
+        this.dom.selectRole.removeAttribute('disabled');
+        this.dom.selectRole.style.background = '#ffffff';
+        this.dom.selectRole.style.color = 'var(--gcal-text-dark)';
+        this.dom.selectRole.style.cursor = 'default';
+        this.dom.selectRole.title = 'Penyelaras ICT dibenarkan mengubah jawatan';
+      } else {
+        this.dom.selectRole.disabled = true;
+        this.dom.selectRole.setAttribute('disabled', 'disabled');
+        this.dom.selectRole.style.background = 'var(--gcal-surface)';
+        this.dom.selectRole.style.color = 'var(--gcal-text-subtle)';
+        this.dom.selectRole.style.cursor = 'not-allowed';
+        this.dom.selectRole.title = 'Hanya Penyelaras ICT sahaja yang dibenarkan untuk ubah jawatan';
+      }
+    }
+
+    if (roleBadge) {
+      if (isCoordinator) {
+        roleBadge.style.background = '#e6f4ea';
+        roleBadge.style.color = '#137333';
+        roleBadge.textContent = 'Boleh Diubah';
+      } else {
+        roleBadge.style.background = '#fee2e2';
+        roleBadge.style.color = '#c5221f';
+        roleBadge.textContent = 'Hanya Penyelaras ICT';
+      }
+    }
+
+    if (roleNotice) {
+      if (isCoordinator) {
+        roleNotice.innerHTML = `
+          <i data-lucide="shield-check" style="width: 13px; height: 13px; color: #1e8e3e; flex-shrink: 0;"></i>
+          <span style="color: #1e8e3e; font-weight: 500;">Penyelaras ICT disahkan: Anda dibenarkan menukar jawatan.</span>
+        `;
+      } else {
+        roleNotice.innerHTML = `
+          <i data-lucide="lock" style="width: 13px; height: 13px; color: #ea4335; flex-shrink: 0;"></i>
+          <span style="color: var(--gcal-text-subtle);">Hanya Penyelaras ICT sahaja yang dibenarkan untuk ubah jawatan.</span>
+        `;
+      }
+    }
+
     if (this.dom.inputPhone) this.dom.inputPhone.value = user.phone || '';
     if (this.dom.inputSubject) this.dom.inputSubject.value = user.subject || '';
+
+    if (window.lucide) lucide.createIcons();
   }
 
   handleProfileSubmit(e) {
@@ -2042,7 +2096,10 @@ class ProfileView {
     }
 
     const name = this.dom.inputName ? this.dom.inputName.value.trim() : '';
-    const role = this.dom.selectRole ? this.dom.selectRole.value : 'Guru';
+    const isCoordinator = this.auth.isLabCoordinator();
+    const currentRole = (this.auth.currentUser && this.auth.currentUser.role) ? this.auth.currentUser.role : 'Guru';
+    // Hanya Penyelaras ICT sahaja dibenarkan menukar jawatan
+    const role = (isCoordinator && this.dom.selectRole) ? this.dom.selectRole.value : currentRole;
     const phone = this.dom.inputPhone ? this.dom.inputPhone.value.trim() : '';
     const subject = this.dom.inputSubject ? this.dom.inputSubject.value.trim() : '';
 
